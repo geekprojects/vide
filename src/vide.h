@@ -12,8 +12,11 @@ class Vide : public Frontier::FrontierApp
     Frontier::FrontierWindow* m_mainWindow;
     Editor* m_editor;
     FontHandle* m_textFont;
+    Frontier::Label* m_interfaceStatus;
 
     void onOpenFile();
+
+    void onEditorTabChange(Frontier::Widget* widget);
 
  public:
     Vide();
@@ -22,6 +25,8 @@ class Vide : public Frontier::FrontierApp
     virtual bool init();
 
     FontHandle* getTextFont() { return m_textFont; }
+
+    void setInterfaceStatus(std::wstring message);
 };
 
 #endif
