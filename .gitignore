@@ -7,6 +7,7 @@
 *.a
 *.la
 *.so*
+*.dSYM
 
 # Backup files
 *~
@@ -38,7 +39,5 @@ autoscan.log
 configure.scan
 output/
 
-libfrontier.pc
-
-src/demo/demo
+src/vide
 
