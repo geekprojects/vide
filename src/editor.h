@@ -20,11 +20,11 @@ class Editor : public Frontier::Widget
     Interface* m_interface;
     Format* m_format;
 
-unsigned int getViewLines();
+    unsigned int getViewLines();
 
  public:
 
-    Editor(Frontier::FrontierApp* ui);
+    Editor(Frontier::FrontierWindow* window);
     virtual ~Editor();
 
     virtual void calculateSize();
@@ -38,11 +38,15 @@ unsigned int getViewLines();
     void setBuffer(Buffer* buffer);
     Buffer* getBuffer() { return m_buffer; }
 
+    unsigned int getCursorX() { return m_cursorX; }
+    unsigned int getCursorY() { return m_cursorY; }
+
     void moveCursorX(unsigned int x);
     void moveCursorY(unsigned int y);
     void moveCursorDelta(int dx, int dy);
     void moveCursorXEnd();
     void moveCursorNextToken();
+    void moveCursorPage(int dir);
 
     void insert(wchar_t c);
     void deleteAtCursor();

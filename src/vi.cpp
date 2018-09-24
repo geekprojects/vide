@@ -85,6 +85,27 @@ void ViInterface::keyNormal(Frontier::InputMessage* inputMessage)
         case L'l':
             m_editor->moveCursorDelta(1, 0);
             break;
+
+        default:
+            switch (inputMessage->event.key.key)
+            {
+                case KC_F:
+                    if (!!(inputMessage->event.key.modifiers & KMOD_CONTROL))
+                    {
+                        m_editor->moveCursorPage(1);
+                    }
+                    break;
+                case KC_B:
+                    if (!!(inputMessage->event.key.modifiers & KMOD_CONTROL))
+                    {
+                        m_editor->moveCursorPage(-1);
+                    }
+                    break;
+
+                default:
+                    keyCursor(inputMessage);
+            }
+            break;
     }
 }
 
@@ -94,19 +115,32 @@ void ViInterface::keyInsert(Frontier::InputMessage* inputMessage)
     {
         return;
     }
-
-    if (inputMessage->event.key.key == KC_ESCAPE)
+    else if (inputMessage->event.key.key == KC_ESCAPE)
     {
         setMode(MODE_NORMAL);
         return;
     }
+    else if (inputMessage->event.key.key == KC_BACKSPACE)
+    {
+        if (m_editor->getCursorX() > 0)
+        {
+            m_editor->moveCursorDelta(-1, 0);
+            m_editor->deleteAtCursor();
+        }
+    }
 
-wchar_t c = inputMessage->event.key.chr;
-if (iswprint(c))
-{
-m_editor->insert(c);
-}
+    bool cursor;
+    cursor = keyCursor(inputMessage);
+    if (cursor)
+    {
+        return;
+    }
 
+    wchar_t c = inputMessage->event.key.chr;
+    if (iswprint(c))
+    {
+        m_editor->insert(c);
+    }
 }
 
 void ViInterface::keyCommand(Frontier::InputMessage* inputMessage)
@@ -141,6 +175,37 @@ void ViInterface::keyCommand(Frontier::InputMessage* inputMessage)
     }
 }
 
+bool ViInterface::keyCursor(InputMessage* inputMessage)
+{
+    switch (inputMessage->event.key.key)
+    {
+        case KC_PAGE_DOWN:
+            m_editor->moveCursorPage(1);
+            return true;
+
+        case KC_PAGE_UP:
+            m_editor->moveCursorPage(-1);
+            return true;
+
+        case KC_UP:
+            m_editor->moveCursorDelta(0, -1);
+            return true;
+
+        case KC_DOWN:
+            m_editor->moveCursorDelta(0, 1);
+            return true;
+
+        case KC_LEFT:
+            m_editor->moveCursorDelta(-1, 0);
+            return true;
+
+        case KC_RIGHT:
+            m_editor->moveCursorDelta(1, 0);
+            return true;
+    }
+    return false;
+}
+ 
 void ViInterface::runCommand(wstring command)
 {
     bool isNumber = true;

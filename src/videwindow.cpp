@@ -1,0 +1,90 @@
+
+#include "videwindow.h"
+
+using namespace std;
+using namespace Frontier;
+
+VideWindow::VideWindow(Frontier::FrontierApp* app) : FrontierWindow(app)
+{
+}
+
+VideWindow::~VideWindow()
+{
+}
+
+bool VideWindow::init()
+{
+    m_interfaceStatus = new Label(this, L"", ALIGN_LEFT);
+
+    Frame* rootFrame = new Frame(this, false);
+
+    Frame* toolbar = new Frame(this, true);
+    toolbar->setPadding(0);
+    IconButton* openButton = new IconButton(this, FRONTIER_ICON_FOLDER_OPEN);
+    openButton->clickSignal().connect(sigc::mem_fun(*this, &VideWindow::onOpenFile));
+    toolbar->add(openButton);
+    toolbar->add(new IconButton(this, FRONTIER_ICON_SAVE));
+    toolbar->add(new IconButton(this, FRONTIER_ICON_SYNC));
+    rootFrame->add(toolbar);
+
+    ResizeableFrame* mainFrame = new ResizeableFrame(this, true);
+    rootFrame->add(mainFrame);
+
+    List* list = new List(this);
+    list->addItem(new TextListItem(L"test.cpp"));
+    list->addItem(new TextListItem(L"test.h"));
+    Scroller* scroller = new Scroller(this);
+    scroller->setChild(list);
+    mainFrame->add(scroller);
+
+    Tabs* tabs = new Tabs(this);
+    mainFrame->add(tabs);
+    tabs->changeTabSignal().connect(sigc::mem_fun(*this, &VideWindow::onEditorTabChange));
+
+    m_editor = new Editor(this);
+    Buffer* buffer = Buffer::loadFile("main.cpp");
+    m_editor->setBuffer(buffer);
+    tabs->addTab(L"main.cpp", m_editor);
+
+    Editor* editor2 = new Editor(this);
+    Buffer* buffer2 = Buffer::loadFile("editor.cpp");
+    editor2->setBuffer(buffer2);
+    tabs->addTab(L"editor.cpp", editor2);
+
+    List* list2 = new List(this);
+    list2->addItem(new TextListItem(L"main()"));
+    list2->addItem(new TextListItem(L"TestClass::method()"));
+    Scroller* scroller2 = new Scroller(this);
+    scroller2->setChild(list2);
+    mainFrame->add(scroller2);
+
+    Frame* statusFrame = new Frame(this, true);
+    statusFrame->add(m_interfaceStatus);
+    statusFrame->add(new Label(this, L"test.cpp", ALIGN_RIGHT));
+    rootFrame->add(statusFrame);
+
+    setContent(rootFrame);
+    setActiveWidget(m_editor);
+
+    return true;
+}
+
+void VideWindow::onOpenFile()
+{
+    printf("VideWindow::onOpenFile: Here!\n");
+    string file = getApp()->chooseFile();
+    printf("VideWindow::onOpenFile: file=%s\n", file.c_str());
+}
+
+void VideWindow::onEditorTabChange(Widget* widget)
+{
+printf("VideWindow::onEditorTabChange: Setting active widget: %p\n", widget);
+    setActiveWidget(widget);
+}
+
+void VideWindow::setInterfaceStatus(std::wstring message)
+{
+    m_interfaceStatus->setText(message);
+}
+
+

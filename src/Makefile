@@ -101,9 +101,9 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
-am_vide_OBJECTS = main.$(OBJEXT) vide.$(OBJEXT) editor.$(OBJEXT) \
-	utils.$(OBJEXT) buffer.$(OBJEXT) interface.$(OBJEXT) \
-	vi.$(OBJEXT) format.$(OBJEXT)
+am_vide_OBJECTS = main.$(OBJEXT) vide.$(OBJEXT) videwindow.$(OBJEXT) \
+	editor.$(OBJEXT) utils.$(OBJEXT) buffer.$(OBJEXT) \
+	interface.$(OBJEXT) vi.$(OBJEXT) format.$(OBJEXT)
 vide_OBJECTS = $(am_vide_OBJECTS)
 vide_LDADD = $(LDADD)
 AM_V_lt = $(am__v_lt_$(V))
@@ -128,7 +128,7 @@ am__maybe_remake_depfiles = depfiles
 am__depfiles_remade = ./$(DEPDIR)/buffer.Po ./$(DEPDIR)/editor.Po \
 	./$(DEPDIR)/format.Po ./$(DEPDIR)/interface.Po \
 	./$(DEPDIR)/main.Po ./$(DEPDIR)/utils.Po ./$(DEPDIR)/vi.Po \
-	./$(DEPDIR)/vide.Po
+	./$(DEPDIR)/vide.Po ./$(DEPDIR)/videwindow.Po
 am__mv = mv -f
 CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
@@ -301,7 +301,7 @@ target_alias =
 top_build_prefix = ../
 top_builddir = ..
 top_srcdir = ..
-vide_SOURCES = main.cpp vide.cpp editor.cpp utils.cpp buffer.cpp interface.cpp vi.cpp format.cpp
+vide_SOURCES = main.cpp vide.cpp videwindow.cpp editor.cpp utils.cpp buffer.cpp interface.cpp vi.cpp format.cpp
 all: all-am
 
 .SUFFIXES:
@@ -403,6 +403,7 @@ include ./$(DEPDIR)/main.Po # am--include-marker
 include ./$(DEPDIR)/utils.Po # am--include-marker
 include ./$(DEPDIR)/vi.Po # am--include-marker
 include ./$(DEPDIR)/vide.Po # am--include-marker
+include ./$(DEPDIR)/videwindow.Po # am--include-marker
 
 $(am__depfiles_remade):
 	@$(MKDIR_P) $(@D)
@@ -572,6 +573,7 @@ distclean: distclean-am
 	-rm -f ./$(DEPDIR)/utils.Po
 	-rm -f ./$(DEPDIR)/vi.Po
 	-rm -f ./$(DEPDIR)/vide.Po
+	-rm -f ./$(DEPDIR)/videwindow.Po
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-tags
@@ -625,6 +627,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f ./$(DEPDIR)/utils.Po
 	-rm -f ./$(DEPDIR)/vi.Po
 	-rm -f ./$(DEPDIR)/vide.Po
+	-rm -f ./$(DEPDIR)/videwindow.Po
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 

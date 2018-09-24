@@ -7,12 +7,12 @@ using namespace Frontier;
 using namespace Geek;
 using namespace Geek::Gfx;
 
-Editor::Editor(FrontierApp* ui) : Widget(ui)
+Editor::Editor(FrontierWindow* window) : Widget(window)
 {
     m_cursorX = 0;
     m_cursorY = 0;
 
-    m_scrollBar = new ScrollBar(ui);
+    m_scrollBar = new ScrollBar(window);
     m_scrollBar->setParent(this);
     m_scrollBar->changedPositionSignal().connect(sigc::mem_fun(*this, &Editor::onScrollbarChanged));
 
@@ -230,6 +230,10 @@ Widget* Editor::handleMessage(Message* msg)
                 }
             } break;
 
+            case FRONTIER_MSG_INPUT_MOUSE_WHEEL:
+                moveCursorDelta(0, -(inputMessage->event.wheel.scrollY));
+                return this;
+
             default:
                 //printf("Editor::handleMessage: Unhandled input message type: %d\n", inputMessage->inputMessageType);
                 break;
@@ -346,9 +350,30 @@ void Editor::moveCursorXEnd()
     setDirty(DIRTY_CONTENT);
 }
 
+void Editor::moveCursorPage(int dir)
+{
+    int viewLines = getViewLines();
+
+    moveCursorDelta(0, viewLines * dir);
+}
+
 void Editor::insert(wchar_t c)
 {
     Line* line = m_buffer->getLine(m_cursorY);
+
+    unsigned int textLen = line->text.length();
+    if (m_cursorX > textLen)
+    {
+        if (textLen > 0)
+        {
+            m_cursorX = textLen;
+        }
+        else
+        {
+            m_cursorX = 0;
+        }
+    }
+    printf("Editor::insert: m_cursorX=%u, textLen=%u\n", m_cursorX, textLen);
 
     line->text.insert(m_cursorX, 1, c);
     m_cursorX++;
@@ -371,7 +396,7 @@ void Editor::deleteAtCursor()
 void Editor::setInterfaceStatus(std::wstring message)
 {
     // TODO: Which window?
-    ((Vide*)m_ui)->setInterfaceStatus(message);
+    //((Vide*)m_ui)->setInterfaceStatus(message);
 }
 
 unsigned int Editor::getViewLines()

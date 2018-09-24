@@ -36,6 +36,7 @@ class ViInterface : public Interface
     void keyNormal(Frontier::InputMessage* inputMessage);
     void keyInsert(Frontier::InputMessage* inputMessage);
     void keyCommand(Frontier::InputMessage* inputMessage);
+    bool keyCursor(Frontier::InputMessage* inputMessage);
 
     void runCommand(std::wstring command);
 
