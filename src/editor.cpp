@@ -46,8 +46,8 @@ bool Editor::draw(Surface* surface)
 {
     FontManager* fm = m_ui->getFontManager();
 
-    //surface->clear(0x002b2b2b);
-    surface->clear(0x272822);
+    surface->clear(0x002b2b2b);
+    //surface->clear(0x272822);
 
     FontHandle* textFont = ((Vide*)m_ui)->getTextFont();
 

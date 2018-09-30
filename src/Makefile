@@ -86,8 +86,8 @@ POST_INSTALL = :
 NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
-build_triplet = x86_64-apple-darwin17.7.0
-host_triplet = x86_64-apple-darwin17.7.0
+build_triplet = x86_64-apple-darwin18.0.0
+host_triplet = x86_64-apple-darwin18.0.0
 bin_PROGRAMS = vide$(EXEEXT)
 subdir = src
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -101,9 +101,10 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
-am_vide_OBJECTS = main.$(OBJEXT) vide.$(OBJEXT) videwindow.$(OBJEXT) \
-	editor.$(OBJEXT) utils.$(OBJEXT) buffer.$(OBJEXT) \
-	interface.$(OBJEXT) vi.$(OBJEXT) format.$(OBJEXT)
+am_vide_OBJECTS = main.$(OBJEXT) vide.$(OBJEXT) project.$(OBJEXT) \
+	videwindow.$(OBJEXT) editor.$(OBJEXT) projectview.$(OBJEXT) \
+	utils.$(OBJEXT) buffer.$(OBJEXT) interface.$(OBJEXT) \
+	vi.$(OBJEXT) format.$(OBJEXT)
 vide_OBJECTS = $(am_vide_OBJECTS)
 vide_LDADD = $(LDADD)
 AM_V_lt = $(am__v_lt_$(V))
@@ -127,8 +128,10 @@ depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__maybe_remake_depfiles = depfiles
 am__depfiles_remade = ./$(DEPDIR)/buffer.Po ./$(DEPDIR)/editor.Po \
 	./$(DEPDIR)/format.Po ./$(DEPDIR)/interface.Po \
-	./$(DEPDIR)/main.Po ./$(DEPDIR)/utils.Po ./$(DEPDIR)/vi.Po \
-	./$(DEPDIR)/vide.Po ./$(DEPDIR)/videwindow.Po
+	./$(DEPDIR)/main.Po ./$(DEPDIR)/project.Po \
+	./$(DEPDIR)/projectview.Po ./$(DEPDIR)/utils.Po \
+	./$(DEPDIR)/vi.Po ./$(DEPDIR)/vide.Po \
+	./$(DEPDIR)/videwindow.Po
 am__mv = mv -f
 CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
@@ -188,7 +191,7 @@ CC = gcc
 CCDEPMODE = depmode=gcc3
 CFLAGS = -g -O2
 CPP = gcc -E
-CPPFLAGS = -O0 -g  -std=c++0x -Wall -Werror -Werror=sign-compare -Wall -Werror -Werror=sign-compare -I/usr/local/include -I/usr/include/libxml2 -I/usr/local/Cellar/libpng/1.6.35/include/libpng16 -I/usr/local/opt/freetype/include/freetype2 -I/usr/local/Cellar/libsigc++/2.10.0/include/sigc++-2.0 -I/usr/local/Cellar/libsigc++/2.10.0/lib/sigc++-2.0/include -Wall -Werror -O0
+CPPFLAGS = -O0 -g  -std=c++0x -pthread -Wall -Werror -Werror=sign-compare -Wall -Werror -Werror=sign-compare -I/usr/local/include -I/usr/include/libxml2 -I/usr/local/Cellar/libpng/1.6.35/include/libpng16 -I/usr/local/opt/freetype/include/freetype2 -I/usr/local/Cellar/libsigc++/2.10.0/include/sigc++-2.0 -I/usr/local/Cellar/libsigc++/2.10.0/lib/sigc++-2.0/include -Wall -Werror -O0
 CXX = g++
 CXXCPP = g++ -E
 CXXDEPMODE = depmode=gcc3
@@ -214,7 +217,7 @@ INSTALL_STRIP_PROGRAM = $(install_sh) -c -s
 LD = /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld
 LDFLAGS = 
 LIBOBJS = 
-LIBS =  -L/usr/local/lib -L/usr/local/Cellar/libpng/1.6.35/lib -L/usr/local/opt/freetype/lib -L/usr/local/Cellar/libsigc++/2.10.0/lib -lfrontier -lgeek-core -lgeek-gfx -ljpeg -lxml2 -lpng16 -lz -lfreetype -lsigc-2.0 -framework AppKit
+LIBS = -lfswatch  -L/usr/local/lib -L/usr/local/Cellar/libpng/1.6.35/lib -L/usr/local/opt/freetype/lib -L/usr/local/Cellar/libsigc++/2.10.0/lib -lfrontier -lgeek-core -lgeek-gfx -ljpeg -lpthread -lxml2 -lpng16 -lz -lfreetype -lsigc-2.0 -framework AppKit
 LIBTOOL = $(SHELL) $(top_builddir)/libtool
 LIPO = lipo
 LN_S = ln -s
@@ -260,10 +263,10 @@ am__quote =
 am__tar = $${TAR-tar} chof - "$$tardir"
 am__untar = $${TAR-tar} xf -
 bindir = ${exec_prefix}/bin
-build = x86_64-apple-darwin17.7.0
+build = x86_64-apple-darwin18.0.0
 build_alias = 
 build_cpu = x86_64
-build_os = darwin17.7.0
+build_os = darwin18.0.0
 build_vendor = apple
 builddir = .
 datadir = ${datarootdir}
@@ -271,10 +274,10 @@ datarootdir = ${prefix}/share
 docdir = ${datarootdir}/doc/${PACKAGE_TARNAME}
 dvidir = ${docdir}
 exec_prefix = ${prefix}
-host = x86_64-apple-darwin17.7.0
+host = x86_64-apple-darwin18.0.0
 host_alias = 
 host_cpu = x86_64
-host_os = darwin17.7.0
+host_os = darwin18.0.0
 host_vendor = apple
 htmldir = ${docdir}
 includedir = ${prefix}/include
@@ -282,8 +285,8 @@ infodir = ${datarootdir}/info
 install_sh = ${SHELL} /Users/ian/projects/vide/install-sh
 libdir = ${exec_prefix}/lib
 libexecdir = ${exec_prefix}/libexec
-libfrontier_CFLAGS = -std=c++0x -Wall -Werror -Werror=sign-compare -Wall -Werror -Werror=sign-compare -I/usr/local/include -I/usr/include/libxml2 -I/usr/local/Cellar/libpng/1.6.35/include/libpng16 -I/usr/local/opt/freetype/include/freetype2 -I/usr/local/Cellar/libsigc++/2.10.0/include/sigc++-2.0 -I/usr/local/Cellar/libsigc++/2.10.0/lib/sigc++-2.0/include
-libfrontier_LIBS = -L/usr/local/lib -L/usr/local/Cellar/libpng/1.6.35/lib -L/usr/local/opt/freetype/lib -L/usr/local/Cellar/libsigc++/2.10.0/lib -lfrontier -lgeek-core -lgeek-gfx -ljpeg -lxml2 -lpng16 -lz -lfreetype -lsigc-2.0 -framework AppKit
+libfrontier_CFLAGS = -std=c++0x -pthread -Wall -Werror -Werror=sign-compare -Wall -Werror -Werror=sign-compare -I/usr/local/include -I/usr/include/libxml2 -I/usr/local/Cellar/libpng/1.6.35/include/libpng16 -I/usr/local/opt/freetype/include/freetype2 -I/usr/local/Cellar/libsigc++/2.10.0/include/sigc++-2.0 -I/usr/local/Cellar/libsigc++/2.10.0/lib/sigc++-2.0/include
+libfrontier_LIBS = -L/usr/local/lib -L/usr/local/Cellar/libpng/1.6.35/lib -L/usr/local/opt/freetype/lib -L/usr/local/Cellar/libsigc++/2.10.0/lib -lfrontier -lgeek-core -lgeek-gfx -ljpeg -lpthread -lxml2 -lpng16 -lz -lfreetype -lsigc-2.0 -framework AppKit
 localedir = ${datarootdir}/locale
 localstatedir = ${prefix}/var
 mandir = ${datarootdir}/man
@@ -301,7 +304,7 @@ target_alias =
 top_build_prefix = ../
 top_builddir = ..
 top_srcdir = ..
-vide_SOURCES = main.cpp vide.cpp videwindow.cpp editor.cpp utils.cpp buffer.cpp interface.cpp vi.cpp format.cpp
+vide_SOURCES = main.cpp vide.cpp project.cpp videwindow.cpp editor.cpp projectview.cpp utils.cpp buffer.cpp interface.cpp vi.cpp format.cpp
 all: all-am
 
 .SUFFIXES:
@@ -400,6 +403,8 @@ include ./$(DEPDIR)/editor.Po # am--include-marker
 include ./$(DEPDIR)/format.Po # am--include-marker
 include ./$(DEPDIR)/interface.Po # am--include-marker
 include ./$(DEPDIR)/main.Po # am--include-marker
+include ./$(DEPDIR)/project.Po # am--include-marker
+include ./$(DEPDIR)/projectview.Po # am--include-marker
 include ./$(DEPDIR)/utils.Po # am--include-marker
 include ./$(DEPDIR)/vi.Po # am--include-marker
 include ./$(DEPDIR)/vide.Po # am--include-marker
@@ -570,6 +575,8 @@ distclean: distclean-am
 	-rm -f ./$(DEPDIR)/format.Po
 	-rm -f ./$(DEPDIR)/interface.Po
 	-rm -f ./$(DEPDIR)/main.Po
+	-rm -f ./$(DEPDIR)/project.Po
+	-rm -f ./$(DEPDIR)/projectview.Po
 	-rm -f ./$(DEPDIR)/utils.Po
 	-rm -f ./$(DEPDIR)/vi.Po
 	-rm -f ./$(DEPDIR)/vide.Po
@@ -624,6 +631,8 @@ maintainer-clean: maintainer-clean-am
 	-rm -f ./$(DEPDIR)/format.Po
 	-rm -f ./$(DEPDIR)/interface.Po
 	-rm -f ./$(DEPDIR)/main.Po
+	-rm -f ./$(DEPDIR)/project.Po
+	-rm -f ./$(DEPDIR)/projectview.Po
 	-rm -f ./$(DEPDIR)/utils.Po
 	-rm -f ./$(DEPDIR)/vi.Po
 	-rm -f ./$(DEPDIR)/vide.Po

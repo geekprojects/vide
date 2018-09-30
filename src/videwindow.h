@@ -5,13 +5,19 @@
 #include <frontier/widgets.h>
 
 #include "editor.h"
+#include "projectview.h"
+
+class Vide;
+class ProjectView;
 
 class VideWindow : public Frontier::FrontierWindow
 {
  private:
+    Vide* m_vide;
     Editor* m_editor;
     FontHandle* m_textFont;
     Frontier::Label* m_interfaceStatus;
+    ProjectView* m_projectView;
 
     void onOpenFile();
 
@@ -20,7 +26,7 @@ class VideWindow : public Frontier::FrontierWindow
     virtual bool init();
 
  public:
-    VideWindow(Frontier::FrontierApp* app);
+    VideWindow(Vide* app);
     ~VideWindow();
 
     FontHandle* getTextFont() { return m_textFont; }

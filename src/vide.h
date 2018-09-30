@@ -5,10 +5,14 @@
 #include <frontier/widgets.h>
 
 #include "videwindow.h"
+#include "project.h"
+
+class VideWindow;
 
 class Vide : public Frontier::FrontierApp
 {
  private:
+    Project* m_project;
     VideWindow* m_mainWindow;
     FontHandle* m_textFont;
 
@@ -19,6 +23,8 @@ class Vide : public Frontier::FrontierApp
     virtual bool init();
 
     FontHandle* getTextFont() { return m_textFont; }
+
+    Project* getProject() { return m_project; }
 };
 
 #endif

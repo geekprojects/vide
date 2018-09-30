@@ -32,9 +32,12 @@ AC_TYPE_UINT8_T
 # Checks for library functions.
 AC_CHECK_FUNCS([iswprint memset])
 
+AC_SEARCH_LIBS([fsw_init_library], [fswatch])
+
 PKG_CHECK_MODULES(libfrontier, libfrontier >= 1)
 CPPFLAGS="$CPPFLAGS $libfrontier_CFLAGS"
 LIBS="$LIBS $libfrontier_LIBS"
+
 
 CPPFLAGS="-O0 -g $CPPFLAGS -Wall -Werror -O0"
 

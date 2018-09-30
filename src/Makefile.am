@@ -1,7 +1,7 @@
 
 bin_PROGRAMS=vide
 
-vide_SOURCES=main.cpp vide.cpp videwindow.cpp editor.cpp utils.cpp buffer.cpp interface.cpp vi.cpp format.cpp
+vide_SOURCES=main.cpp vide.cpp project.cpp videwindow.cpp editor.cpp projectview.cpp utils.cpp buffer.cpp interface.cpp vi.cpp format.cpp
 #vide_LDADD=../libfrontier/libfrontier.la
 #vide_LDFLAGS=-framework Cocoa -framework AppKit
 

@@ -32,6 +32,9 @@ bool Vide::init()
         return false;
     }
 
+    m_project = new Project("/Users/ian/projects/vide/testproject");
+m_project->scan();
+
     m_mainWindow = new VideWindow(this);
 
     m_mainWindow->show();

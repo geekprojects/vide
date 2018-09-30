@@ -4,8 +4,9 @@
 using namespace std;
 using namespace Frontier;
 
-VideWindow::VideWindow(Frontier::FrontierApp* app) : FrontierWindow(app)
+VideWindow::VideWindow(Vide* vide) : FrontierWindow(vide)
 {
+    m_vide = vide;
 }
 
 VideWindow::~VideWindow()
@@ -30,12 +31,8 @@ bool VideWindow::init()
     ResizeableFrame* mainFrame = new ResizeableFrame(this, true);
     rootFrame->add(mainFrame);
 
-    List* list = new List(this);
-    list->addItem(new TextListItem(L"test.cpp"));
-    list->addItem(new TextListItem(L"test.h"));
-    Scroller* scroller = new Scroller(this);
-    scroller->setChild(list);
-    mainFrame->add(scroller);
+    m_projectView = new ProjectView(m_vide);
+    mainFrame->add(m_projectView);
 
     Tabs* tabs = new Tabs(this);
     mainFrame->add(tabs);
@@ -52,8 +49,8 @@ bool VideWindow::init()
     tabs->addTab(L"editor.cpp", editor2);
 
     List* list2 = new List(this);
-    list2->addItem(new TextListItem(L"main()"));
-    list2->addItem(new TextListItem(L"TestClass::method()"));
+    list2->addItem(new TextListItem(this, L"main()"));
+    list2->addItem(new TextListItem(this, L"TestClass::method()"));
     Scroller* scroller2 = new Scroller(this);
     scroller2->setChild(list2);
     mainFrame->add(scroller2);
@@ -65,6 +62,8 @@ bool VideWindow::init()
 
     setContent(rootFrame);
     setActiveWidget(m_editor);
+
+    m_projectView->update();
 
     return true;
 }
