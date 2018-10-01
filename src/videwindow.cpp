@@ -20,6 +20,7 @@
 
 
 #include "videwindow.h"
+#include "utils.h"
 
 using namespace std;
 using namespace Frontier;
@@ -54,19 +55,9 @@ bool VideWindow::init()
     m_projectView = new ProjectView(m_vide);
     mainFrame->add(m_projectView);
 
-    Tabs* tabs = new Tabs(this);
-    mainFrame->add(tabs);
-    tabs->changeTabSignal().connect(sigc::mem_fun(*this, &VideWindow::onEditorTabChange));
-
-    m_editor = new Editor(this);
-    Buffer* buffer = Buffer::loadFile("main.cpp");
-    m_editor->setBuffer(buffer);
-    tabs->addTab(L"main.cpp", m_editor);
-
-    Editor* editor2 = new Editor(this);
-    Buffer* buffer2 = Buffer::loadFile("editor.cpp");
-    editor2->setBuffer(buffer2);
-    tabs->addTab(L"editor.cpp", editor2);
+    m_tabs = new Tabs(this);
+    mainFrame->add(m_tabs);
+    m_tabs->changeTabSignal().connect(sigc::mem_fun(*this, &VideWindow::onEditorTabChange));
 
     List* list2 = new List(this);
     list2->addItem(new TextListItem(this, L"main()"));
@@ -81,7 +72,6 @@ bool VideWindow::init()
     rootFrame->add(statusFrame);
 
     setContent(rootFrame);
-    setActiveWidget(m_editor);
 
     m_projectView->update();
 
@@ -106,4 +96,23 @@ void VideWindow::setInterfaceStatus(std::wstring message)
     m_interfaceStatus->setText(message);
 }
 
+void VideWindow::openEntry(ProjectEntry* entry)
+{
+    string filePath = entry->getFilePath();
+    printf("VideWindow::openEntry: filePath=%s\n", filePath.c_str());
+
+    Editor* editor = entry->getEditor();
+    if (editor == NULL)
+    {
+        editor = new Editor(m_vide);
+        Buffer* buffer = Buffer::loadFile(filePath.c_str());
+        editor->setBuffer(buffer);
+        m_tabs->addTab(Utils::string2wstring(entry->getName()), editor);
+        entry->setEditor(editor);
+    }
+
+    printf("VideWindow::openEntry: Setting active widget: %p\n", editor);
+    m_tabs->setActiveTab(editor);
+    setActiveWidget(editor);
+}
 

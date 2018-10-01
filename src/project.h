@@ -34,24 +34,34 @@ enum ProjectEntryType
     ENTRY_UNKNOWN,
 };
 
+class Project;
+class Editor;
+
 class ProjectEntry
 {
  private:
+    Project* m_project;
     ProjectEntryType m_type;
     ProjectEntry* m_parent;
     std::string m_name;
+    Editor* m_editor;
 
     std::vector<ProjectEntry*> m_children;
 
  public:
-    ProjectEntry(ProjectEntryType type, ProjectEntry* parent, std::string name);
+    ProjectEntry(Project* project, ProjectEntryType type, ProjectEntry* parent, std::string name);
     virtual ~ProjectEntry();
 
+    Project* getProject() { return m_project; }
     ProjectEntryType getType() { return m_type; }
     std::string getName() { return m_name; }
+    std::string getFilePath();
 
     void addChild(ProjectEntry* entry);
     std::vector<ProjectEntry*>& getChildren() { return m_children; }
+
+    void setEditor(Editor* editor) { m_editor = editor; }
+    Editor* getEditor() { return m_editor; }
 
     void dump(int level);
 };
@@ -61,7 +71,7 @@ class ProjectFile : public ProjectEntry
  private:
 
  public:
-    ProjectFile(ProjectEntry* parent, std::string name);
+    ProjectFile(Project* project, ProjectEntry* parent, std::string name);
     virtual ~ProjectFile();
 };
 
@@ -70,7 +80,7 @@ class ProjectDirectory : public ProjectEntry
  private:
 
  public:
-    ProjectDirectory(ProjectEntry* parent, std::string name);
+    ProjectDirectory(Project* project, ProjectEntry* parent, std::string name);
     virtual ~ProjectDirectory();
 
 };
@@ -115,6 +125,7 @@ class Project
 
     bool scan();
 
+    std::string getRootPath() { return m_rootPath; }
     ProjectDirectory* getRoot() { return m_root; }
 };
 

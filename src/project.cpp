@@ -53,7 +53,7 @@ void process_events(const vector<fsw::event>& events, void *context)
 
 bool Project::scan()
 {
-    m_root = new ProjectDirectory(NULL, "");
+    m_root = new ProjectDirectory(this, NULL, "");
 
     scanDirectory(m_root, m_rootPath);
 
@@ -96,13 +96,13 @@ bool Project::scanDirectory(ProjectDirectory* entry, std::string path)
         lstat(childPath.c_str(), &stat);
         if (S_ISDIR(stat.st_mode))
         {
-            ProjectDirectory* child = new ProjectDirectory(entry, dirent->d_name);
+            ProjectDirectory* child = new ProjectDirectory(this, entry, dirent->d_name);
             entry->addChild(child);
             scanDirectory(child, childPath);
         }
         else if (S_ISREG(stat.st_mode))
         {
-            ProjectFile* child = new ProjectFile(entry, dirent->d_name);
+            ProjectFile* child = new ProjectFile(this, entry, dirent->d_name);
             entry->addChild(child);
         }
     }
@@ -110,11 +110,13 @@ bool Project::scanDirectory(ProjectDirectory* entry, std::string path)
     return true;
 }
 
-ProjectEntry::ProjectEntry(ProjectEntryType type, ProjectEntry* parent, std::string name)
+ProjectEntry::ProjectEntry(Project* project, ProjectEntryType type, ProjectEntry* parent, std::string name)
 {
+    m_project = project;
     m_type = type;
     m_parent = parent;
     m_name = name;
+    m_editor = NULL;
 }
 
 ProjectEntry::~ProjectEntry()
@@ -129,21 +131,38 @@ void ProjectEntry::addChild(ProjectEntry* entry)
 void ProjectEntry::dump(int level)
 {
     string spaces = "";
-int i;
-for (i = 0; i < level + 1; i++)
-{
-spaces += "  ";
-}
-printf("ProjectEntry::dump:%s%d - %s\n", spaces.c_str(), m_type, m_name.c_str());
-vector<ProjectEntry*>::iterator it;
-for (it = m_children.begin(); it != m_children.end(); it++)
-{
-ProjectEntry* entry = *it;
-entry->dump(level + 1);
-}
+    int i;
+    for (i = 0; i < level + 1; i++)
+    {
+        spaces += "  ";
+    }
+    printf("ProjectEntry::dump:%s%d - %s\n", spaces.c_str(), m_type, m_name.c_str());
+    vector<ProjectEntry*>::iterator it;
+    for (it = m_children.begin(); it != m_children.end(); it++)
+    {
+        ProjectEntry* entry = *it;
+        entry->dump(level + 1);
+    }
 }
 
-ProjectFile::ProjectFile(ProjectEntry* parent, std::string name) : ProjectEntry(ENTRY_FILE, parent, name)
+string ProjectEntry::getFilePath()
+{
+    string path = "";
+    if (m_parent != NULL)
+    {
+        path = m_parent->getFilePath();
+    }
+else
+{
+path = m_project->getRootPath();
+}
+
+    path += "/" + m_name;
+    return path;
+}
+
+ProjectFile::ProjectFile(Project* project, ProjectEntry* parent, std::string name)
+    : ProjectEntry(project, ENTRY_FILE, parent, name)
 {
 }
 
@@ -151,7 +170,8 @@ ProjectFile::~ProjectFile()
 {
 }
 
-ProjectDirectory::ProjectDirectory(ProjectEntry* parent, std::string name) : ProjectEntry(ENTRY_DIR, parent, name)
+ProjectDirectory::ProjectDirectory(Project* project, ProjectEntry* parent, std::string name)
+    : ProjectEntry(project, ENTRY_DIR, parent, name)
 {
 }
 

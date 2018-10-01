@@ -44,6 +44,7 @@ class Vide : public Frontier::FrontierApp
 
     FontHandle* getTextFont() { return m_textFont; }
 
+    VideWindow* getWindow() { return m_mainWindow; }
     Project* getProject() { return m_project; }
 };
 

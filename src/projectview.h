@@ -37,6 +37,8 @@ class ProjectView : public Frontier::Frame
 
     void addDirectory(Frontier::TreeListItem* parent, ProjectDirectory* dir);
 
+    void onItemClicked(Frontier::ListItem* item);
+
  public:
     ProjectView(Vide* vide);
     virtual ~ProjectView();

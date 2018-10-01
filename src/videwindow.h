@@ -28,13 +28,14 @@
 #include "projectview.h"
 
 class Vide;
+class ProjectEntry;
 class ProjectView;
 
 class VideWindow : public Frontier::FrontierWindow
 {
  private:
     Vide* m_vide;
-    Editor* m_editor;
+    Frontier::Tabs* m_tabs;
     FontHandle* m_textFont;
     Frontier::Label* m_interfaceStatus;
     ProjectView* m_projectView;
@@ -52,6 +53,8 @@ class VideWindow : public Frontier::FrontierWindow
     FontHandle* getTextFont() { return m_textFont; }
 
     void setInterfaceStatus(std::wstring message);
+
+    void openEntry(ProjectEntry* entry);
 };
 
 #endif

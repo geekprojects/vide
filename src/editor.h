@@ -27,9 +27,13 @@
 
 #include <frontier/widgets.h>
 
+class Vide;
+
 class Editor : public Frontier::Widget
 {
  private:
+    Vide* m_vide;
+
     int m_marginX;
     unsigned int m_cursorX;
     unsigned int m_cursorY;
@@ -44,7 +48,7 @@ class Editor : public Frontier::Widget
 
  public:
 
-    Editor(Frontier::FrontierWindow* window);
+    Editor(Vide* window);
     virtual ~Editor();
 
     virtual void calculateSize();

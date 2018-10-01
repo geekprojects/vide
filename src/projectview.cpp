@@ -73,11 +73,13 @@ void ProjectView::addDirectory(TreeListItem* parent, ProjectDirectory* dir)
         {
             case ENTRY_FILE:
                 item = new TextListItem(m_vide, FRONTIER_ICON_FILE, string2wstring(entry->getName()));
+            parent->addItem(item);
                 break;
 
             case ENTRY_DIR:
             {
                 TreeListItem* treeItem = new TreeListItem(m_vide, FRONTIER_ICON_FOLDER, string2wstring(entry->getName()));
+                parent->addItem(treeItem);
 
                 addDirectory(treeItem, (ProjectDirectory*)entry);
 
@@ -92,8 +94,24 @@ void ProjectView::addDirectory(TreeListItem* parent, ProjectDirectory* dir)
         if (item != NULL)
         {
             item->setPrivateData(entry);
-            parent->addItem(item);
+            item->clickSignal().connect(sigc::mem_fun(*this, &ProjectView::onItemClicked));
         }
     }
 }
+
+void ProjectView::onItemClicked(Frontier::ListItem* item)
+{
+    ProjectEntry* entry = (ProjectEntry*)item->getPrivateData();
+    if (entry == NULL)
+    {
+        return;
+    }
+
+    printf("ProjectView::onItemClicked: entry=%s\n", entry->getName().c_str());
+    if (entry->getType() == ENTRY_FILE)
+    {
+        m_vide->getWindow()->openEntry(entry);
+    }
+}
+
 

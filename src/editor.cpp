@@ -27,12 +27,14 @@ using namespace Frontier;
 using namespace Geek;
 using namespace Geek::Gfx;
 
-Editor::Editor(FrontierWindow* window) : Widget(window)
+Editor::Editor(Vide* vide) : Widget(vide)
 {
+    m_vide = vide;
+
     m_cursorX = 0;
     m_cursorY = 0;
 
-    m_scrollBar = new ScrollBar(window);
+    m_scrollBar = new ScrollBar(vide);
     m_scrollBar->setParent(this);
     m_scrollBar->changedPositionSignal().connect(sigc::mem_fun(*this, &Editor::onScrollbarChanged));
 
@@ -415,8 +417,7 @@ void Editor::deleteAtCursor()
 
 void Editor::setInterfaceStatus(std::wstring message)
 {
-    // TODO: Which window?
-    //((Vide*)m_ui)->setInterfaceStatus(message);
+    m_vide->getWindow()->setInterfaceStatus(message);
 }
 
 unsigned int Editor::getViewLines()
