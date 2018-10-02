@@ -44,6 +44,26 @@ Buffer::~Buffer()
 {
 }
 
+void Buffer::insertLine(int asLine, Line* line)
+{
+    vector<Line*>::iterator it;
+    int i;
+    for (it = m_lines.begin(), i = 0; i < asLine && it != m_lines.end(); it++, i++)
+    {
+    }
+    m_lines.insert(it, line);
+}
+
+void Buffer::deleteLine(int line)
+{
+    vector<Line*>::iterator it;
+    int i;
+    for (it = m_lines.begin(), i = 0; i < line && it != m_lines.end(); it++, i++)
+    {
+    }
+    m_lines.erase(it);
+}
+
 void Buffer::dump()
 {
     vector<Line*>::iterator lineIt;

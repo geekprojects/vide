@@ -44,21 +44,51 @@ enum ViMode
 {
     MODE_NORMAL,
     MODE_INSERT,
-    MODE_COMMAND,
+    MODE_EX_COMMAND, // Extended command mode
+};
+
+enum ViCommandState
+{
+    STATE_START,
+    STATE_COUNT,
+    STATE_COMMAND,
+    STATE_EXTRA,
+    STATE_EDIT,
+    STATE_EXEC
+};
+
+struct ViCommand
+{
+    ViCommandState state;
+    int count;
+
+    char type;
+    uint32_t key;
+    uint32_t modifiers;
+
+    std::string extra;
 };
 
 class ViInterface : public Interface
 {
  protected:
     ViMode m_mode;
-    std::wstring m_command;
+
+    // This stores the state of the current command in NORMAL mode
+    ViCommand m_command;
+    ViCommand m_prevCommand;
+
+    // This stores the extended command
+    std::wstring m_exCommand;
 
     void keyNormal(Frontier::InputMessage* inputMessage);
     void keyInsert(Frontier::InputMessage* inputMessage);
     void keyCommand(Frontier::InputMessage* inputMessage);
-    bool keyCursor(Frontier::InputMessage* inputMessage);
 
-    void runCommand(std::wstring command);
+    bool keyCursor(uint32_t key);
+
+    bool runCommand(bool& setPrev);
+    void runExCommand(std::wstring command);
 
     void setMode(ViMode mode);
 

@@ -73,7 +73,12 @@ class Editor : public Frontier::Widget
     void moveCursorPage(int dir);
 
     void insert(wchar_t c);
+    void insertLine();
     void deleteAtCursor();
+    void deleteLine();
+
+    void copyToBuffer(int count);
+    void pasteFromBuffer();
 
     void setInterfaceStatus(std::wstring message);
 };

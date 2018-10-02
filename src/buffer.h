@@ -73,6 +73,8 @@ class Buffer
 
     std::vector<Line*>& getLines() { return m_lines; }
     Line* getLine(int y) { return m_lines.at(y); }
+    void insertLine(int asLine, Line* line);
+    void deleteLine(int line);
 
     void dump();
 

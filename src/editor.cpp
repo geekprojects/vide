@@ -253,8 +253,13 @@ Widget* Editor::handleMessage(Message* msg)
             } break;
 
             case FRONTIER_MSG_INPUT_MOUSE_WHEEL:
-                moveCursorDelta(0, -(inputMessage->event.wheel.scrollY));
+            {
+                int scrollPos = m_scrollBar->getPos();
+                scrollPos -= inputMessage->event.wheel.scrollY;
+                m_scrollBar->setPos(scrollPos);
+
                 return this;
+            } break;
 
             default:
                 //printf("Editor::handleMessage: Unhandled input message type: %d\n", inputMessage->inputMessageType);
@@ -405,6 +410,15 @@ void Editor::insert(wchar_t c)
     setDirty(DIRTY_CONTENT);
 }
 
+void Editor::insertLine()
+{
+    Line* line = new Line();
+    line->lineEnding = L"\n";
+
+    m_buffer->insertLine(m_cursorY + 1, line);
+    setDirty(DIRTY_CONTENT);
+}
+
 void Editor::deleteAtCursor()
 {
     Line* line = m_buffer->getLine(m_cursorY);
@@ -412,6 +426,61 @@ void Editor::deleteAtCursor()
 
     m_format->tokenise(line);
 
+    setDirty(DIRTY_CONTENT);
+}
+
+void Editor::deleteLine()
+{
+    m_buffer->deleteLine(m_cursorY);
+
+    unsigned int count = m_buffer->getLineCount();
+    if (count == 0)
+    {
+        m_cursorY = 0;
+        Line* line = new Line();
+        line->lineEnding = L"\n";
+
+        m_buffer->insertLine(m_cursorY, line);
+    }
+
+    if (m_cursorY >= m_buffer->getLineCount())
+    {
+        m_cursorY = m_buffer->getLineCount() - 1;
+    }
+
+    setDirty(DIRTY_CONTENT);
+}
+
+void Editor::copyToBuffer(int count)
+{
+    vector<wstring> copyVec;
+
+    int i;
+    for (i = 0; i < count; i++)
+    {
+        Line* line = m_buffer->getLine(m_cursorY + i);
+        if (line != NULL)
+        {
+            printf("Editor::copyToBuffer: Copying: %ls\n", line->text.c_str());
+            copyVec.push_back(line->text);
+        }
+    }
+    m_vide->setBuffer(copyVec);
+}
+
+void Editor::pasteFromBuffer()
+{
+    vector<wstring> copyVec = m_vide->getBuffer();
+
+    for (wstring text : copyVec)
+    {
+        Line* line = new Line();
+        line->lineEnding = L"\n";
+        line->text = text;
+        m_format->tokenise(line);
+
+        m_buffer->insertLine(++m_cursorY, line);
+    }
     setDirty(DIRTY_CONTENT);
 }
 
