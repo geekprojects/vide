@@ -87,30 +87,48 @@ bool SimpleFormat::tokenise(Line* line)
 
     LineToken* token = NULL;
     size_t pos;
-int t = 0;
-bool spaces = false;
+    int t = 0;
     for (pos = 0; pos < line->text.length(); pos++)
     {
-        if (token == NULL)
-        {
-            token = new LineToken();
-            token->colour = g_colours[t % (sizeof(g_colours) / sizeof(uint32_t))];
-            line->tokens.push_back(token);
-t++;
-        }
 
         wchar_t c = line->text.at(pos);
         if (iswspace(c))
         {
             token = new LineToken();
-            token->text += c;
             line->tokens.push_back(token);
+            token->column = pos;
+            token->isSpace = true;
+
+            while (pos < line->text.length())
+            {
+                token->text += c;
+                if (pos + 1 >= line->text.length())
+                {
+                    break;
+                }
+
+                c = line->text.at(pos + 1);
+                if (!iswspace(c))
+                {
+                    break;
+                }
+
+                pos++;
+            }
 
             token = NULL;
-spaces = true;
         }
         else
         {
+            if (token == NULL)
+            {
+                token = new LineToken();
+                token->colour = g_colours[t % (sizeof(g_colours) / sizeof(uint32_t))];
+                token->column = pos;
+                line->tokens.push_back(token);
+                t++;
+            }
+
             token->text += c;
         }
     }
@@ -119,6 +137,7 @@ spaces = true;
     {
         // No tokens for this line. Add an empty one
         token = new LineToken();
+        token->isSpace = true;
         line->tokens.push_back(token);
     }
 
