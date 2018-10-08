@@ -39,6 +39,7 @@ CPPFLAGS="$CPPFLAGS $libfrontier_CFLAGS"
 LIBS="$LIBS $libfrontier_LIBS"
 
 
+CPPFLAGS="$CPPFLAGS -std=c++0x"
 CPPFLAGS="-O0 -g $CPPFLAGS -Wall -Werror -O0"
 
 AC_CONFIG_FILES([
