@@ -47,6 +47,15 @@ enum ViMode
     MODE_EX_COMMAND, // Extended command mode
 };
 
+enum ViCommandType
+{
+    TYPE_NONE,
+    TYPE_INSERT,
+    TYPE_DELETE,
+    TYPE_CURSOR,
+    TYPE_OTHER,
+};
+
 enum ViCommandState
 {
     STATE_START,
@@ -60,13 +69,15 @@ enum ViCommandState
 struct ViCommand
 {
     ViCommandState state;
+    ViCommandType type;
     int count;
 
-    char type;
+    char command;
     uint32_t key;
     uint32_t modifiers;
 
-    std::string extra;
+    std::string params;
+    std::wstring edit;
 };
 
 class ViInterface : public Interface
@@ -87,7 +98,7 @@ class ViInterface : public Interface
 
     bool keyCursor(uint32_t key);
 
-    bool runCommand(bool& setPrev);
+    bool runCommand(bool& setPrev, bool& continueRunning);
     void runExCommand(std::wstring command);
 
     void setMode(ViMode mode);

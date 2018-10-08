@@ -92,12 +92,12 @@ void ViInterface::keyNormal(Frontier::InputMessage* inputMessage)
 
     if (m_command.state == STATE_COMMAND)
     {
-        m_command.type = chr;
+        m_command.command = chr;
         m_command.key = inputMessage->event.key.key;
         m_command.modifiers = inputMessage->event.key.modifiers;
 
         // Check for special cases we should handle straight away
-        switch (m_command.type)
+        switch (m_command.command)
         {
             case '.': // Repeat previous command
             {
@@ -107,6 +107,10 @@ void ViInterface::keyNormal(Frontier::InputMessage* inputMessage)
                 m_command.state = STATE_EXEC;
 
                 // TODO: Handle repeating insert commands
+                if (m_command.type == TYPE_INSERT)
+                {
+                    printf("ViInterface::keyNormal: Repeating INSERT: %ls\n", m_command.edit.c_str());
+                }
             } break;
 
             case L':': // Ex command
@@ -115,6 +119,7 @@ void ViInterface::keyNormal(Frontier::InputMessage* inputMessage)
 
             case L'i': // Insert
                 setMode(MODE_INSERT);
+                m_command.type = TYPE_INSERT;
                 m_command.state = STATE_EDIT;
                 break;
 
@@ -122,12 +127,14 @@ void ViInterface::keyNormal(Frontier::InputMessage* inputMessage)
                 m_editor->moveCursorXEnd();
                 m_editor->moveCursorDelta(1, 0);
                 setMode(MODE_INSERT);
+                m_command.type = TYPE_INSERT;
                 m_command.state = STATE_EDIT;
                 break;
 
             case L'I':
                 m_editor->moveCursorX(0);
                 setMode(MODE_INSERT);
+                m_command.type = TYPE_INSERT;
                 m_command.state = STATE_EDIT;
                 break;
 
@@ -136,6 +143,7 @@ void ViInterface::keyNormal(Frontier::InputMessage* inputMessage)
                 m_editor->moveCursorDelta(0, 1);
                 m_editor->moveCursorX(0);
                 setMode(MODE_INSERT);
+                m_command.type = TYPE_INSERT;
                 m_command.state = STATE_EDIT;
                 break;
 
@@ -145,6 +153,7 @@ void ViInterface::keyNormal(Frontier::InputMessage* inputMessage)
                 m_editor->moveCursorDelta(0, 1);
                 m_editor->moveCursorX(0);
                 setMode(MODE_INSERT);
+                m_command.type = TYPE_INSERT;
                 m_command.state = STATE_EDIT;
                 break;
 
@@ -160,12 +169,12 @@ void ViInterface::keyNormal(Frontier::InputMessage* inputMessage)
     }
     else if (m_command.state == STATE_EXTRA)
     {
-        switch (m_command.type)
+        switch (m_command.command)
         {
             case 'd':
             case 'y':
                 printf("ViInterface::keyNormal: STATE_EXTRA: d: Extra char: %c\n", chr);
-                m_command.extra += chr;
+                m_command.params += chr;
                 m_command.state = STATE_EXEC;
                 break;
         }
@@ -173,13 +182,14 @@ void ViInterface::keyNormal(Frontier::InputMessage* inputMessage)
 
     if (m_command.state == STATE_EXEC)
     {
-        printf("ViInterface::keyNormal: Executing '%c' %d times\n", m_command.type, m_command.count);
+        printf("ViInterface::keyNormal: Executing '%c' %d times\n", m_command.command, m_command.count);
         int i;
         bool setPrev = false;
+        bool continueRunning = true;
 
-        for (i = 0; i < m_command.count; i++)
+        for (i = 0; i < m_command.count && continueRunning; i++)
         {
-            runCommand(setPrev);
+            runCommand(setPrev, continueRunning);
         }
 
         m_command.state = STATE_START;
@@ -188,53 +198,103 @@ void ViInterface::keyNormal(Frontier::InputMessage* inputMessage)
             m_prevCommand = m_command;
         }
     }
+else if (m_command.state == STATE_EDIT)
+{
+            m_prevCommand = m_command;
+}
 }
 
-bool ViInterface::runCommand(bool& setPrev)
+bool ViInterface::runCommand(bool& setPrev, bool& continueRunning)
 {
     setPrev = true;
-    switch (m_command.type)
+    continueRunning = true;
+
+    switch (m_command.command)
     {
         case L'x':
             m_editor->deleteAtCursor();
+            m_command.type = TYPE_DELETE;
             break;
 
         case L'^':
             m_editor->moveCursorX(0);
+            m_command.type = TYPE_CURSOR;
             break;
 
         case L'$':
             m_editor->moveCursorXEnd();
+            m_command.type = TYPE_CURSOR;
             break;
 
         case L'j':
             m_editor->moveCursorDelta(0, 1);
+            m_command.type = TYPE_CURSOR;
             setPrev = false;
             break;
         case L'k':
             m_editor->moveCursorDelta(0, -1);
+            m_command.type = TYPE_CURSOR;
             setPrev = false;
             break;
         case L'h':
             m_editor->moveCursorDelta(-1, 0);
+            m_command.type = TYPE_CURSOR;
             setPrev = false;
             break;
         case L'l':
             m_editor->moveCursorDelta(1, 0);
+            m_command.type = TYPE_CURSOR;
             setPrev = false;
             break;
 
+        case L'w':
+        {
+            Position pos = m_editor->findNextWord();
+            m_editor->moveCursor(pos);
+            m_command.type = TYPE_CURSOR;
+            setPrev = false;
+        } break;
+
+        case L'e':
+        {
+            Position cursor = m_editor->getCursor();
+            Position pos = cursor;
+            LineToken* token = m_editor->getBuffer()->getToken(cursor);
+printf("ViInterface::runCommand: e: token=%p\n", token);
+
+            if (token == NULL || token->isSpace || cursor.column == (token->column + token->text.length() - 1) )
+            {
+printf("ViInterface::runCommand: e: Looking for next word...\n");
+                pos = m_editor->findNextWord();
+printf("ViInterface::runCommand: e: pos: line=%u, col=%u\n", pos.line, pos.column);
+                token = m_editor->getBuffer()->getToken(pos);
+            }
+
+printf("ViInterface::runCommand: e: token(2)=%p\n", token);
+            if (token != NULL)
+            {
+                pos.column = token->column + token->text.length() - 1;
+                m_editor->moveCursor(pos);
+            }
+            m_command.type = TYPE_CURSOR;
+            setPrev = false;
+        } break;
+
         case L'd':
             m_editor->deleteLine();
+            m_command.type = TYPE_DELETE;
             break;
 
         case L'y':
-            printf("ViInterface::runCommand: YANK!\n");
-            m_editor->copyToBuffer(1);
+            printf("ViInterface::runCommand: YANKing %d lines\n", m_command.count);
+            m_editor->copyToBuffer(m_command.count);
+            continueRunning = false;
+            m_command.type = TYPE_OTHER;
             break;
 
         case L'p':
             m_editor->pasteFromBuffer();
+            m_command.type = TYPE_OTHER;
             break;
 
         default:
@@ -244,6 +304,7 @@ bool ViInterface::runCommand(bool& setPrev)
                     if (!!(m_command.modifiers & KMOD_CONTROL))
                     {
                         m_editor->moveCursorPage(1);
+                        m_command.type = TYPE_CURSOR;
                         setPrev = false;
                     }
                     break;
@@ -252,12 +313,14 @@ bool ViInterface::runCommand(bool& setPrev)
                     if (!!(m_command.modifiers & KMOD_CONTROL))
                     {
                         m_editor->moveCursorPage(-1);
+                        m_command.type = TYPE_CURSOR;
                         setPrev = false;
                     }
                     break;
 
                 default:
                     keyCursor(m_command.key);
+                    m_command.type = TYPE_CURSOR;
                     setPrev = false;
                     break;
             }
@@ -268,6 +331,8 @@ bool ViInterface::runCommand(bool& setPrev)
 
 void ViInterface::keyInsert(Frontier::InputMessage* inputMessage)
 {
+    wchar_t c = inputMessage->event.key.chr;
+
     if (!inputMessage->event.key.direction)
     {
         return;
@@ -276,6 +341,13 @@ void ViInterface::keyInsert(Frontier::InputMessage* inputMessage)
     {
         setMode(MODE_NORMAL);
         return;
+    }
+    else if (inputMessage->event.key.key == KC_RETURN)
+    {
+        m_editor->splitLine();
+        m_editor->moveCursorDelta(0, 1);
+        m_editor->moveCursorX(0);
+        m_prevCommand.edit += '\n';
     }
     else if (inputMessage->event.key.key == KC_BACKSPACE)
     {
@@ -290,12 +362,13 @@ void ViInterface::keyInsert(Frontier::InputMessage* inputMessage)
     cursor = keyCursor(inputMessage->event.key.key);
     if (cursor)
     {
+        m_prevCommand.edit = L"";
         return;
     }
 
-    wchar_t c = inputMessage->event.key.chr;
     if (iswprint(c))
     {
+        m_prevCommand.edit += c;
         m_editor->insert(c);
     }
 }
@@ -386,6 +459,11 @@ void ViInterface::runExCommand(wstring command)
         m_editor->moveCursorY(n);
         return;
     }
+
+    if (command == L"w")
+    {
+        m_editor->save();
+    }
 }
 
 void ViInterface::setMode(ViMode mode)
@@ -396,9 +474,11 @@ void ViInterface::setMode(ViMode mode)
     {
         case MODE_NORMAL:
             m_command.state = STATE_START;
+            m_command.type = TYPE_NONE;
             m_command.count = 0;
-            m_command.type = 0;
-            m_command.extra = "";
+            m_command.command = 0;
+            m_command.params = "";
+            m_command.edit = L"";
             break;
 
         case MODE_EX_COMMAND:

@@ -25,7 +25,7 @@
 #include "interface.h"
 #include "format.h"
 
-#include <frontier/widgets.h>
+#include <frontier/widgets/scrollbar.h>
 
 class Vide;
 
@@ -35,8 +35,7 @@ class Editor : public Frontier::Widget
     Vide* m_vide;
 
     int m_marginX;
-    unsigned int m_cursorX;
-    unsigned int m_cursorY;
+    Position m_cursor;
 
     Frontier::ScrollBar* m_scrollBar;
 
@@ -46,9 +45,11 @@ class Editor : public Frontier::Widget
 
     unsigned int getViewLines();
 
+    void drawCursor();
+
  public:
 
-    Editor(Vide* window);
+    Editor(Vide* window, Buffer* buffer);
     virtual ~Editor();
 
     virtual void calculateSize();
@@ -56,15 +57,22 @@ class Editor : public Frontier::Widget
 
     virtual bool draw(Geek::Gfx::Surface* surface);
 
+    bool save();
+
     virtual Widget* handleMessage(Frontier::Message* msg);
     void onScrollbarChanged(int pos);
 
     void setBuffer(Buffer* buffer);
     Buffer* getBuffer() { return m_buffer; }
 
-    unsigned int getCursorX() { return m_cursorX; }
-    unsigned int getCursorY() { return m_cursorY; }
+    Position getCursor() { return m_cursor; }
+    unsigned int getCursorX() { return m_cursor.column; }
+    unsigned int getCursorY() { return m_cursor.line; }
 
+    Position findNextWord();
+    Position findNextWord(Position from);
+
+    void moveCursor(Position pos);
     void moveCursorX(unsigned int x);
     void moveCursorY(unsigned int y);
     void moveCursorDelta(int dx, int dy);
@@ -74,6 +82,7 @@ class Editor : public Frontier::Widget
 
     void insert(wchar_t c);
     void insertLine();
+    void splitLine();
     void deleteAtCursor();
     void deleteLine();
 

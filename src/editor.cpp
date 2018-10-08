@@ -27,12 +27,13 @@ using namespace Frontier;
 using namespace Geek;
 using namespace Geek::Gfx;
 
-Editor::Editor(Vide* vide) : Widget(vide)
+Editor::Editor(Vide* vide, Buffer* buffer) : Widget(vide)
 {
     m_vide = vide;
+m_buffer = buffer;
 
-    m_cursorX = 0;
-    m_cursorY = 0;
+    m_cursor.line = 0;
+    m_cursor.column = 0;
 
     m_scrollBar = new ScrollBar(vide);
     m_scrollBar->setParent(this);
@@ -121,10 +122,15 @@ bool Editor::draw(Surface* surface)
 
         Line* line = lines.at(lineNumber);
 
-        unsigned int cursorX = m_cursorX;
-        if (cursorX > line->text.length())
+        unsigned int column = m_cursor.column;
+        if (column > line->text.length())
         {
-            cursorX = line->text.length();
+            column = line->text.length();
+        }
+
+        if (line->tokens.empty())
+        {
+            surface->drawRectFilled(drawX, drawY, charWidth, charHeight, 0x00BBBBBB);
         }
 
         vector<LineToken*>::iterator tokenIt;
@@ -133,7 +139,8 @@ bool Editor::draw(Surface* surface)
             LineToken* token = *tokenIt;
 
             unsigned int tokenLen = token->text.length();
-            if (lineNumber == m_cursorY && (tokenIt + 1) == line->tokens.end() && cursorX >= xpos + tokenLen)
+
+            if (lineNumber == m_cursor.line && (tokenIt + 1) == line->tokens.end() && column >= xpos + tokenLen)
             {
                 //cursorX = xpos + fragLen;
                 tokenLen++;
@@ -148,11 +155,13 @@ bool Editor::draw(Surface* surface)
                 }
 
                 uint32_t textCol = 0x00BBBBBB;
-                if (xpos == cursorX && lineNumber == m_cursorY)
+                if (xpos == column && lineNumber == m_cursor.line)
                 {
+                    // Draw the cursor!
                     surface->drawRectFilled(drawX, drawY, charWidth, charHeight, 0x00BBBBBB);
                     textCol = 0x002b2b2b;
                 }
+
                 if (tokenPos < token->text.length())
                 {
                     wstring str = L"";
@@ -186,6 +195,12 @@ bool Editor::draw(Surface* surface)
     SurfaceViewPort scrollbarVP(surface, m_scrollBar->getX(), m_scrollBar->getY(), m_scrollBar->getWidth(), m_scrollBar->getHeight());
     m_scrollBar->draw(&scrollbarVP);
 
+    return true;
+}
+
+bool Editor::save()
+{
+    m_buffer->save();
     return true;
 }
 
@@ -291,9 +306,80 @@ void Editor::setBuffer(Buffer* buffer)
     setDirty(DIRTY_CONTENT);
 }
 
+Position Editor::findNextWord()
+{
+    return findNextWord(m_cursor);
+}
+
+Position Editor::findNextWord(Position from)
+{
+    Line* line = m_buffer->getLine(from.line);
+
+    vector<LineToken*>::iterator it;
+
+    it = line->tokenAt(from.column, false);
+
+    bool nextLine = false;
+    if (it != line->tokens.end() && (it + 1) != line->tokens.end())
+    {
+        LineToken* curToken = *it;
+        printf("CURRENT TOKEN: %ls\n", curToken->text.c_str());
+
+        do
+        {
+            it++;
+        }
+        while (it != line->tokens.end() && (*it)->isSpace);
+
+        if (it != line->tokens.end())
+        {
+            LineToken* nextToken = *it;
+
+            printf("NEXT TOKEN: %lsn", nextToken->text.c_str());
+            return Position(from.line, nextToken->column);
+        }
+        else
+        {
+            nextLine = true;
+        }
+    }
+    else
+    {
+        nextLine = true;
+    }
+
+    if (nextLine)
+    {
+        printf("END OF LINE\n");
+        if (from.line < m_buffer->getLineCount() - 1)
+        {
+            Line* nextLine = m_buffer->getLine(from.line + 1);
+            if (!nextLine->tokens.empty() && !nextLine->tokens.at(0)->isSpace)
+            {
+                return Position(from.line + 1, 0);
+            }
+            return findNextWord(Position(from.line + 1, 0));
+        }
+        else
+        {
+            printf("RETURNING END OF FILE\n");
+
+            return Position(from.line, line->text.length() - 1);
+        }
+    }
+
+    return Position();
+}
+
+void Editor::moveCursor(Position pos)
+{
+    moveCursorY(pos.line);
+    moveCursorX(pos.column);
+}
+
 void Editor::moveCursorX(unsigned int x)
 {
-    if (m_cursorX == x)
+    if (m_cursor.column == x)
     {
         return;
     }
@@ -305,23 +391,23 @@ void Editor::moveCursorX(unsigned int x)
     }
     else
     {
-        unsigned int width = m_buffer->getLineLength(m_cursorY);
+        unsigned int width = m_buffer->getLineLength(m_cursor.line);
         if (x > width)
         {
             x = width;
         }
     }
 
-    if (m_cursorX != x)
+    if (m_cursor.column != x)
     {
-        m_cursorX = x;
+        m_cursor.column = x;
         setDirty(DIRTY_CONTENT);
     }
 }
 
 void Editor::moveCursorY(unsigned int y)
 {
-    if (m_cursorY == y)
+    if (m_cursor.line == y)
     {
         return;
     }
@@ -335,20 +421,20 @@ void Editor::moveCursorY(unsigned int y)
         y = m_buffer->getLineCount() - 1;
     }
 
-    if (m_cursorY != y)
+    if (m_cursor.line != y)
     {
         unsigned int scrollPos = m_scrollBar->getPos();
-        m_cursorY = y;
-        if (m_cursorY < scrollPos)
+        m_cursor.line = y;
+        if (m_cursor.line < scrollPos)
         {
-            m_scrollBar->setPos(m_cursorY);
+            m_scrollBar->setPos(m_cursor.line);
         }
         else
         {
             int viewLines = getViewLines();
-            if (m_cursorY >= (scrollPos + viewLines))
+            if (m_cursor.line >= (scrollPos + viewLines))
             {
-                m_scrollBar->setPos(m_cursorY - (viewLines - 1));
+                m_scrollBar->setPos(m_cursor.line - (viewLines - 1));
             }
         }
         setDirty(DIRTY_CONTENT);
@@ -360,20 +446,20 @@ void Editor::moveCursorDelta(int dx, int dy)
     // Move Y first as X depends on line width
     if (dy != 0)
     {
-        moveCursorY(m_cursorY + dy);
+        moveCursorY(m_cursor.line + dy);
     }
 
     if (dx != 0)
     {
-        moveCursorX(m_cursorX + dx);
+        moveCursorX(m_cursor.column + dx);
     }
-    printf("Editor::moveCursorDelta: m_cursorX=%d, moveCursorY=%d\n", m_cursorX, m_cursorY);
+    printf("Editor::moveCursorDelta: m_cursorX=%d, moveCursorY=%d\n", m_cursor.column, m_cursor.line);
 }
 
 void Editor::moveCursorXEnd()
 {
-    int width = m_buffer->getLineLength(m_cursorY);
-    m_cursorX = width - 1;
+    int width = m_buffer->getLineLength(m_cursor.line);
+    m_cursor.column = width - 1;
     setDirty(DIRTY_CONTENT);
 }
 
@@ -386,24 +472,24 @@ void Editor::moveCursorPage(int dir)
 
 void Editor::insert(wchar_t c)
 {
-    Line* line = m_buffer->getLine(m_cursorY);
+    Line* line = m_buffer->getLine(m_cursor.line);
 
     unsigned int textLen = line->text.length();
-    if (m_cursorX > textLen)
+    if (m_cursor.column > textLen)
     {
         if (textLen > 0)
         {
-            m_cursorX = textLen;
+            m_cursor.column = textLen;
         }
         else
         {
-            m_cursorX = 0;
+            m_cursor.column = 0;
         }
     }
-    printf("Editor::insert: m_cursorX=%u, textLen=%u\n", m_cursorX, textLen);
+    printf("Editor::insert: m_cursorX=%u, textLen=%u\n", m_cursor.column, textLen);
 
-    line->text.insert(m_cursorX, 1, c);
-    m_cursorX++;
+    line->text.insert(m_cursor.column, 1, c);
+    m_cursor.column++;
 
     m_format->tokenise(line);
 
@@ -413,16 +499,35 @@ void Editor::insert(wchar_t c)
 void Editor::insertLine()
 {
     Line* line = new Line();
-    line->lineEnding = L"\n";
+    line->lineEnding = "\n";
 
-    m_buffer->insertLine(m_cursorY + 1, line);
+    m_buffer->insertLine(m_cursor.line + 1, line);
+    setDirty(DIRTY_CONTENT);
+}
+
+void Editor::splitLine()
+{
+    Line* line = m_buffer->getLine(m_cursor.line);
+
+    wstring text1 = line->text.substr(0, m_cursor.column);
+    wstring text2 = line->text.substr(m_cursor.column);
+
+    line->text = text1;
+
+    Line* newLine = new Line();
+    newLine->lineEnding = line->lineEnding;
+    newLine->text = text2;
+
+    m_buffer->insertLine(m_cursor.line + 1, newLine);
+    m_format->tokenise(line);
+    m_format->tokenise(newLine);
     setDirty(DIRTY_CONTENT);
 }
 
 void Editor::deleteAtCursor()
 {
-    Line* line = m_buffer->getLine(m_cursorY);
-    line->text.erase(m_cursorX, 1);
+    Line* line = m_buffer->getLine(m_cursor.line);
+    line->text.erase(m_cursor.column, 1);
 
     m_format->tokenise(line);
 
@@ -431,21 +536,21 @@ void Editor::deleteAtCursor()
 
 void Editor::deleteLine()
 {
-    m_buffer->deleteLine(m_cursorY);
+    m_buffer->deleteLine(m_cursor.line);
 
     unsigned int count = m_buffer->getLineCount();
     if (count == 0)
     {
-        m_cursorY = 0;
+        m_cursor.line = 0;
         Line* line = new Line();
-        line->lineEnding = L"\n";
+        line->lineEnding = "\n";
 
-        m_buffer->insertLine(m_cursorY, line);
+        m_buffer->insertLine(m_cursor.line, line);
     }
 
-    if (m_cursorY >= m_buffer->getLineCount())
+    if (m_cursor.line >= m_buffer->getLineCount())
     {
-        m_cursorY = m_buffer->getLineCount() - 1;
+        m_cursor.line = m_buffer->getLineCount() - 1;
     }
 
     setDirty(DIRTY_CONTENT);
@@ -458,7 +563,7 @@ void Editor::copyToBuffer(int count)
     int i;
     for (i = 0; i < count; i++)
     {
-        Line* line = m_buffer->getLine(m_cursorY + i);
+        Line* line = m_buffer->getLine(m_cursor.line + i);
         if (line != NULL)
         {
             printf("Editor::copyToBuffer: Copying: %ls\n", line->text.c_str());
@@ -475,11 +580,11 @@ void Editor::pasteFromBuffer()
     for (wstring text : copyVec)
     {
         Line* line = new Line();
-        line->lineEnding = L"\n";
+        line->lineEnding = "\n";
         line->text = text;
         m_format->tokenise(line);
 
-        m_buffer->insertLine(++m_cursorY, line);
+        m_buffer->insertLine(++m_cursor.line, line);
     }
     setDirty(DIRTY_CONTENT);
 }
