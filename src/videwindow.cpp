@@ -22,10 +22,13 @@
 #include "videwindow.h"
 #include "utils.h"
 
+#include <frontier/widgets/iconbutton.h>
+#include <frontier/widgets/resizeableframe.h>
+
 using namespace std;
 using namespace Frontier;
 
-VideWindow::VideWindow(Vide* vide) : FrontierWindow(vide)
+VideWindow::VideWindow(Vide* vide) : FrontierWindow(vide, L"Vide", WINDOW_NORMAL)
 {
     m_vide = vide;
 }
@@ -53,10 +56,10 @@ bool VideWindow::init()
     rootFrame->add(mainFrame);
 
     m_projectView = new ProjectView(m_vide);
-    mainFrame->add(m_projectView);
+    mainFrame->addWithSize(m_projectView, 25);
 
     m_tabs = new Tabs(this);
-    mainFrame->add(m_tabs);
+    mainFrame->addWithSize(m_tabs, 50);
     m_tabs->changeTabSignal().connect(sigc::mem_fun(*this, &VideWindow::onEditorTabChange));
 
     List* list2 = new List(this);
@@ -64,7 +67,7 @@ bool VideWindow::init()
     list2->addItem(new TextListItem(this, L"TestClass::method()"));
     Scroller* scroller2 = new Scroller(this);
     scroller2->setChild(list2);
-    mainFrame->add(scroller2);
+    mainFrame->addWithSize(scroller2, 25);
 
     Frame* statusFrame = new Frame(this, true);
     statusFrame->add(m_interfaceStatus);
@@ -104,8 +107,8 @@ void VideWindow::openEntry(ProjectEntry* entry)
     Editor* editor = entry->getEditor();
     if (editor == NULL)
     {
-        editor = new Editor(m_vide);
         Buffer* buffer = Buffer::loadFile(filePath.c_str());
+        editor = new Editor(m_vide, buffer);
         editor->setBuffer(buffer);
         m_tabs->addTab(Utils::string2wstring(entry->getName()), editor);
         entry->setEditor(editor);

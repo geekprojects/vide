@@ -23,7 +23,9 @@
 
 #include "vide.h"
 
-#include <frontier/widgets.h>
+#include <frontier/widgets/frame.h>
+#include <frontier/widgets/scroller.h>
+#include <frontier/widgets/list.h>
 
 class Vide;
 class ProjectDirectory;

@@ -22,7 +22,8 @@
 #define __VIDE_VIDEWINDOW_H_
 
 #include <frontier/frontier.h>
-#include <frontier/widgets.h>
+#include <frontier/widgets/label.h>
+#include <frontier/widgets/tabs.h>
 
 #include "editor.h"
 #include "projectview.h"
@@ -55,6 +56,7 @@ class VideWindow : public Frontier::FrontierWindow
     void setInterfaceStatus(std::wstring message);
 
     void openEntry(ProjectEntry* entry);
+    void closeEntry(ProjectEntry* entry);
 };
 
 #endif
