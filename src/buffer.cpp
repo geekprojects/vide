@@ -44,6 +44,23 @@ Buffer::~Buffer()
 {
 }
 
+LineToken* Buffer::getToken(Position pos)
+{
+    if (pos.line >= m_lines.size())
+    {
+        return NULL;
+    }
+
+    Line* line = m_lines.at(pos.line);
+    vector<LineToken*>::iterator it = line->tokenAt(pos.column, false);
+
+    if (it != line->tokens.end())
+    {
+        return *it;
+    }
+    return NULL;
+}
+
 void Buffer::insertLine(int asLine, Line* line)
 {
     vector<Line*>::iterator it;
@@ -64,16 +81,42 @@ void Buffer::deleteLine(int line)
     m_lines.erase(it);
 }
 
+bool Buffer::save()
+{
+    FILE* fd = fopen("saved.txt", "w");
+    for (Line* line : m_lines)
+    {
+        unsigned int pos;
+        for (pos = 0; pos < line->text.length(); pos++)
+        {
+            wchar_t c = line->text.at(pos);
+
+            char buffer[6] = {0, 0, 0, 0, 0, 0};
+            char* end = utf8::append(c, buffer);
+
+            char* p;
+            for (p = buffer; p < end; p++)
+            {
+                fputc(*p, fd);
+            }
+
+        }
+
+        // Write the End Of Line
+        fwrite(line->lineEnding.c_str(), line->lineEnding.length(), 1, fd);
+    }
+
+    fclose(fd);
+
+    return true;
+}
+
 void Buffer::dump()
 {
-    vector<Line*>::iterator lineIt;
-    for (lineIt = m_lines.begin(); lineIt != m_lines.end(); lineIt++)
+    for (Line* line : m_lines)
     {
-        Line* line = *lineIt;
-        vector<LineToken*>::iterator tokenIt;
-        for (tokenIt = line->tokens.begin(); tokenIt != line->tokens.end(); tokenIt++)
+        for (LineToken* token : line->tokens)
         {
-            LineToken* token = *tokenIt;
             printf("[%ls]", token->text.c_str());
         }
         printf("\n");
@@ -132,7 +175,7 @@ Buffer* Buffer::loadFile(const char* filename)
 
         if (cur == L'\n' || cur == L'\r')
         {
-            line->lineEnding = L"";
+            line->lineEnding = "";
             line->lineEnding += cur;
 
             if (cur == L'\r')
@@ -176,6 +219,30 @@ Buffer* Buffer::loadFile(const char* filename)
 
     delete[] fileData;
     return buffer;
+}
+
+vector<LineToken*>::iterator Line::tokenAt(unsigned int column, bool ignoreSpace)
+{
+    if (column == 0)
+    {
+        return tokens.begin();
+    }
+
+    vector<LineToken*>::iterator it;
+    printf("Line::tokenAt: column=%u, ignoreSpace=%d\n", column, ignoreSpace);
+    for (it = tokens.begin(); it != tokens.end(); it++)
+    {
+        LineToken* token = *it;
+        printf("Line::tokenAt: token=%ls, column=%d, isSpace=%d\n", token->text.c_str(), token->column, token->isSpace);
+        if (token->column + token->text.length() > column)
+        {
+            if (!ignoreSpace || !token->isSpace)
+            {
+                return it;
+            }
+        }
+    }
+    return tokens.end();
 }
 
 void Line::clearTokens()

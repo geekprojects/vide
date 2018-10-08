@@ -25,23 +25,43 @@
 #include <string>
 #include <wchar.h>
 
+struct Position
+{
+    unsigned int line;
+    unsigned int column;
+
+    Position()
+    {
+        line = 0;
+        column = 0;
+    }
+
+    Position(unsigned int l, unsigned int c)
+    {
+        line = l;
+        column = c;
+    }
+};
+
 struct LineToken
 {
+    unsigned int column;
     std::wstring text;
     uint32_t colour;
+    bool isSpace;
 };
 
 struct Line
 {
     std::wstring text;
-    std::wstring lineEnding;
+    std::string lineEnding;
 
     std::vector<LineToken*> tokens;
 
     Line()
     {
         text = L"";
-        lineEnding = L"";
+        lineEnding = "";
     }
 
     ~Line()
@@ -49,12 +69,15 @@ struct Line
         clearTokens();
     }
 
+    std::vector<LineToken*>::iterator tokenAt(unsigned int column, bool ignoreSpace);
+
     void clearTokens();
 };
 
 class Buffer
 {
  private:
+    std::string m_filename;
     std::vector<Line*> m_lines;
 
  public:
@@ -73,8 +96,12 @@ class Buffer
 
     std::vector<Line*>& getLines() { return m_lines; }
     Line* getLine(int y) { return m_lines.at(y); }
+    LineToken* getToken(Position position);
+
     void insertLine(int asLine, Line* line);
     void deleteLine(int line);
+
+    bool save();
 
     void dump();
 
