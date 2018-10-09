@@ -23,27 +23,27 @@
 
 #include "buffer.h"
 
-class Format
+class Tokeniser
 {
  protected:
 
  public:
-    Format();
-    virtual ~Format();
+    Tokeniser();
+    virtual ~Tokeniser();
 
     virtual bool tokenise(Buffer* buffer);
-    virtual bool tokenise(Line* line);
+    virtual bool tokenise(Buffer* buffer, Line* line);
 };
 
-class SimpleFormat : public Format
+class SimpleTokeniser : public Tokeniser
 {
  protected:
 
  public:
-    SimpleFormat();
-    virtual ~SimpleFormat();
+    SimpleTokeniser();
+    virtual ~SimpleTokeniser();
 
-    virtual bool tokenise(Line* line);
+    virtual bool tokenise(Buffer* buffer, Line* line);
 };
 
 #endif

@@ -18,27 +18,27 @@
  * along with Vide.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "format.h"
+#include "tokeniser.h"
 
 using namespace std;
 
-Format::Format()
+Tokeniser::Tokeniser()
 {
 }
 
-Format::~Format()
+Tokeniser::~Tokeniser()
 {
 }
 
 
-bool Format::tokenise(Buffer* buffer)
+bool Tokeniser::tokenise(Buffer* buffer)
 {
     vector<Line*>::iterator lineIt;
 
     for (lineIt = buffer->getLines().begin(); lineIt != buffer->getLines().end(); lineIt++)
     {
         bool res;
-        res = tokenise(*lineIt);
+        res = tokenise(buffer, *lineIt);
         if (!res)
         {
             return false;
@@ -48,9 +48,8 @@ bool Format::tokenise(Buffer* buffer)
     return true;
 }
 
-bool Format::tokenise(Line* line)
+bool Tokeniser::tokenise(Buffer* buffer, Line* line)
 {
-
     return true;
 }
 
@@ -73,15 +72,15 @@ static uint32_t g_colours[] =
 */
 };
 
-SimpleFormat::SimpleFormat()
+SimpleTokeniser::SimpleTokeniser()
 {
 }
 
-SimpleFormat::~SimpleFormat()
+SimpleTokeniser::~SimpleTokeniser()
 {
 }
 
-bool SimpleFormat::tokenise(Line* line)
+bool SimpleTokeniser::tokenise(Buffer* buffer, Line* line)
 {
     line->clearTokens();
 

@@ -40,7 +40,7 @@ m_buffer = buffer;
     m_scrollBar->changedPositionSignal().connect(sigc::mem_fun(*this, &Editor::onScrollbarChanged));
 
     m_interface = new ViInterface(this);
-    m_format = new SimpleFormat();
+    m_fileTypeManager = new TextFileTypeManager();
 
     m_marginX = 40;
 }
@@ -299,7 +299,7 @@ void Editor::setBuffer(Buffer* buffer)
 {
     m_buffer = buffer;
 
-    m_format->tokenise(m_buffer);
+    m_fileTypeManager->tokenise(m_buffer);
 
     m_interface->updateStatus();
 
@@ -491,7 +491,7 @@ void Editor::insert(wchar_t c)
     line->text.insert(m_cursor.column, 1, c);
     m_cursor.column++;
 
-    m_format->tokenise(line);
+    m_fileTypeManager->tokenise(m_buffer, line);
 
     setDirty(DIRTY_CONTENT);
 }
@@ -519,8 +519,8 @@ void Editor::splitLine()
     newLine->text = text2;
 
     m_buffer->insertLine(m_cursor.line + 1, newLine);
-    m_format->tokenise(line);
-    m_format->tokenise(newLine);
+    m_fileTypeManager->tokenise(m_buffer, line);
+    m_fileTypeManager->tokenise(m_buffer, newLine);
     setDirty(DIRTY_CONTENT);
 }
 
@@ -529,7 +529,7 @@ void Editor::deleteAtCursor()
     Line* line = m_buffer->getLine(m_cursor.line);
     line->text.erase(m_cursor.column, 1);
 
-    m_format->tokenise(line);
+    m_fileTypeManager->tokenise(m_buffer, line);
 
     setDirty(DIRTY_CONTENT);
 }
@@ -582,7 +582,7 @@ void Editor::pasteFromBuffer()
         Line* line = new Line();
         line->lineEnding = "\n";
         line->text = text;
-        m_format->tokenise(line);
+        m_fileTypeManager->tokenise(m_buffer, line);
 
         m_buffer->insertLine(++m_cursor.line, line);
     }

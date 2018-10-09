@@ -23,7 +23,7 @@
 
 #include "buffer.h"
 #include "interface.h"
-#include "format.h"
+#include "filetypemanager.h"
 
 #include <frontier/widgets/scrollbar.h>
 
@@ -41,7 +41,7 @@ class Editor : public Frontier::Widget
 
     Buffer* m_buffer;
     Interface* m_interface;
-    Format* m_format;
+    FileTypeManager* m_fileTypeManager;
 
     unsigned int getViewLines();
 
@@ -93,3 +93,4 @@ class Editor : public Frontier::Widget
 };
 
 #endif
+
