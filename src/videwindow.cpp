@@ -78,6 +78,8 @@ bool VideWindow::init()
 
     m_projectView->update();
 
+    m_editorTipWindow = new EditorTipWindow(getApp());
+
     return true;
 }
 
@@ -108,9 +110,10 @@ void VideWindow::openEntry(ProjectEntry* entry)
     if (editor == NULL)
     {
         Buffer* buffer = Buffer::loadFile(filePath.c_str());
-        editor = new Editor(m_vide, buffer);
+
+        editor = new Editor(m_vide, buffer, entry->getFileTypeManager());
         editor->setBuffer(buffer);
-        m_tabs->addTab(Utils::string2wstring(entry->getName()), editor);
+        m_tabs->addTab(Frontier::Utils::string2wstring(entry->getName()), editor);
         entry->setEditor(editor);
     }
 

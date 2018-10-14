@@ -27,6 +27,7 @@
 
 #include "editor.h"
 #include "projectview.h"
+#include "editortipwindow.h"
 
 class Vide;
 class ProjectEntry;
@@ -41,6 +42,8 @@ class VideWindow : public Frontier::FrontierWindow
     Frontier::Label* m_interfaceStatus;
     ProjectView* m_projectView;
 
+    EditorTipWindow* m_editorTipWindow;
+
     void onOpenFile();
 
     void onEditorTabChange(Frontier::Widget* widget);
@@ -54,6 +57,8 @@ class VideWindow : public Frontier::FrontierWindow
     FontHandle* getTextFont() { return m_textFont; }
 
     void setInterfaceStatus(std::wstring message);
+
+    EditorTipWindow* getEditorTipWindow() { return m_editorTipWindow; }
 
     void openEntry(ProjectEntry* entry);
     void closeEntry(ProjectEntry* entry);
