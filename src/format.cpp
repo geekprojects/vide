@@ -20,6 +20,8 @@
 
 #include "format.h"
 
+#include <wctype.h>
+
 using namespace std;
 
 Format::Format()
@@ -87,8 +89,8 @@ bool SimpleFormat::tokenise(Line* line)
 
     LineToken* token = NULL;
     size_t pos;
-int t = 0;
-bool spaces = false;
+    int t = 0;
+
     for (pos = 0; pos < line->text.length(); pos++)
     {
         if (token == NULL)
@@ -107,7 +109,6 @@ t++;
             line->tokens.push_back(token);
 
             token = NULL;
-spaces = true;
         }
         else
         {

@@ -23,6 +23,8 @@
 
 #include "utf8.h"
 
+#include <string.h>
+
 using namespace std;
 
 uint32_t colours[] =

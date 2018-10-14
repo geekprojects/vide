@@ -22,6 +22,8 @@
 #include "editor.h"
 #include "vide.h"
 
+#include <wctype.h>
+
 using namespace std;
 using namespace Frontier;
 using namespace Geek;
@@ -145,11 +147,11 @@ bool Editor::draw(Surface* surface)
                     break;
                 }
 
-                uint32_t textCol = 0x00BBBBBB;
+                //uint32_t textCol = 0x00BBBBBB;
                 if (xpos == cursorX && lineNumber == m_cursorY)
                 {
                     surface->drawRectFilled(drawX, drawY, charWidth, charHeight, 0x00BBBBBB);
-                    textCol = 0x002b2b2b;
+                    //textCol = 0x002b2b2b;
                 }
                 if (tokenPos < token->text.length())
                 {

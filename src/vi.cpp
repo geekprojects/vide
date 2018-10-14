@@ -22,6 +22,8 @@
 #include "interface.h"
 #include "editor.h"
 
+#include <wctype.h>
+
 using namespace std;
 using namespace Frontier;
 
