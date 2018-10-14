@@ -27,10 +27,10 @@ using namespace Frontier;
 using namespace Geek;
 using namespace Geek::Gfx;
 
-Editor::Editor(Vide* vide, Buffer* buffer) : Widget(vide)
+Editor::Editor(Vide* vide, Buffer* buffer, FileTypeManager* ftm) : Widget(vide)
 {
     m_vide = vide;
-m_buffer = buffer;
+    m_buffer = buffer;
 
     m_cursor.line = 0;
     m_cursor.column = 0;
@@ -40,9 +40,17 @@ m_buffer = buffer;
     m_scrollBar->changedPositionSignal().connect(sigc::mem_fun(*this, &Editor::onScrollbarChanged));
 
     m_interface = new ViInterface(this);
-    m_fileTypeManager = new TextFileTypeManager();
+    m_fileTypeManager = ftm;
 
     m_marginX = 40;
+
+    m_colours.insert(make_pair(TOKEN_TEXT, 0xA9B7C6));
+    m_colours.insert(make_pair(TOKEN_COMMENT, 0x808080));
+    m_colours.insert(make_pair(TOKEN_KEYWORD, 0xCC7832));
+    m_colours.insert(make_pair(TOKEN_IDENTIFIER, 0xA9B7C6));
+    m_colours.insert(make_pair(TOKEN_LOCAL_VARIABLE, 0x9876AA));
+    m_colours.insert(make_pair(TOKEN_PARAM_VARIABLE, 0x9876AA));
+    m_colours.insert(make_pair(TOKEN_ACCESS_SPECIFIER, 0xff0000));
 }
 
 Editor::~Editor()
@@ -78,6 +86,15 @@ bool Editor::draw(Surface* surface)
     int charHeight = textFont->getPixelHeight(72);
     unsigned int viewLines = m_setSize.height / charHeight;
 
+    // Set the default colour to the TEXT colour
+    uint32_t defaultColour = 0xffffff;
+    map<TokenType, uint32_t>::iterator it;
+    it = m_colours.find(TOKEN_TEXT);
+    if (it != m_colours.end())
+    {
+        defaultColour = it->second;
+    }
+
     int drawX = 0;
     int drawY = 0;
 
@@ -90,13 +107,6 @@ bool Editor::draw(Surface* surface)
     unsigned int ypos = 0;
     for (ypos = 0; ypos < viewLines; ypos++)
     {
-/*
-        if (drawY + charHeight > m_setSize.height)
-        {
-            break;
-        }
-*/
-
         unsigned int lineNumber = scrollPos + ypos;
 
         if (lineNumber >= lines.size())
@@ -138,6 +148,7 @@ bool Editor::draw(Surface* surface)
         {
             LineToken* token = *tokenIt;
 
+            unsigned int startX = drawX;
             unsigned int tokenLen = token->text.length();
 
             if (lineNumber == m_cursor.line && (tokenIt + 1) == line->tokens.end() && column >= xpos + tokenLen)
@@ -167,18 +178,55 @@ bool Editor::draw(Surface* surface)
                     wstring str = L"";
                     str += token->text.at(tokenPos);
 
+                    uint32_t colour;
+                    map<TokenType, uint32_t>::iterator it;
+                    it = m_colours.find(token->type);
+                    if (it != m_colours.end())
+                    {
+                        colour = it->second;
+                    }
+                    else
+                    {
+                        colour = defaultColour;
+                    }
+
                     fm->write(textFont,
                         surface,
                         drawX + 1,
                         drawY,
                         str,
-                        token->colour,
+                        colour,
                         //textCol,
                         true,
                         NULL);
                 }
 
                 drawX += charWidth;
+            }
+            if (!token->messages.empty())
+            {
+                int maxType = 0;
+                for (TokenMessage message : token->messages)
+                {
+                    if (message.type > maxType)
+                    {
+                        maxType = message.type;
+                    }
+                }
+                uint32_t messageCol = 0;
+                switch (maxType)
+                {
+                    case ::MESSAGE_INFO:
+                        messageCol = 0xff6897BB;
+                        break;
+                    case MESSAGE_WARNING:
+                        messageCol = 0xffFFC66D;
+                        break;
+                    case MESSAGE_ERROR:
+                        messageCol = 0xffff0000;
+                        break;
+                }
+                surface->drawLine(startX, drawY + charHeight - 1, drawX, drawY + charHeight - 1, messageCol);
             }
         }
 
@@ -241,29 +289,56 @@ Widget* Editor::handleMessage(Message* msg)
                     return m_scrollBar->handleMessage(msg);
                 }
 
-                if (inputMessage->inputMessageType == FRONTIER_MSG_INPUT_MOUSE_BUTTON)
+                Vector2D thisPos = getAbsolutePosition();
+                x -= thisPos.x;
+                y -= thisPos.y;
+
+                if (x > m_marginX)
                 {
-                    Vector2D thisPos = getAbsolutePosition();
-                    x -= thisPos.x;
-                    y -= thisPos.y;
+                    x -= m_marginX;
 
-                    if (x > m_marginX)
+                    FontManager* fm = m_ui->getFontManager();
+                    FontHandle* textFont = ((Vide*)m_ui)->getTextFont();
+
+                    int charWidth = fm->width(textFont, L"M");
+                    int charHeight = textFont->getPixelHeight(72);
+
+                    int scrollPos = m_scrollBar->getPos();
+                    int mouseCursorX = x / charWidth;
+                    int mouseCursorY = scrollPos + (y / charHeight);
+ 
+                    if (inputMessage->inputMessageType == FRONTIER_MSG_INPUT_MOUSE_BUTTON)
                     {
-                        x -= m_marginX;
+                        moveCursorX(mouseCursorX);
+                        moveCursorY(mouseCursorY);
 
-                        FontManager* fm = m_ui->getFontManager();
-                        FontHandle* textFont = ((Vide*)m_ui)->getTextFont();
-
-                        int charWidth = fm->width(textFont, L"M");
-                        int charHeight = textFont->getPixelHeight(72);
-
-                        int scrollPos = m_scrollBar->getPos();
-                        moveCursorX(x / charWidth);
-                        moveCursorY(scrollPos + (y / charHeight));
+                        setDirty(DIRTY_CONTENT);
+                        return this;
                     }
+                    else if (inputMessage->inputMessageType == FRONTIER_MSG_INPUT_MOUSE_MOTION)
+                    {
+                        LineToken* token = m_buffer->getToken(Position(mouseCursorY, mouseCursorX));
+                        printf("Editor::handleMessage:: Motion: token=%p\n", token);
+                        bool showTip = false;
+                        if (token != NULL)
+                        {
+                            printf("Editor::handleMessage:: Motion: Messages=%lu\n", token->messages.size());
+                            if (!token->messages.empty())
+                            {
 
-                    setDirty(DIRTY_CONTENT);
-                    return this;
+                                int x = inputMessage->event.button.x;
+                                int y = inputMessage->event.button.y;
+                                Geek::Vector2D screenPos = m_vide->getWindow()->getScreenPosition(Geek::Vector2D(x, y));
+                                m_vide->getWindow()->getEditorTipWindow()->setToken(token, screenPos);
+
+                                showTip = true;
+                            }
+                        }
+                        if (!showTip)
+                        {
+                            m_vide->getWindow()->getEditorTipWindow()->hide();
+                        }
+                    }
                 }
             } break;
 
@@ -293,6 +368,11 @@ void Editor::onScrollbarChanged(int pos)
 {
     printf("Editor::onScrollbarChanged: pos=%d\n", pos);
 
+}
+
+void Editor::onMouseLeave()
+{
+    m_vide->getWindow()->getEditorTipWindow()->hide();
 }
 
 void Editor::setBuffer(Buffer* buffer)

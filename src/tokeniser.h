@@ -21,7 +21,20 @@
 #ifndef __VIDE_FORMAT_H_
 #define __VIDE_FORMAT_H_
 
-#include "buffer.h"
+class Buffer;
+struct Line;
+
+enum TokenType
+{
+    TOKEN_TEXT,
+    TOKEN_COMMENT,
+    TOKEN_KEYWORD,
+    TOKEN_TYPE_REF,
+    TOKEN_IDENTIFIER,
+    TOKEN_LOCAL_VARIABLE,
+    TOKEN_PARAM_VARIABLE,
+    TOKEN_ACCESS_SPECIFIER,
+};
 
 class Tokeniser
 {

@@ -19,6 +19,7 @@
  */
 
 #include "tokeniser.h"
+#include "buffer.h"
 
 using namespace std;
 
@@ -52,25 +53,6 @@ bool Tokeniser::tokenise(Buffer* buffer, Line* line)
 {
     return true;
 }
-
-static uint32_t g_colours[] =
-{
-    0xbbb529,
-    0x77b767,
-    0xcc7832,
-    0x808080,
-    0xffc66d,
-    0xd0d0ff,
-    0xb389c5
-
-/*
-    0xF8F8F2,
-    0xAE81FF,
-    0xE6DB74,
-    0xBCA3A3,
-    0x960050
-*/
-};
 
 SimpleTokeniser::SimpleTokeniser()
 {
@@ -122,7 +104,7 @@ bool SimpleTokeniser::tokenise(Buffer* buffer, Line* line)
             if (token == NULL)
             {
                 token = new LineToken();
-                token->colour = g_colours[t % (sizeof(g_colours) / sizeof(uint32_t))];
+                token->type = TOKEN_TEXT;
                 token->column = pos;
                 line->tokens.push_back(token);
                 t++;
@@ -137,6 +119,7 @@ bool SimpleTokeniser::tokenise(Buffer* buffer, Line* line)
         // No tokens for this line. Add an empty one
         token = new LineToken();
         token->isSpace = true;
+        token->type = TOKEN_TEXT;
         line->tokens.push_back(token);
     }
 

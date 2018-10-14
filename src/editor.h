@@ -28,6 +28,7 @@
 #include <frontier/widgets/scrollbar.h>
 
 class Vide;
+class EditorTipWindow;
 
 class Editor : public Frontier::Widget
 {
@@ -43,13 +44,17 @@ class Editor : public Frontier::Widget
     Interface* m_interface;
     FileTypeManager* m_fileTypeManager;
 
+    EditorTipWindow* m_tipWindow;
+
+    std::map<TokenType, uint32_t> m_colours;
+
     unsigned int getViewLines();
 
     void drawCursor();
 
  public:
 
-    Editor(Vide* window, Buffer* buffer);
+    Editor(Vide* window, Buffer* buffer, FileTypeManager* ftm);
     virtual ~Editor();
 
     virtual void calculateSize();
@@ -61,6 +66,7 @@ class Editor : public Frontier::Widget
 
     virtual Widget* handleMessage(Frontier::Message* msg);
     void onScrollbarChanged(int pos);
+    void onMouseLeave();
 
     void setBuffer(Buffer* buffer);
     Buffer* getBuffer() { return m_buffer; }
