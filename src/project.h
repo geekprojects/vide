@@ -26,6 +26,8 @@
 
 #include <wchar.h>
 
+#include "filetypemanager.h"
+
 enum ProjectEntryType
 {
     ENTRY_PROJECT,
@@ -46,6 +48,9 @@ class ProjectEntry
     std::string m_name;
     Editor* m_editor;
 
+    FileTypeManager* m_fileTypeManager;
+    FileTypeManagerData* m_fileTypeManagerData;
+
     std::vector<ProjectEntry*> m_children;
 
  public:
@@ -62,6 +67,11 @@ class ProjectEntry
 
     void setEditor(Editor* editor) { m_editor = editor; }
     Editor* getEditor() { return m_editor; }
+
+    void setFileTypeManager(FileTypeManager* ftm) { m_fileTypeManager = ftm; }
+    FileTypeManager* getFileTypeManager() { return m_fileTypeManager; }
+    void setFileTypeManagerData(FileTypeManagerData* ftmd) { m_fileTypeManagerData = ftmd; }
+    FileTypeManagerData* getFileTypeManagerData() { return m_fileTypeManagerData; }
 
     void dump(int level);
 };
@@ -117,13 +127,17 @@ class Project
 
     ProjectDirectory* m_root;
 
+    std::vector<FileTypeManager*> m_fileTypeManagers;
+
     bool scanDirectory(ProjectDirectory* entry, std::string path);
+    bool indexDirectory(ProjectDirectory* dir);
 
  public:
     Project(std::string rootPath);
     ~Project();
 
     bool scan();
+    bool index();
 
     std::string getRootPath() { return m_rootPath; }
     ProjectDirectory* getRoot() { return m_root; }

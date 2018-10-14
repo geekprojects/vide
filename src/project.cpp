@@ -20,6 +20,7 @@
 
 
 #include "project.h"
+#include "config.h"
 
 #include <dirent.h>
 #include <unistd.h>
@@ -29,11 +30,22 @@
 #include <libfswatch/c++/event.hpp>
 #include <libfswatch/c++/monitor.hpp>
 
+#include "filetypemanager.h"
+#ifdef HAS_LIBCLANG
+#include "cxxfiletypemanager.h"
+#endif
+
 using namespace std;
 
 Project::Project(string rootPath)
 {
     m_rootPath = rootPath;
+
+    // Push in order that they should be evaluated
+#ifdef HAS_LIBCLANG
+    m_fileTypeManagers.push_back(new CXXFileTypeManager());
+#endif
+    m_fileTypeManagers.push_back(new TextFileTypeManager());
 
     m_root = NULL;
 }
@@ -103,10 +115,46 @@ bool Project::scanDirectory(ProjectDirectory* entry, std::string path)
         else if (S_ISREG(stat.st_mode))
         {
             ProjectFile* child = new ProjectFile(this, entry, dirent->d_name);
+
+            for (FileTypeManager* ftm : m_fileTypeManagers)
+            {
+                bool canHandle;
+                canHandle = ftm->canHandle(child);
+                if (canHandle)
+                {
+                    child->setFileTypeManager(ftm);
+                    break;
+                }
+            }
+
             entry->addChild(child);
         }
     }
 
+    return true;
+}
+
+bool Project::index()
+{
+    return indexDirectory(m_root);
+}
+
+bool Project::indexDirectory(ProjectDirectory* dir)
+{
+    for (ProjectEntry* entry : dir->getChildren())
+    {
+        switch (entry->getType())
+        {
+            case ENTRY_FILE:
+                entry->getFileTypeManager()->index((ProjectFile*)entry);
+                break;
+            case ENTRY_DIR:
+                indexDirectory((ProjectDirectory*)entry);
+                break;
+            default:
+                break;
+        }
+    }
     return true;
 }
 
@@ -117,6 +165,9 @@ ProjectEntry::ProjectEntry(Project* project, ProjectEntryType type, ProjectEntry
     m_parent = parent;
     m_name = name;
     m_editor = NULL;
+
+    m_fileTypeManager = NULL;
+    m_fileTypeManagerData = NULL;
 }
 
 ProjectEntry::~ProjectEntry()
@@ -152,10 +203,10 @@ string ProjectEntry::getFilePath()
     {
         path = m_parent->getFilePath();
     }
-else
-{
-path = m_project->getRootPath();
-}
+    else
+    {
+        path = m_project->getRootPath();
+    }
 
     path += "/" + m_name;
     return path;

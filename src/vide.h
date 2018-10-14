@@ -25,6 +25,7 @@
 #include <frontier/widgets.h>
 
 #include "videwindow.h"
+#include "filetypemanager.h"
 #include "project.h"
 
 class VideWindow;

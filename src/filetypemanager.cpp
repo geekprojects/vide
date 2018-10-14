@@ -1,5 +1,6 @@
 
 #include "filetypemanager.h"
+#include "project.h"
 
 FileTypeManager::FileTypeManager()
 {
@@ -7,6 +8,17 @@ FileTypeManager::FileTypeManager()
 
 FileTypeManager::~FileTypeManager()
 {
+}
+
+bool FileTypeManager::canHandle(ProjectFile* file)
+{
+    return false;
+}
+
+bool FileTypeManager::index(ProjectFile* file)
+{
+    // No indexing by default
+    return true;
 }
 
 bool FileTypeManager::tokenise(Buffer* buffer)
@@ -37,6 +49,12 @@ TextFileTypeManager::TextFileTypeManager()
 TextFileTypeManager::~TextFileTypeManager()
 {
     delete m_tokeniser;
+}
+
+bool TextFileTypeManager::canHandle(ProjectFile* file)
+{
+    // We'll take anything!
+    return true;
 }
 
 
