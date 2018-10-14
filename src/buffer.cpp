@@ -25,19 +25,9 @@
 
 using namespace std;
 
-uint32_t colours[] =
+Buffer::Buffer(string filename)
 {
-0xbbb529,
-0x77b767,
-0xcc7832,
-0x808080,
-0xffc66d,
-0xd0d0ff,
-0xb389c5
-};
-
-Buffer::Buffer()
-{
+    m_filename = filename;
 }
 
 Buffer::~Buffer()
@@ -111,6 +101,47 @@ bool Buffer::save()
     return true;
 }
 
+char* Buffer::writeToMem(uint32_t& size)
+{
+    size = 0;
+
+    for (Line* line : m_lines)
+    {
+        unsigned int pos;
+        for (pos = 0; pos < line->text.length(); pos++)
+        {
+            wchar_t c = line->text.at(pos);
+
+            char buffer[6] = {0, 0, 0, 0, 0, 0};
+            char* end = utf8::append(c, buffer);
+            size += (end - buffer);
+        }
+        size += line->lineEnding.length();
+    }
+
+    char* data = new char[size];
+    char* p = data;
+
+    for (Line* line : m_lines)
+    {
+        unsigned int pos;
+        for (pos = 0; pos < line->text.length(); pos++)
+        {
+            wchar_t c = line->text.at(pos);
+
+            p = utf8::append(c, p);
+        }
+
+        // Write the End Of Line
+        for (pos = 0; pos < line->lineEnding.length(); pos++)
+        {
+            *(p++) = line->lineEnding.at(pos);
+        }
+    }
+
+    return data;
+}
+
 void Buffer::dump()
 {
     for (Line* line : m_lines)
@@ -149,7 +180,7 @@ Buffer* Buffer::loadFile(const char* filename)
     char* pos = fileData;
     char* end = fileData + length;
 
-    Buffer* buffer = new Buffer();
+    Buffer* buffer = new Buffer(filename);
     Line* line = NULL;
     LineToken* token = NULL;
 
@@ -161,7 +192,7 @@ Buffer* Buffer::loadFile(const char* filename)
             line->text = L"";
 
             token = new LineToken();
-            token->colour = colours[line->tokens.size() % (sizeof(colours) / sizeof(uint32_t))];
+            token->type = TOKEN_TEXT;
             token->text = L"";
 
             line->tokens.push_back(token);
@@ -229,13 +260,20 @@ vector<LineToken*>::iterator Line::tokenAt(unsigned int column, bool ignoreSpace
     }
 
     vector<LineToken*>::iterator it;
+#if 0
     printf("Line::tokenAt: column=%u, ignoreSpace=%d\n", column, ignoreSpace);
+#endif
     for (it = tokens.begin(); it != tokens.end(); it++)
     {
         LineToken* token = *it;
+#if 0
         printf("Line::tokenAt: token=%ls, column=%d, isSpace=%d\n", token->text.c_str(), token->column, token->isSpace);
+#endif
         if (token->column + token->text.length() > column)
         {
+#if 0
+        printf("Line::tokenAt: Found! isSpace=%d\n", token->isSpace);
+#endif
             if (!ignoreSpace || !token->isSpace)
             {
                 return it;
