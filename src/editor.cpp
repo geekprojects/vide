@@ -99,7 +99,6 @@ bool Editor::draw(Surface* surface)
     int drawY = 0;
 
     int scrollPos = m_scrollBar->getPos();
-    printf("Editor::draw: scrollPos=%d\n", scrollPos);
 
     vector<Line*> lines = m_buffer->getLines();
 
@@ -318,14 +317,11 @@ Widget* Editor::handleMessage(Message* msg)
                     else if (inputMessage->inputMessageType == FRONTIER_MSG_INPUT_MOUSE_MOTION)
                     {
                         LineToken* token = m_buffer->getToken(Position(mouseCursorY, mouseCursorX));
-                        printf("Editor::handleMessage:: Motion: token=%p\n", token);
                         bool showTip = false;
                         if (token != NULL)
                         {
-                            printf("Editor::handleMessage:: Motion: Messages=%lu\n", token->messages.size());
                             if (!token->messages.empty())
                             {
-
                                 int x = inputMessage->event.button.x;
                                 int y = inputMessage->event.button.y;
                                 Geek::Vector2D screenPos = m_vide->getWindow()->getScreenPosition(Geek::Vector2D(x, y));
