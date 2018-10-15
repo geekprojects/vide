@@ -53,7 +53,8 @@ bool Vide::init()
     }
 
     m_project = new Project("/Users/ian/projects/vide/testproject");
-m_project->scan();
+    m_project->scan();
+    m_project->index();
 
     m_mainWindow = new VideWindow(this);
 
