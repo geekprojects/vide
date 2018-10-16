@@ -282,7 +282,7 @@ bool CXXTokeniser::tokenise(Buffer* buffer)
         }
     }
 
-    m_ftm->indexStructure(unit);
+    m_ftm->indexStructure(unit, buffer->getProjectFile());
 
     clang_disposeTranslationUnit(unit);
 
@@ -297,7 +297,7 @@ bool CXXTokeniser::tokenise(Buffer* buffer, Line* line)
     return tokenise(buffer);
 }
 
-CXXFileTypeManager::CXXFileTypeManager()
+CXXFileTypeManager::CXXFileTypeManager(Project* project) : FileTypeManager(project)
 {
     m_tokeniser = new CXXTokeniser(this);
 
@@ -342,7 +342,7 @@ bool CXXFileTypeManager::index(ProjectFile* file)
         NULL, 0,
         CXTranslationUnit_KeepGoing);
 
-    indexStructure(unit);
+    indexStructure(unit, file);
 
     clang_disposeTranslationUnit(unit);
 
@@ -352,13 +352,13 @@ bool CXXFileTypeManager::index(ProjectFile* file)
 struct StructureVisitorData
 {
     CXXFileTypeManager* ftm;
-    Buffer* buffer;
+    ProjectFile* file;
 };
 
 static CXChildVisitResult structureVisitorFunc(CXCursor cursor, CXCursor parent, CXClientData client_data)
 {
     StructureVisitorData* data = (StructureVisitorData*)client_data;
-    return data->ftm->structureVisitor(cursor, parent, data->buffer);
+    return data->ftm->structureVisitor(cursor, parent, data->file);
 }
 
 string buildName(CXCursor cursor)
@@ -378,16 +378,16 @@ string buildName(CXCursor cursor)
     return cursorName;
 }
 
-void CXXFileTypeManager::indexStructure(CXTranslationUnit unit)
+void CXXFileTypeManager::indexStructure(CXTranslationUnit unit, ProjectFile* file)
 {
     StructureVisitorData data;
     data.ftm = this;
-    data.buffer = NULL;
+    data.file = file;
 
     clang_visitChildren(clang_getTranslationUnitCursor(unit), structureVisitorFunc, (CXClientData*)&data);
 }
 
-CXChildVisitResult CXXFileTypeManager::structureVisitor(CXCursor cursor, CXCursor parent, Buffer* buffer)
+CXChildVisitResult CXXFileTypeManager::structureVisitor(CXCursor cursor, CXCursor parent, ProjectFile* file)
 {
     CXSourceLocation sourceLocation = clang_getCursorLocation(cursor);
 
@@ -411,10 +411,111 @@ CXChildVisitResult CXXFileTypeManager::structureVisitor(CXCursor cursor, CXCurso
         cursorKind == CXCursor_Constructor ||
         cursorKind == CXCursor_Destructor)
     {
+        if (cursorKind == CXCursor_NonTypeTemplateParameter ||
+            cursorKind == CXCursor_ClassTemplatePartialSpecialization ||
+            cursorKind == CXCursor_ConversionFunction ||
+            cursorKind == CXCursor_TemplateTemplateParameter)
+        {
+            printf("CXXTokeniser::structureVisitor: WARN: Ignoring CXCursor %u\n", cursorKind);
+
+            return CXChildVisit_Continue;
+        }
+
         Position pos = cxlocation2position(sourceLocation);
 
         string defName = buildName(cursor);
-        printf("CXXTokeniser::structureVisitor: Line %u: %s (kind=%u, isDef=%u)\n", pos.line, defName.c_str(), cursorKind, isDef);
+
+        CXCursor parentCursor = clang_getCursorSemanticParent(cursor);
+        CXCursorKind parentCursorKind = clang_getCursorKind(parentCursor);
+        string parentName = "";
+        ProjectDefinition* parentDef = NULL;
+        if (parentCursorKind != CXCursor_TranslationUnit)
+        {
+            parentName = buildName(parentCursor);
+            parentDef = m_project->findDefinition(parentName);
+        }
+
+        ProjectDefinition* def = m_project->findDefinition(defName);
+        if (def == NULL)
+        {
+            def = new ProjectDefinition();
+            def->name = defName;
+            def->parentName = parentName;
+            def->parent = NULL;
+        }
+
+        if (def->parent == NULL && parentName != "")
+        {
+            parentDef = m_project->findDefinition(parentName);
+
+            if (parentDef != NULL)
+            {
+                parentDef->children.push_back(def);
+                def->parent = parentDef;
+            }
+        }
+
+#if 0
+        printf("CXXTokeniser::structureVisitor: Line %u: %s, parent=%s (%p) (kind=%u, isDef=%u)\n", pos.line, defName.c_str(), parentName.c_str(), parentDef, cursorKind, isDef);
+#endif
+
+        ProjectDefinitionSource source;
+        source.entry = file;
+        source.position = pos;
+
+        switch (cursorKind)
+        {
+            case CXCursor_FunctionDecl:
+            case CXCursor_CXXMethod:
+            case CXCursor_Constructor:
+            case CXCursor_Destructor:
+                if (isDef)
+                {
+                    source.type = DEF_FUNCTION_IMPL;
+                }
+                else
+                {
+                    source.type = DEF_FUNCTION_SPEC;
+                }
+                break;
+            case CXCursor_FunctionTemplate:
+                source.type = DEF_FUNCTION_TEMPLATE;
+                break;
+            case CXCursor_Namespace:
+                source.type = DEF_NAMESPACE;
+                break;
+            case CXCursor_ClassDecl:
+            case CXCursor_StructDecl:
+            case CXCursor_UnionDecl:
+                source.type = DEF_CLASS;
+                break;
+            case CXCursor_ClassTemplate:
+                source.type = DEF_CLASS_TEMPLATE;
+                break;
+            case CXCursor_FieldDecl:
+                source.type = DEF_FIELD;
+                break;
+            case CXCursor_EnumDecl:
+                source.type = DEF_ENUM;
+                break;
+            case CXCursor_EnumConstantDecl:
+                source.type = DEF_ENUM_CONSTANT;
+                break;
+            case CXCursor_TypedefDecl:
+                source.type = DEF_TYPEDEF;
+                break;
+            case CXCursor_VarDecl:
+                source.type = DEF_VARIABLE;
+                break;
+
+
+            default:
+                printf("CXXTokeniser::structureVisitor: Unhandled cursor kind: %u\n", cursorKind);
+                exit(1);
+        }
+        def->sources.push_back(source);
+
+        m_project->addDefinition(def);
     }
 
     if (cursorKind == CXCursor_Namespace ||

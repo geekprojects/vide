@@ -27,6 +27,14 @@ using namespace Frontier;
 
 int main(int argc, char** argv)
 {
+    if (argc == 3 && !strcmp(argv[1], "project"))
+    {
+        Project* project = new Project(argv[2]);
+        project->scan();
+        project->index();
+        project->dumpStructure();
+        return 0;
+    }
 
     Vide app;
 

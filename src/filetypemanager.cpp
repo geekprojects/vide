@@ -2,8 +2,9 @@
 #include "filetypemanager.h"
 #include "project.h"
 
-FileTypeManager::FileTypeManager()
+FileTypeManager::FileTypeManager(Project* project)
 {
+    m_project = project;
 }
 
 FileTypeManager::~FileTypeManager()
@@ -41,7 +42,7 @@ bool FileTypeManager::tokenise(Buffer* buffer, Line* line)
     return m_tokeniser->tokenise(buffer, line);
 }
 
-TextFileTypeManager::TextFileTypeManager()
+TextFileTypeManager::TextFileTypeManager(Project* project) : FileTypeManager(project)
 {
     m_tokeniser = new SimpleTokeniser();
 }

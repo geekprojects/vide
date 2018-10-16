@@ -3,6 +3,7 @@
 
 #include "tokeniser.h"
 
+class Project;
 class ProjectFile;
 
 struct FileTypeManagerData
@@ -13,10 +14,11 @@ class FileTypeManager
 {
  protected:
 
+    Project* m_project;
     Tokeniser* m_tokeniser;
 
  public:
-    FileTypeManager();
+    FileTypeManager(Project* project);
     virtual ~FileTypeManager();
 
     virtual bool canHandle(ProjectFile* file);
@@ -34,7 +36,7 @@ class TextFileTypeManager : public FileTypeManager
  protected:
 
  public:
-    TextFileTypeManager();
+    TextFileTypeManager(Project* project);
     virtual ~TextFileTypeManager();
 
     virtual bool canHandle(ProjectFile* file);

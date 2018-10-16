@@ -27,6 +27,8 @@
 
 #include "tokeniser.h"
 
+class ProjectFile;
+
 struct Position
 {
     unsigned int line;
@@ -95,6 +97,7 @@ class Buffer
 {
  private:
     std::string m_filename;
+    ProjectFile* m_projectFile;
     std::vector<Line*> m_lines;
 
  public:
@@ -102,6 +105,9 @@ class Buffer
     ~Buffer();
 
     std::string getFilename() { return m_filename; }
+
+    void setProjectFile(ProjectFile* pf) { m_projectFile = pf; }
+    ProjectFile* getProjectFile() { return m_projectFile; }
 
     size_t getLineCount() { return m_lines.size(); }
     size_t getLineLength(unsigned int line)

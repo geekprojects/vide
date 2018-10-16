@@ -23,10 +23,51 @@
 
 #include <string>
 #include <vector>
+#include <map>
 
 #include <wchar.h>
 
 #include "filetypemanager.h"
+#include "buffer.h"
+
+class Project;
+class ProjectEntry;
+class Editor;
+
+enum ProjectDefinitionType
+{
+    DEF_NAMESPACE,
+    DEF_CLASS,
+    DEF_CLASS_TEMPLATE,
+    DEF_FUNCTION_SPEC,
+    DEF_FUNCTION_IMPL,
+    DEF_FUNCTION_TEMPLATE,
+    DEF_FIELD,
+    DEF_VARIABLE,
+    DEF_ENUM,
+    DEF_ENUM_CONSTANT,
+    DEF_TYPEDEF,
+};
+
+struct ProjectDefinitionSource
+{
+    ProjectEntry* entry;
+    Position position;
+    ProjectDefinitionType type;
+};
+
+struct ProjectDefinition
+{
+    std::vector<ProjectDefinitionSource> sources;
+    std::string name;
+    std::string parentName;
+    ProjectDefinition* parent;
+    std::vector<ProjectDefinition*> children;
+
+    ProjectEntry* entry;
+
+    void dump(int level);
+};
 
 enum ProjectEntryType
 {
@@ -35,9 +76,6 @@ enum ProjectEntryType
     ENTRY_FILE,
     ENTRY_UNKNOWN,
 };
-
-class Project;
-class Editor;
 
 class ProjectEntry
 {
@@ -52,6 +90,7 @@ class ProjectEntry
     FileTypeManagerData* m_fileTypeManagerData;
 
     std::vector<ProjectEntry*> m_children;
+    std::map<std::string, ProjectDefinition*> m_index;
 
  public:
     ProjectEntry(Project* project, ProjectEntryType type, ProjectEntry* parent, std::string name);
@@ -127,6 +166,8 @@ class Project
 
     ProjectDirectory* m_root;
 
+    std::map<std::string, ProjectDefinition*> m_index;
+
     std::vector<FileTypeManager*> m_fileTypeManagers;
 
     bool scanDirectory(ProjectDirectory* entry, std::string path);
@@ -141,6 +182,11 @@ class Project
 
     std::string getRootPath() { return m_rootPath; }
     ProjectDirectory* getRoot() { return m_root; }
+
+    ProjectDefinition* findDefinition(std::string name);
+    void addDefinition(ProjectDefinition* def);
+
+    void dumpStructure();
 };
 
 #endif

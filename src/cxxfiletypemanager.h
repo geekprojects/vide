@@ -34,15 +34,15 @@ class CXXFileTypeManager : public FileTypeManager
     CXIndex m_index;
 
  public:
-    CXXFileTypeManager();
+    CXXFileTypeManager(Project* project);
     virtual ~CXXFileTypeManager();
 
     virtual bool canHandle(ProjectFile* file);
 
     virtual bool index(ProjectFile* entry);
 
-    void indexStructure(CXTranslationUnit unit);
-    CXChildVisitResult structureVisitor(CXCursor cursor, CXCursor parent, Buffer* buffer);
+    void indexStructure(CXTranslationUnit unit, ProjectFile* file);
+    CXChildVisitResult structureVisitor(CXCursor cursor, CXCursor parent, ProjectFile* file);
 
     CXIndex getIndex() { return m_index; }
 };
