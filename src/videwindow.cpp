@@ -59,7 +59,7 @@ bool VideWindow::init()
     m_projectView = new ProjectView(m_vide);
     m_leftTabs->addTab(L"Files", m_projectView);
 
-    m_structureView = new StructureView(m_vide);
+    m_structureView = new StructureView(m_vide, false);
     m_leftTabs->addTab(L"Structure", m_structureView);
  
     mainFrame->addWithSize(m_leftTabs, 25);
@@ -68,12 +68,10 @@ bool VideWindow::init()
     mainFrame->addWithSize(m_editorTabs, 50);
     m_editorTabs->changeTabSignal().connect(sigc::mem_fun(*this, &VideWindow::onEditorTabChange));
 
-    List* list2 = new List(this);
-    list2->addItem(new TextListItem(this, L"main()"));
-    list2->addItem(new TextListItem(this, L"TestClass::method()"));
-    Scroller* scroller2 = new Scroller(this);
-    scroller2->setChild(list2);
-    mainFrame->addWithSize(scroller2, 25);
+    m_rightTabs = new Tabs(this);
+    m_fileStructureView = new StructureView(m_vide, true);
+    m_rightTabs->addTab(L"Structure", m_fileStructureView);
+    mainFrame->addWithSize(m_rightTabs, 25);
 
     Frame* statusFrame = new Frame(this, true);
     statusFrame->add(m_interfaceStatus);
@@ -127,11 +125,17 @@ Editor* VideWindow::openEntry(ProjectEntry* entry)
         entry->dumpDefinitions();
     }
 
-    printf("VideWindow::openEntry: Setting active widget: %p\n", editor);
-    m_editorTabs->setActiveTab(editor);
-    setActiveWidget(editor);
+    Editor* activeEditor = (Editor*)m_editorTabs->getActiveTab();
+    if (activeEditor != editor)
+    {
+        printf("VideWindow::openEntry: Setting active widget: %p\n", editor);
+        m_editorTabs->setActiveTab(editor);
+        setActiveWidget(editor);
 
-    getContent()->setDirty();
+        m_fileStructureView->setProjectFile((ProjectFile*)entry);
+
+        getContent()->setDirty();
+    }
 
     return editor;
 }

@@ -50,6 +50,7 @@ void ProjectView::init()
 void ProjectView::update()
 {
     TreeListItem* rootItem = new TreeListItem(m_vide, L"Project");
+    rootItem->setOpen(true);
     m_projectList->addItem(rootItem);
 
     Project* project = m_vide->getProject();

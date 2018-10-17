@@ -24,9 +24,11 @@
 using namespace std;
 using namespace Frontier;
 
-StructureView::StructureView(Vide* vide) : Frame(vide, false)
+StructureView::StructureView(Vide* vide, bool fileView) : Frame(vide, false)
 {
     m_vide = vide;
+    m_fileView = fileView;
+
     m_margin = 0;
 }
 
@@ -36,70 +38,100 @@ StructureView::~StructureView()
 
 void StructureView::init()
 {
-printf("StructureView::init: m_vide=%p\n", m_vide);
-
     m_structureList = new List(m_vide);
     m_scroller = new Scroller(m_vide, m_structureList);
-    //Label* projectLabel = new Label(m_vide, L"Project", ALIGN_LEFT);
-    //projectLabel->setMargin(2);
-    //add(projectLabel);
     add(m_scroller);
-/*
-*/
 }
 
 void StructureView::update()
 {
-    //TreeListItem* rootItem = new TreeListItem(m_vide, L"Project");
-    map<string, ProjectDefinition*> index = m_vide->getProject()->getIndex();
+    m_structureList->clearItems();
+
+    map<string, ProjectDefinition*> index;
+    if (!m_fileView)
+    {
+        index = m_vide->getProject()->getIndex();
+    }
+    else
+    {
+        if (m_projectFile == NULL)
+        {
+            return;
+        }
+        index = m_projectFile->getIndex();
+    }
+
     map<string, ProjectDefinition*>::iterator it;
     for (it = index.begin(); it != index.end(); it++)
-{
-ProjectDefinition* def = it->second;
-if (def->parent == NULL)
-{
-addDefinition(NULL, def);
-}
+    {
+        ProjectDefinition* def = it->second;
+        if (def->parent == NULL)
+        {
+            addDefinition(NULL, def);
+        }
+    }
 }
 
+void StructureView::setProjectFile(ProjectFile* projectFile)
+{
+    m_projectFile = projectFile;
+    update();
 }
 
 uint32_t typeToIcon(ProjectDefinitionType type)
 {
-switch (type)
-{
-case DEF_NAMESPACE:
-return FRONTIER_ICON_GLOBE;
-case DEF_CLASS:
-return FRONTIER_ICON_COGS;
+    switch (type)
+    {
+        case DEF_NAMESPACE:
+            return FRONTIER_ICON_GLOBE;
+        case DEF_CLASS:
+            return FRONTIER_ICON_COGS;
 
-default:
-return FRONTIER_ICON_COG;
-}
+        default:
+            return FRONTIER_ICON_COG;
+    }
 }
 
 void StructureView::addDefinition(Frontier::TreeListItem* parent, ProjectDefinition* def)
 {
+    ProjectDefinitionSource fileSource;
+    bool singleFileSource = false;
+    if (m_fileView)
+    {
+        bool found = false;
+        for (ProjectDefinitionSource source : def->sources)
+        {
+            if (source.entry == m_projectFile)
+            {
+                fileSource = source;
+                found = true;
+                break;
+            }
+        }
+        if (!found)
+        {
+            return;
+        }
+        singleFileSource = true;
+    }
+    else if (def->sources.size() == 1)
+    {
+        fileSource = def->sources[0];
+        singleFileSource = true;
+    }
+
     wstring name = Utils::string2wstring(def->name);
-uint32_t icon = FRONTIER_ICON_CIRCLE;
-    if (def->sources.size() == 1)
+    uint32_t icon = FRONTIER_ICON_CIRCLE;
+
+    if (singleFileSource)
     {
         char linestr[32];
-        snprintf(linestr, 32, "%u", def->sources[0].position.line);
-        name += L" " + Utils::string2wstring(def->sources[0].entry->getName() + ":" + string(linestr));
-icon = typeToIcon(def->sources[0].type);
+        snprintf(linestr, 32, "%u", fileSource.position.line);
+        name += L" " + Utils::string2wstring(fileSource.entry->getName() + ":" + string(linestr));
+        icon = typeToIcon(fileSource.type);
     }
 
     TreeListItem* item = new TreeListItem(m_vide, icon, name);
-
-if (def->sources.size() == 1)
-{
-ProjectDefinitionSource* src = new ProjectDefinitionSource();
-*src = def->sources[0];
-item->setPrivateData(src);
-            item->clickSignal().connect(sigc::mem_fun(*this, &StructureView::onItemClicked));
-}
-
     if (parent == NULL)
     {
         m_structureList->addItem(item);
@@ -109,18 +141,28 @@ item->setPrivateData(src);
         parent->addItem(item);
     }
 
-    if (def->sources.size() > 1)
+    if (singleFileSource)
+    {
+        ProjectDefinitionSource* src = new ProjectDefinitionSource();
+        *src = fileSource;
+        item->setPrivateData(src);
+        item->clickSignal().connect(sigc::mem_fun(*this, &StructureView::onItemClicked));
+    }
+
+    if (!m_fileView && def->sources.size() > 1)
     {
         for (ProjectDefinitionSource source : def->sources)
         {
 
             char linestr[32];
             snprintf(linestr, 32, "%u", source.position.line);
-            TextListItem* sourceItem = new TextListItem(m_vide, typeToIcon(source.type), Utils::string2wstring(source.entry->getName() + ":" + string(linestr) ));
+            TextListItem* sourceItem = new TextListItem(m_vide,
+                typeToIcon(source.type), Utils::string2wstring(source.entry->getName() + ":" + string(linestr) ));
             item->addItem(sourceItem);
-ProjectDefinitionSource* src = new ProjectDefinitionSource();
-*src = source;
-sourceItem->setPrivateData(src);
+
+            ProjectDefinitionSource* src = new ProjectDefinitionSource();
+            *src = source;
+            sourceItem->setPrivateData(src);
             sourceItem->clickSignal().connect(sigc::mem_fun(*this, &StructureView::onItemClicked));
         }
     }

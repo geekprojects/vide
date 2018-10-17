@@ -40,10 +40,12 @@ class VideWindow : public Frontier::FrontierWindow
     Vide* m_vide;
     Frontier::Tabs* m_leftTabs;
     Frontier::Tabs* m_editorTabs;
+    Frontier::Tabs* m_rightTabs;
     FontHandle* m_textFont;
     Frontier::Label* m_interfaceStatus;
     ProjectView* m_projectView;
     StructureView* m_structureView;
+    StructureView* m_fileStructureView;
 
     EditorTipWindow* m_editorTipWindow;
 

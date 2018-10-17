@@ -114,6 +114,7 @@ class ProjectEntry
 
     void addDefinition(ProjectDefinition* def);
     void dumpDefinitions();
+    std::map<std::string, ProjectDefinition*>& getIndex() { return m_index; }
 
     void dump(int level);
 };

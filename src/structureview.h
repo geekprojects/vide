@@ -16,15 +16,20 @@ class StructureView : public Frontier::Frame
     Frontier::Scroller* m_scroller;
     Frontier::List* m_structureList;
 
+    bool m_fileView;
+    ProjectFile* m_projectFile;
+
     void addDefinition(Frontier::TreeListItem* parent, ProjectDefinition* def);
 
     void onItemClicked(Frontier::ListItem* item);
 
  public:
-    StructureView(Vide* vide);
+    StructureView(Vide* vide, bool fileView);
     virtual ~StructureView();
 
     virtual void update();
+
+void setProjectFile(ProjectFile* projectFile);
 
     virtual void init();
 };
