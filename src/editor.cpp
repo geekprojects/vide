@@ -70,7 +70,6 @@ void Editor::layout()
 {
     m_scrollBar->setPosition(m_setSize.width - m_scrollBar->getMinSize().width, 0);
     m_scrollBar->setSize(Size(m_scrollBar->getMinSize().width, m_setSize.height));
-
 }
 
 bool Editor::draw(Surface* surface)

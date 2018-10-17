@@ -55,12 +55,18 @@ bool VideWindow::init()
     ResizeableFrame* mainFrame = new ResizeableFrame(this, true);
     rootFrame->add(mainFrame);
 
+    m_leftTabs = new Tabs(this);
     m_projectView = new ProjectView(m_vide);
-    mainFrame->addWithSize(m_projectView, 25);
+    m_leftTabs->addTab(L"Files", m_projectView);
 
-    m_tabs = new Tabs(this);
-    mainFrame->addWithSize(m_tabs, 50);
-    m_tabs->changeTabSignal().connect(sigc::mem_fun(*this, &VideWindow::onEditorTabChange));
+    m_structureView = new StructureView(m_vide);
+    m_leftTabs->addTab(L"Structure", m_structureView);
+ 
+    mainFrame->addWithSize(m_leftTabs, 25);
+
+    m_editorTabs = new Tabs(this);
+    mainFrame->addWithSize(m_editorTabs, 50);
+    m_editorTabs->changeTabSignal().connect(sigc::mem_fun(*this, &VideWindow::onEditorTabChange));
 
     List* list2 = new List(this);
     list2->addItem(new TextListItem(this, L"main()"));
@@ -77,6 +83,7 @@ bool VideWindow::init()
     setContent(rootFrame);
 
     m_projectView->update();
+    m_structureView->update();
 
     m_editorTipWindow = new EditorTipWindow(getApp());
 
@@ -92,7 +99,7 @@ void VideWindow::onOpenFile()
 
 void VideWindow::onEditorTabChange(Widget* widget)
 {
-printf("VideWindow::onEditorTabChange: Setting active widget: %p\n", widget);
+    printf("VideWindow::onEditorTabChange: Setting active widget: %p\n", widget);
     setActiveWidget(widget);
 }
 
@@ -101,7 +108,7 @@ void VideWindow::setInterfaceStatus(std::wstring message)
     m_interfaceStatus->setText(message);
 }
 
-void VideWindow::openEntry(ProjectEntry* entry)
+Editor* VideWindow::openEntry(ProjectEntry* entry)
 {
     string filePath = entry->getFilePath();
     printf("VideWindow::openEntry: filePath=%s\n", filePath.c_str());
@@ -110,16 +117,30 @@ void VideWindow::openEntry(ProjectEntry* entry)
     if (editor == NULL)
     {
         Buffer* buffer = Buffer::loadFile(filePath.c_str());
-buffer->setProjectFile((ProjectFile*)entry);
+        buffer->setProjectFile((ProjectFile*)entry);
 
         editor = new Editor(m_vide, buffer, entry->getFileTypeManager());
         editor->setBuffer(buffer);
-        m_tabs->addTab(Frontier::Utils::string2wstring(entry->getName()), editor);
+        m_editorTabs->addTab(Frontier::Utils::string2wstring(entry->getName()), editor);
         entry->setEditor(editor);
+
+        entry->dumpDefinitions();
     }
 
     printf("VideWindow::openEntry: Setting active widget: %p\n", editor);
-    m_tabs->setActiveTab(editor);
+    m_editorTabs->setActiveTab(editor);
     setActiveWidget(editor);
+
+    getContent()->setDirty();
+
+    return editor;
+}
+
+Editor* VideWindow::openEntry(ProjectEntry* entry, Position pos)
+{
+    Editor* editor = openEntry(entry);
+    editor->moveCursor(pos);
+    printf("VideWindow::openEntry: line=%u, column=%u\n", pos.line, pos.column);
+    return editor;
 }
 

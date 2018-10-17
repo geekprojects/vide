@@ -42,16 +42,9 @@ ProjectView::~ProjectView()
 
 void ProjectView::init()
 {
-printf("ProjectView::init: m_vide=%p\n", m_vide);
-
     m_projectList = new List(m_vide);
     m_scroller = new Scroller(m_vide, m_projectList);
-    Label* projectLabel = new Label(m_vide, L"Project", ALIGN_LEFT);
-    projectLabel->setMargin(2);
-    add(projectLabel);
     add(m_scroller);
-/*
-*/
 }
 
 void ProjectView::update()

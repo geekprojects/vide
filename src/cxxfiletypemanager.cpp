@@ -516,6 +516,7 @@ CXChildVisitResult CXXFileTypeManager::structureVisitor(CXCursor cursor, CXCurso
         def->sources.push_back(source);
 
         m_project->addDefinition(def);
+        file->addDefinition(def);
     }
 
     if (cursorKind == CXCursor_Namespace ||

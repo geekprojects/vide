@@ -112,6 +112,9 @@ class ProjectEntry
     void setFileTypeManagerData(FileTypeManagerData* ftmd) { m_fileTypeManagerData = ftmd; }
     FileTypeManagerData* getFileTypeManagerData() { return m_fileTypeManagerData; }
 
+    void addDefinition(ProjectDefinition* def);
+    void dumpDefinitions();
+
     void dump(int level);
 };
 
@@ -185,6 +188,7 @@ class Project
 
     ProjectDefinition* findDefinition(std::string name);
     void addDefinition(ProjectDefinition* def);
+    std::map<std::string, ProjectDefinition*>& getIndex() { return m_index; }
 
     void dumpStructure();
 };

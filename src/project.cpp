@@ -267,6 +267,21 @@ string ProjectEntry::getFilePath()
     return path;
 }
 
+void ProjectEntry::addDefinition(ProjectDefinition* def)
+{
+    m_index.insert(make_pair(def->name, def));
+}
+
+void ProjectEntry::dumpDefinitions()
+{
+    map<string, ProjectDefinition*>::iterator it;
+
+    for (it = m_index.begin(); it != m_index.end(); it++)
+    {
+        printf("ProjectEntry::dumpDefinitions: %s: %s\n", m_name.c_str(), it->second->name.c_str());
+    }
+}
+
 ProjectFile::ProjectFile(Project* project, ProjectEntry* parent, std::string name)
     : ProjectEntry(project, ENTRY_FILE, parent, name)
 {
@@ -275,6 +290,7 @@ ProjectFile::ProjectFile(Project* project, ProjectEntry* parent, std::string nam
 ProjectFile::~ProjectFile()
 {
 }
+
 
 ProjectDirectory::ProjectDirectory(Project* project, ProjectEntry* parent, std::string name)
     : ProjectEntry(project, ENTRY_DIR, parent, name)

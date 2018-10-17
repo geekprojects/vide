@@ -9,7 +9,8 @@ using namespace Frontier;
 
 EditorTipWindow::EditorTipWindow(FrontierApp* app) : FrontierWindow(app, L"", WINDOW_POPUP)
 {
-m_token = NULL;
+    m_token = NULL;
+    m_frame = NULL;
 }
 
 EditorTipWindow::~EditorTipWindow()
