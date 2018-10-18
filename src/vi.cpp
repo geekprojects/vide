@@ -105,6 +105,7 @@ void ViInterface::keyNormal(Frontier::InputMessage* inputMessage)
                 m_command = m_prevCommand;
                 m_command.count *= count;
                 m_command.state = STATE_EXEC;
+                m_command.params = "";
 
                 // TODO: Handle repeating insert commands
                 if (m_command.type == TYPE_INSERT)
@@ -125,7 +126,7 @@ void ViInterface::keyNormal(Frontier::InputMessage* inputMessage)
 
             case L'A':
                 m_editor->moveCursorXEnd();
-                m_editor->moveCursorDelta(1, 0);
+                m_editor->moveCursorDelta(1, 0, true);
                 setMode(MODE_INSERT);
                 m_command.type = TYPE_INSERT;
                 m_command.state = STATE_EDIT;
@@ -173,7 +174,7 @@ void ViInterface::keyNormal(Frontier::InputMessage* inputMessage)
         {
             case 'd':
             case 'y':
-                printf("ViInterface::keyNormal: STATE_EXTRA: d: Extra char: %c\n", chr);
+                printf("ViInterface::keyNormal: STATE_EXTRA: Extra char: %c\n", chr);
                 m_command.params += chr;
                 m_command.state = STATE_EXEC;
                 break;
@@ -260,17 +261,17 @@ bool ViInterface::runCommand(bool& setPrev, bool& continueRunning)
             Position cursor = m_editor->getCursor();
             Position pos = cursor;
             LineToken* token = m_editor->getBuffer()->getToken(cursor);
-printf("ViInterface::runCommand: e: token=%p\n", token);
+            printf("ViInterface::runCommand: e: token=%p\n", token);
 
             if (token == NULL || token->isSpace || cursor.column == (token->column + token->text.length() - 1) )
             {
-printf("ViInterface::runCommand: e: Looking for next word...\n");
+                printf("ViInterface::runCommand: e: Looking for next word...\n");
                 pos = m_editor->findNextWord();
-printf("ViInterface::runCommand: e: pos: line=%u, col=%u\n", pos.line, pos.column);
+                printf("ViInterface::runCommand: e: pos: line=%u, col=%u\n", pos.line, pos.column);
                 token = m_editor->getBuffer()->getToken(pos);
             }
 
-printf("ViInterface::runCommand: e: token(2)=%p\n", token);
+            printf("ViInterface::runCommand: e: token(2)=%p\n", token);
             if (token != NULL)
             {
                 pos.column = token->column + token->text.length() - 1;
@@ -280,9 +281,32 @@ printf("ViInterface::runCommand: e: token(2)=%p\n", token);
             setPrev = false;
         } break;
 
+        case L'b':
+        {
+            Position pos = m_editor->findPrevWord();
+            m_editor->moveCursor(pos);
+            m_command.type = TYPE_CURSOR;
+            setPrev = false;
+        } break;
+
         case L'd':
-            m_editor->deleteLine();
-            m_command.type = TYPE_DELETE;
+            if (m_command.params == "d")
+            {
+                m_editor->deleteLine();
+                m_command.type = TYPE_DELETE;
+            }
+            else if (m_command.params == "w")
+            {
+                printf("DELETE WORD\n");
+            }
+            break;
+
+        case L'J':
+            m_editor->moveCursorXEnd();
+            m_editor->moveCursorDelta(1, 0);
+            m_editor->insert(L' ');
+            m_editor->joinLines();
+            m_command.type = TYPE_OTHER;
             break;
 
         case L'y':
@@ -339,6 +363,12 @@ void ViInterface::keyInsert(Frontier::InputMessage* inputMessage)
     }
     else if (inputMessage->event.key.key == KC_ESCAPE)
     {
+        // Is there any logic to this?
+        if (m_command.command == 'i' || m_command.command == 'I' || m_command.command == 'A')
+        {
+            m_editor->moveCursorDelta(-1, 0);
+        }
+
         setMode(MODE_NORMAL);
         return;
     }
@@ -497,12 +527,15 @@ void ViInterface::updateStatus()
     {
         case MODE_NORMAL:
             m_editor->setInterfaceStatus(L"Normal");
+            m_editor->setCursorType(CURSOR_BLOCK);
             break;
         case MODE_INSERT:
             m_editor->setInterfaceStatus(L"Insert");
+            m_editor->setCursorType(CURSOR_BAR);
             break;
         case MODE_EX_COMMAND:
             m_editor->setInterfaceStatus(L"Command: " + m_exCommand);
+            m_editor->setCursorType(CURSOR_BLOCK);
             break;
     }
 }

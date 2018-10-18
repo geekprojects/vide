@@ -34,6 +34,7 @@ Editor::Editor(Vide* vide, Buffer* buffer, FileTypeManager* ftm) : Widget(vide)
 
     m_cursor.line = 0;
     m_cursor.column = 0;
+    m_cursorType = CURSOR_BLOCK;
 
     m_scrollBar = new ScrollBar(vide);
     m_scrollBar->setParent(this);
@@ -163,12 +164,18 @@ bool Editor::draw(Surface* surface)
                     break;
                 }
 
-                uint32_t textCol = 0x00BBBBBB;
                 if (xpos == column && lineNumber == m_cursor.line)
                 {
                     // Draw the cursor!
-                    surface->drawRectFilled(drawX, drawY, charWidth, charHeight, 0x00BBBBBB);
-                    textCol = 0x002b2b2b;
+                    switch (m_cursorType)
+                    {
+                        case CURSOR_BLOCK:
+                            surface->drawRectFilled(drawX, drawY, charWidth, charHeight, 0x00BBBBBB);
+                            break;
+                        case CURSOR_BAR:
+                            surface->drawRectFilled(drawX, drawY, 1, charHeight, 0x00BBBBBB);
+                            break;
+                    }
                 }
 
                 if (tokenPos < token->text.length())
@@ -194,7 +201,6 @@ bool Editor::draw(Surface* surface)
                         drawY,
                         str,
                         colour,
-                        //textCol,
                         true,
                         NULL);
                 }
@@ -246,8 +252,7 @@ bool Editor::draw(Surface* surface)
 
 bool Editor::save()
 {
-    m_buffer->save();
-    return true;
+    return m_buffer->save();
 }
 
 Widget* Editor::handleMessage(Message* msg)
@@ -381,6 +386,70 @@ void Editor::setBuffer(Buffer* buffer)
     setDirty(DIRTY_CONTENT);
 }
 
+Position Editor::findPrevWord()
+{
+    return findPrevWord(m_cursor);
+}
+
+Position Editor::findPrevWord(Position from)
+{
+    Line* line = m_buffer->getLine(from.line);
+    vector<LineToken*>::iterator it;
+    it = line->tokenAt(from.column, false);
+
+    bool prevLine = false;
+    if (it != line->tokens.begin() && (it - 1) != line->tokens.begin())
+    {
+        LineToken* curToken = *it;
+        printf("CURRENT TOKEN: %ls\n", curToken->text.c_str());
+
+        if (curToken->column < from.column)
+        {
+            return Position(from.line, curToken->column);
+        }
+
+        do
+        {
+            it--;
+        }
+        while (it != line->tokens.begin() && (*it)->isSpace);
+
+        if (it != line->tokens.begin())
+        {
+            LineToken* nextToken = *it;
+
+            printf("PREV TOKEN: %lsn", nextToken->text.c_str());
+            return Position(from.line, nextToken->column);
+        }
+        else
+        {
+            prevLine = true;
+        }
+    }
+    else
+    {
+        prevLine = true;
+    }
+
+    if (prevLine)
+    {
+        printf("START OF LINE\n");
+        if (from.line > 0)
+        {
+            Line* prevLine = m_buffer->getLine(from.line - 1);
+            return findNextWord(Position(from.line + 1, prevLine->text.length() - 1));
+        }
+        else
+        {
+            printf("RETURNING START OF FILE\n");
+
+            return Position(0, 0);
+        }
+    }
+
+    return Position(0, 0);
+}
+
 Position Editor::findNextWord()
 {
     return findNextWord(m_cursor);
@@ -391,7 +460,6 @@ Position Editor::findNextWord(Position from)
     Line* line = m_buffer->getLine(from.line);
 
     vector<LineToken*>::iterator it;
-
     it = line->tokenAt(from.column, false);
 
     bool nextLine = false;
@@ -452,7 +520,7 @@ void Editor::moveCursor(Position pos)
     moveCursorX(pos.column);
 }
 
-void Editor::moveCursorX(unsigned int x)
+void Editor::moveCursorX(unsigned int x, bool allowXOver)
 {
     if (m_cursor.column == x)
     {
@@ -467,7 +535,11 @@ void Editor::moveCursorX(unsigned int x)
     else
     {
         unsigned int width = m_buffer->getLineLength(m_cursor.line);
-        if (x > width)
+        if (!allowXOver && x >= width)
+        {
+            x = width - 1;
+        }
+        else if (allowXOver && x > width)
         {
             x = width;
         }
@@ -516,7 +588,7 @@ void Editor::moveCursorY(unsigned int y)
     }
 }
 
-void Editor::moveCursorDelta(int dx, int dy)
+void Editor::moveCursorDelta(int dx, int dy, bool allowXOver)
 {
     // Move Y first as X depends on line width
     if (dy != 0)
@@ -526,7 +598,7 @@ void Editor::moveCursorDelta(int dx, int dy)
 
     if (dx != 0)
     {
-        moveCursorX(m_cursor.column + dx);
+        moveCursorX(m_cursor.column + dx, allowXOver);
     }
     printf("Editor::moveCursorDelta: m_cursorX=%d, moveCursorY=%d\n", m_cursor.column, m_cursor.line);
 }
@@ -596,6 +668,26 @@ void Editor::splitLine()
     m_buffer->insertLine(m_cursor.line + 1, newLine);
     m_fileTypeManager->tokenise(m_buffer, line);
     m_fileTypeManager->tokenise(m_buffer, newLine);
+    setDirty(DIRTY_CONTENT);
+}
+
+void Editor::joinLines()
+{
+    unsigned int count = m_buffer->getLineCount();
+
+    if (m_cursor.line >= count - 1)
+    {
+        return;
+    }
+
+    Line* line1 = m_buffer->getLine(m_cursor.line);
+    Line* line2 = m_buffer->getLine(m_cursor.line + 1);
+
+    line1->text += line2->text;
+    m_buffer->deleteLine(m_cursor.line + 1);
+
+    m_fileTypeManager->tokenise(m_buffer, line1);
+
     setDirty(DIRTY_CONTENT);
 }
 
