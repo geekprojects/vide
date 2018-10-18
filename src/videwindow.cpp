@@ -111,6 +111,8 @@ Editor* VideWindow::openEntry(ProjectEntry* entry)
     string filePath = entry->getFilePath();
     printf("VideWindow::openEntry: filePath=%s\n", filePath.c_str());
 
+    Editor* activeEditor = (Editor*)m_editorTabs->getActiveTab();
+
     Editor* editor = entry->getEditor();
     if (editor == NULL)
     {
@@ -125,7 +127,6 @@ Editor* VideWindow::openEntry(ProjectEntry* entry)
         entry->dumpDefinitions();
     }
 
-    Editor* activeEditor = (Editor*)m_editorTabs->getActiveTab();
     if (activeEditor != editor)
     {
         printf("VideWindow::openEntry: Setting active widget: %p\n", editor);
