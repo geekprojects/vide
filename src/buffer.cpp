@@ -73,7 +73,7 @@ void Buffer::deleteLine(int line)
 
 bool Buffer::save()
 {
-    FILE* fd = fopen("saved.txt", "w");
+    FILE* fd = fopen(m_filename.c_str(), "w");
     for (Line* line : m_lines)
     {
         unsigned int pos;
