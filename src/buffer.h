@@ -120,7 +120,17 @@ class Buffer
     }
 
     std::vector<Line*>& getLines() { return m_lines; }
-    Line* getLine(int y) { return m_lines.at(y); }
+    Line* getLine(int y)
+    {
+        if (y >= 0 && y < (int)m_lines.size())
+        {
+            return m_lines.at(y);
+        }
+        else
+        {
+            return NULL;
+        }
+    }
     LineToken* getToken(Position position);
 
     void insertLine(int asLine, Line* line);

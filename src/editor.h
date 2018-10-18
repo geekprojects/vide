@@ -81,6 +81,7 @@ class Editor : public Frontier::Widget
     Position getCursor() { return m_cursor; }
     unsigned int getCursorX() { return m_cursor.column; }
     unsigned int getCursorY() { return m_cursor.line; }
+
     CursorType getCursorType() { return m_cursorType; }
     void setCursorType(CursorType type) { m_cursorType = type; }
 
@@ -88,6 +89,7 @@ class Editor : public Frontier::Widget
     Position findPrevWord(Position from);
     Position findNextWord();
     Position findNextWord(Position from);
+    wchar_t getCharAtCursor();
 
     void moveCursor(Position pos);
     void moveCursorX(unsigned int x, bool allowXOver = false);

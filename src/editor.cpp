@@ -437,7 +437,7 @@ Position Editor::findPrevWord(Position from)
         if (from.line > 0)
         {
             Line* prevLine = m_buffer->getLine(from.line - 1);
-            return findNextWord(Position(from.line + 1, prevLine->text.length() - 1));
+            return findPrevWord(Position(from.line - 1, prevLine->text.length() - 1));
         }
         else
         {
@@ -512,6 +512,24 @@ Position Editor::findNextWord(Position from)
     }
 
     return Position();
+}
+
+wchar_t Editor::getCharAtCursor()
+{
+    Line* line = m_buffer->getLine(m_cursor.line);
+    if (line == NULL)
+    {
+        return 0;
+    }
+
+    if (m_cursor.column >= 0 && m_cursor.column < line->text.length())
+    {
+        return line->text.at(m_cursor.column);
+    }
+    else
+    {
+        return 0;
+    }
 }
 
 void Editor::moveCursor(Position pos)

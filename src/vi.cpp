@@ -303,8 +303,13 @@ bool ViInterface::runCommand(bool& setPrev, bool& continueRunning)
 
         case L'J':
             m_editor->moveCursorXEnd();
-            m_editor->moveCursorDelta(1, 0);
-            m_editor->insert(L' ');
+
+            if (!iswspace(m_editor->getCharAtCursor()))
+            {
+                m_editor->moveCursorDelta(1, 0, true);
+                m_editor->insert(L' ');
+            }
+
             m_editor->joinLines();
             m_command.type = TYPE_OTHER;
             break;
