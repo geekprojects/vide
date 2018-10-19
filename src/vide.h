@@ -25,6 +25,7 @@
 #include <frontier/widgets.h>
 
 #include "videwindow.h"
+#include "filetypemanager.h"
 #include "project.h"
 
 class VideWindow;
@@ -36,6 +37,8 @@ class Vide : public Frontier::FrontierApp
     VideWindow* m_mainWindow;
     FontHandle* m_textFont;
 
+    std::vector<std::wstring> m_buffer;
+
  public:
     Vide();
     ~Vide();
@@ -44,7 +47,11 @@ class Vide : public Frontier::FrontierApp
 
     FontHandle* getTextFont() { return m_textFont; }
 
+    VideWindow* getWindow() { return m_mainWindow; }
     Project* getProject() { return m_project; }
+
+    void setBuffer(std::vector<std::wstring> buffer) { m_buffer = buffer; }
+    std::vector<std::wstring> getBuffer() { return m_buffer; }
 };
 
 #endif

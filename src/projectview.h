@@ -23,7 +23,9 @@
 
 #include "vide.h"
 
-#include <frontier/widgets.h>
+#include <frontier/widgets/frame.h>
+#include <frontier/widgets/scroller.h>
+#include <frontier/widgets/list.h>
 
 class Vide;
 class ProjectDirectory;
@@ -36,6 +38,8 @@ class ProjectView : public Frontier::Frame
     Frontier::List* m_projectList;
 
     void addDirectory(Frontier::TreeListItem* parent, ProjectDirectory* dir);
+
+    void onItemClicked(Frontier::ListItem* item);
 
  public:
     ProjectView(Vide* vide);

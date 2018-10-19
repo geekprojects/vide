@@ -22,22 +22,27 @@
 #define __VIDE_VIDEWINDOW_H_
 
 #include <frontier/frontier.h>
-#include <frontier/widgets.h>
+#include <frontier/widgets/label.h>
+#include <frontier/widgets/tabs.h>
 
 #include "editor.h"
 #include "projectview.h"
+#include "editortipwindow.h"
 
 class Vide;
+class ProjectEntry;
 class ProjectView;
 
 class VideWindow : public Frontier::FrontierWindow
 {
  private:
     Vide* m_vide;
-    Editor* m_editor;
+    Frontier::Tabs* m_tabs;
     FontHandle* m_textFont;
     Frontier::Label* m_interfaceStatus;
     ProjectView* m_projectView;
+
+    EditorTipWindow* m_editorTipWindow;
 
     void onOpenFile();
 
@@ -52,6 +57,11 @@ class VideWindow : public Frontier::FrontierWindow
     FontHandle* getTextFont() { return m_textFont; }
 
     void setInterfaceStatus(std::wstring message);
+
+    EditorTipWindow* getEditorTipWindow() { return m_editorTipWindow; }
+
+    void openEntry(ProjectEntry* entry);
+    void closeEntry(ProjectEntry* entry);
 };
 
 #endif

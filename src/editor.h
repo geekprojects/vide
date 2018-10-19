@@ -23,28 +23,38 @@
 
 #include "buffer.h"
 #include "interface.h"
-#include "format.h"
+#include "filetypemanager.h"
 
-#include <frontier/widgets.h>
+#include <frontier/widgets/scrollbar.h>
+
+class Vide;
+class EditorTipWindow;
 
 class Editor : public Frontier::Widget
 {
  private:
+    Vide* m_vide;
+
     int m_marginX;
-    unsigned int m_cursorX;
-    unsigned int m_cursorY;
+    Position m_cursor;
 
     Frontier::ScrollBar* m_scrollBar;
 
     Buffer* m_buffer;
     Interface* m_interface;
-    Format* m_format;
+    FileTypeManager* m_fileTypeManager;
+
+    EditorTipWindow* m_tipWindow;
+
+    std::map<TokenType, uint32_t> m_colours;
 
     unsigned int getViewLines();
 
+    void drawCursor();
+
  public:
 
-    Editor(Frontier::FrontierWindow* window);
+    Editor(Vide* window, Buffer* buffer, FileTypeManager* ftm);
     virtual ~Editor();
 
     virtual void calculateSize();
@@ -52,15 +62,23 @@ class Editor : public Frontier::Widget
 
     virtual bool draw(Geek::Gfx::Surface* surface);
 
+    bool save();
+
     virtual Widget* handleMessage(Frontier::Message* msg);
     void onScrollbarChanged(int pos);
+    void onMouseLeave();
 
     void setBuffer(Buffer* buffer);
     Buffer* getBuffer() { return m_buffer; }
 
-    unsigned int getCursorX() { return m_cursorX; }
-    unsigned int getCursorY() { return m_cursorY; }
+    Position getCursor() { return m_cursor; }
+    unsigned int getCursorX() { return m_cursor.column; }
+    unsigned int getCursorY() { return m_cursor.line; }
 
+    Position findNextWord();
+    Position findNextWord(Position from);
+
+    void moveCursor(Position pos);
     void moveCursorX(unsigned int x);
     void moveCursorY(unsigned int y);
     void moveCursorDelta(int dx, int dy);
@@ -69,9 +87,16 @@ class Editor : public Frontier::Widget
     void moveCursorPage(int dir);
 
     void insert(wchar_t c);
+    void insertLine();
+    void splitLine();
     void deleteAtCursor();
+    void deleteLine();
+
+    void copyToBuffer(int count);
+    void pasteFromBuffer();
 
     void setInterfaceStatus(std::wstring message);
 };
 
 #endif
+

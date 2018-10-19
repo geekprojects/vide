@@ -20,11 +20,15 @@
 
 
 #include "videwindow.h"
+#include "utils.h"
+
+#include <frontier/widgets/iconbutton.h>
+#include <frontier/widgets/resizeableframe.h>
 
 using namespace std;
 using namespace Frontier;
 
-VideWindow::VideWindow(Vide* vide) : FrontierWindow(vide)
+VideWindow::VideWindow(Vide* vide) : FrontierWindow(vide, L"Vide", WINDOW_NORMAL)
 {
     m_vide = vide;
 }
@@ -52,28 +56,18 @@ bool VideWindow::init()
     rootFrame->add(mainFrame);
 
     m_projectView = new ProjectView(m_vide);
-    mainFrame->add(m_projectView);
+    mainFrame->addWithSize(m_projectView, 25);
 
-    Tabs* tabs = new Tabs(this);
-    mainFrame->add(tabs);
-    tabs->changeTabSignal().connect(sigc::mem_fun(*this, &VideWindow::onEditorTabChange));
-
-    m_editor = new Editor(this);
-    Buffer* buffer = Buffer::loadFile("main.cpp");
-    m_editor->setBuffer(buffer);
-    tabs->addTab(L"main.cpp", m_editor);
-
-    Editor* editor2 = new Editor(this);
-    Buffer* buffer2 = Buffer::loadFile("editor.cpp");
-    editor2->setBuffer(buffer2);
-    tabs->addTab(L"editor.cpp", editor2);
+    m_tabs = new Tabs(this);
+    mainFrame->addWithSize(m_tabs, 50);
+    m_tabs->changeTabSignal().connect(sigc::mem_fun(*this, &VideWindow::onEditorTabChange));
 
     List* list2 = new List(this);
     list2->addItem(new TextListItem(this, L"main()"));
     list2->addItem(new TextListItem(this, L"TestClass::method()"));
     Scroller* scroller2 = new Scroller(this);
     scroller2->setChild(list2);
-    mainFrame->add(scroller2);
+    mainFrame->addWithSize(scroller2, 25);
 
     Frame* statusFrame = new Frame(this, true);
     statusFrame->add(m_interfaceStatus);
@@ -81,9 +75,10 @@ bool VideWindow::init()
     rootFrame->add(statusFrame);
 
     setContent(rootFrame);
-    setActiveWidget(m_editor);
 
     m_projectView->update();
+
+    m_editorTipWindow = new EditorTipWindow(getApp());
 
     return true;
 }
@@ -106,4 +101,24 @@ void VideWindow::setInterfaceStatus(std::wstring message)
     m_interfaceStatus->setText(message);
 }
 
+void VideWindow::openEntry(ProjectEntry* entry)
+{
+    string filePath = entry->getFilePath();
+    printf("VideWindow::openEntry: filePath=%s\n", filePath.c_str());
+
+    Editor* editor = entry->getEditor();
+    if (editor == NULL)
+    {
+        Buffer* buffer = Buffer::loadFile(filePath.c_str());
+
+        editor = new Editor(m_vide, buffer, entry->getFileTypeManager());
+        editor->setBuffer(buffer);
+        m_tabs->addTab(Frontier::Utils::string2wstring(entry->getName()), editor);
+        entry->setEditor(editor);
+    }
+
+    printf("VideWindow::openEntry: Setting active widget: %p\n", editor);
+    m_tabs->setActiveTab(editor);
+    setActiveWidget(editor);
+}
 

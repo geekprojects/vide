@@ -5,7 +5,7 @@ AC_PREREQ([2.69])
 AC_INIT([FULL-PACKAGE-NAME], [VERSION], [BUG-REPORT-ADDRESS])
 AM_INIT_AUTOMAKE([-Wall -Werror])
 AC_CONFIG_SRCDIR([src/editor.h])
-AC_CONFIG_HEADERS([config.h])
+AC_CONFIG_HEADERS([src/config.h])
 
 # Checks for programs.
 AM_PROG_AR
@@ -34,11 +34,31 @@ AC_CHECK_FUNCS([iswprint memset])
 
 AC_SEARCH_LIBS([fsw_init_library], [fswatch])
 
+AC_ARG_WITH([clang], [Build with Clang from specified directory], [LLVM_PREFIX=$withval])
+
+OLDLIBS="$LIBS"
+if test "x$LLVM_PREFIX" != "x"; then
+    LIBS="$LIBS -L$LLVM_PREFIX/lib"
+fi
+
+AC_SEARCH_LIBS([clang_createIndex], [clang], [LIBCLANG="true" ], [ LIBCLANG="false"])
+AM_CONDITIONAL([HAS_LIBCLANG], [test x$LIBCLANG = xtrue])
+LIBS="$OLDLIBS"
+
+if test x$LIBCLANG = xtrue; then
+    if test "x$LLVM_PREFIX" != "x"; then
+        LIBS="$LIBS -L$LLVM_PREFIX/lib"
+        CPPFLAGS="$CPPFLAGS -I$LLVM_PREFIX/include"
+    fi
+    AC_DEFINE(HAS_LIBCLANG, 1, [libclang])
+    LIBS="$LIBS -lclang"
+fi
+
 PKG_CHECK_MODULES(libfrontier, libfrontier >= 1)
 CPPFLAGS="$CPPFLAGS $libfrontier_CFLAGS"
 LIBS="$LIBS $libfrontier_LIBS"
 
-
+CPPFLAGS="$CPPFLAGS"
 CPPFLAGS="-O0 -g $CPPFLAGS -Wall -Werror -O0"
 
 AC_CONFIG_FILES([

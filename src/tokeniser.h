@@ -21,29 +21,42 @@
 #ifndef __VIDE_FORMAT_H_
 #define __VIDE_FORMAT_H_
 
-#include "buffer.h"
+class Buffer;
+struct Line;
 
-class Format
+enum TokenType
 {
- protected:
-
- public:
-    Format();
-    virtual ~Format();
-
-    virtual bool tokenise(Buffer* buffer);
-    virtual bool tokenise(Line* line);
+    TOKEN_TEXT,
+    TOKEN_COMMENT,
+    TOKEN_KEYWORD,
+    TOKEN_TYPE_REF,
+    TOKEN_IDENTIFIER,
+    TOKEN_LOCAL_VARIABLE,
+    TOKEN_PARAM_VARIABLE,
+    TOKEN_ACCESS_SPECIFIER,
 };
 
-class SimpleFormat : public Format
+class Tokeniser
 {
  protected:
 
  public:
-    SimpleFormat();
-    virtual ~SimpleFormat();
+    Tokeniser();
+    virtual ~Tokeniser();
 
-    virtual bool tokenise(Line* line);
+    virtual bool tokenise(Buffer* buffer);
+    virtual bool tokenise(Buffer* buffer, Line* line);
+};
+
+class SimpleTokeniser : public Tokeniser
+{
+ protected:
+
+ public:
+    SimpleTokeniser();
+    virtual ~SimpleTokeniser();
+
+    virtual bool tokenise(Buffer* buffer, Line* line);
 };
 
 #endif

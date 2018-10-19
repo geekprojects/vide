@@ -29,19 +29,30 @@ using namespace Frontier;
 using namespace Geek;
 using namespace Geek::Gfx;
 
-Editor::Editor(FrontierWindow* window) : Widget(window)
+Editor::Editor(Vide* vide, Buffer* buffer, FileTypeManager* ftm) : Widget(vide)
 {
-    m_cursorX = 0;
-    m_cursorY = 0;
+    m_vide = vide;
+    m_buffer = buffer;
 
-    m_scrollBar = new ScrollBar(window);
+    m_cursor.line = 0;
+    m_cursor.column = 0;
+
+    m_scrollBar = new ScrollBar(vide);
     m_scrollBar->setParent(this);
     m_scrollBar->changedPositionSignal().connect(sigc::mem_fun(*this, &Editor::onScrollbarChanged));
 
     m_interface = new ViInterface(this);
-    m_format = new SimpleFormat();
+    m_fileTypeManager = ftm;
 
     m_marginX = 40;
+
+    m_colours.insert(make_pair(TOKEN_TEXT, 0xA9B7C6));
+    m_colours.insert(make_pair(TOKEN_COMMENT, 0x808080));
+    m_colours.insert(make_pair(TOKEN_KEYWORD, 0xCC7832));
+    m_colours.insert(make_pair(TOKEN_IDENTIFIER, 0xA9B7C6));
+    m_colours.insert(make_pair(TOKEN_LOCAL_VARIABLE, 0x9876AA));
+    m_colours.insert(make_pair(TOKEN_PARAM_VARIABLE, 0x9876AA));
+    m_colours.insert(make_pair(TOKEN_ACCESS_SPECIFIER, 0xff0000));
 }
 
 Editor::~Editor()
@@ -77,6 +88,15 @@ bool Editor::draw(Surface* surface)
     int charHeight = textFont->getPixelHeight(72);
     unsigned int viewLines = m_setSize.height / charHeight;
 
+    // Set the default colour to the TEXT colour
+    uint32_t defaultColour = 0xffffff;
+    map<TokenType, uint32_t>::iterator it;
+    it = m_colours.find(TOKEN_TEXT);
+    if (it != m_colours.end())
+    {
+        defaultColour = it->second;
+    }
+
     int drawX = 0;
     int drawY = 0;
 
@@ -89,13 +109,6 @@ bool Editor::draw(Surface* surface)
     unsigned int ypos = 0;
     for (ypos = 0; ypos < viewLines; ypos++)
     {
-/*
-        if (drawY + charHeight > m_setSize.height)
-        {
-            break;
-        }
-*/
-
         unsigned int lineNumber = scrollPos + ypos;
 
         if (lineNumber >= lines.size())
@@ -121,10 +134,15 @@ bool Editor::draw(Surface* surface)
 
         Line* line = lines.at(lineNumber);
 
-        unsigned int cursorX = m_cursorX;
-        if (cursorX > line->text.length())
+        unsigned int column = m_cursor.column;
+        if (column > line->text.length())
         {
-            cursorX = line->text.length();
+            column = line->text.length();
+        }
+
+        if (line->tokens.empty())
+        {
+            surface->drawRectFilled(drawX, drawY, charWidth, charHeight, 0x00BBBBBB);
         }
 
         vector<LineToken*>::iterator tokenIt;
@@ -132,8 +150,10 @@ bool Editor::draw(Surface* surface)
         {
             LineToken* token = *tokenIt;
 
+            unsigned int startX = drawX;
             unsigned int tokenLen = token->text.length();
-            if (lineNumber == m_cursorY && (tokenIt + 1) == line->tokens.end() && cursorX >= xpos + tokenLen)
+
+            if (lineNumber == m_cursor.line && (tokenIt + 1) == line->tokens.end() && column >= xpos + tokenLen)
             {
                 //cursorX = xpos + fragLen;
                 tokenLen++;
@@ -147,29 +167,65 @@ bool Editor::draw(Surface* surface)
                     break;
                 }
 
-                //uint32_t textCol = 0x00BBBBBB;
-                if (xpos == cursorX && lineNumber == m_cursorY)
+                if (xpos == column && lineNumber == m_cursor.line)
                 {
+                    // Draw the cursor!
                     surface->drawRectFilled(drawX, drawY, charWidth, charHeight, 0x00BBBBBB);
-                    //textCol = 0x002b2b2b;
                 }
+
                 if (tokenPos < token->text.length())
                 {
                     wstring str = L"";
                     str += token->text.at(tokenPos);
+
+                    uint32_t colour;
+                    map<TokenType, uint32_t>::iterator it;
+                    it = m_colours.find(token->type);
+                    if (it != m_colours.end())
+                    {
+                        colour = it->second;
+                    }
+                    else
+                    {
+                        colour = defaultColour;
+                    }
 
                     fm->write(textFont,
                         surface,
                         drawX + 1,
                         drawY,
                         str,
-                        token->colour,
-                        //textCol,
+                        colour,
                         true,
                         NULL);
                 }
 
                 drawX += charWidth;
+            }
+            if (!token->messages.empty())
+            {
+                int maxType = 0;
+                for (TokenMessage message : token->messages)
+                {
+                    if (message.type > maxType)
+                    {
+                        maxType = message.type;
+                    }
+                }
+                uint32_t messageCol = 0;
+                switch (maxType)
+                {
+                    case ::MESSAGE_INFO:
+                        messageCol = 0xff6897BB;
+                        break;
+                    case MESSAGE_WARNING:
+                        messageCol = 0xffFFC66D;
+                        break;
+                    case MESSAGE_ERROR:
+                        messageCol = 0xffff0000;
+                        break;
+                }
+                surface->drawLine(startX, drawY + charHeight - 1, drawX, drawY + charHeight - 1, messageCol);
             }
         }
 
@@ -186,6 +242,12 @@ bool Editor::draw(Surface* surface)
     SurfaceViewPort scrollbarVP(surface, m_scrollBar->getX(), m_scrollBar->getY(), m_scrollBar->getWidth(), m_scrollBar->getHeight());
     m_scrollBar->draw(&scrollbarVP);
 
+    return true;
+}
+
+bool Editor::save()
+{
+    m_buffer->save();
     return true;
 }
 
@@ -226,35 +288,67 @@ Widget* Editor::handleMessage(Message* msg)
                     return m_scrollBar->handleMessage(msg);
                 }
 
-                if (inputMessage->inputMessageType == FRONTIER_MSG_INPUT_MOUSE_BUTTON)
+                Vector2D thisPos = getAbsolutePosition();
+                x -= thisPos.x;
+                y -= thisPos.y;
+
+                if (x > m_marginX)
                 {
-                    Vector2D thisPos = getAbsolutePosition();
-                    x -= thisPos.x;
-                    y -= thisPos.y;
+                    x -= m_marginX;
 
-                    if (x > m_marginX)
+                    FontManager* fm = m_ui->getFontManager();
+                    FontHandle* textFont = ((Vide*)m_ui)->getTextFont();
+
+                    int charWidth = fm->width(textFont, L"M");
+                    int charHeight = textFont->getPixelHeight(72);
+
+                    int scrollPos = m_scrollBar->getPos();
+                    int mouseCursorX = x / charWidth;
+                    int mouseCursorY = scrollPos + (y / charHeight);
+ 
+                    if (inputMessage->inputMessageType == FRONTIER_MSG_INPUT_MOUSE_BUTTON)
                     {
-                        x -= m_marginX;
+                        moveCursorX(mouseCursorX);
+                        moveCursorY(mouseCursorY);
 
-                        FontManager* fm = m_ui->getFontManager();
-                        FontHandle* textFont = ((Vide*)m_ui)->getTextFont();
-
-                        int charWidth = fm->width(textFont, L"M");
-                        int charHeight = textFont->getPixelHeight(72);
-
-                        int scrollPos = m_scrollBar->getPos();
-                        moveCursorX(x / charWidth);
-                        moveCursorY(scrollPos + (y / charHeight));
+                        setDirty(DIRTY_CONTENT);
+                        return this;
                     }
+                    else if (inputMessage->inputMessageType == FRONTIER_MSG_INPUT_MOUSE_MOTION)
+                    {
+                        LineToken* token = m_buffer->getToken(Position(mouseCursorY, mouseCursorX));
+                        printf("Editor::handleMessage:: Motion: token=%p\n", token);
+                        bool showTip = false;
+                        if (token != NULL)
+                        {
+                            printf("Editor::handleMessage:: Motion: Messages=%lu\n", token->messages.size());
+                            if (!token->messages.empty())
+                            {
 
-                    setDirty(DIRTY_CONTENT);
-                    return this;
+                                int x = inputMessage->event.button.x;
+                                int y = inputMessage->event.button.y;
+                                Geek::Vector2D screenPos = m_vide->getWindow()->getScreenPosition(Geek::Vector2D(x, y));
+                                m_vide->getWindow()->getEditorTipWindow()->setToken(token, screenPos);
+
+                                showTip = true;
+                            }
+                        }
+                        if (!showTip)
+                        {
+                            m_vide->getWindow()->getEditorTipWindow()->hide();
+                        }
+                    }
                 }
             } break;
 
             case FRONTIER_MSG_INPUT_MOUSE_WHEEL:
-                moveCursorDelta(0, -(inputMessage->event.wheel.scrollY));
+            {
+                int scrollPos = m_scrollBar->getPos();
+                scrollPos -= inputMessage->event.wheel.scrollY;
+                m_scrollBar->setPos(scrollPos);
+
                 return this;
+            } break;
 
             default:
                 //printf("Editor::handleMessage: Unhandled input message type: %d\n", inputMessage->inputMessageType);
@@ -275,20 +369,96 @@ void Editor::onScrollbarChanged(int pos)
 
 }
 
+void Editor::onMouseLeave()
+{
+    m_vide->getWindow()->getEditorTipWindow()->hide();
+}
+
 void Editor::setBuffer(Buffer* buffer)
 {
     m_buffer = buffer;
 
-    m_format->tokenise(m_buffer);
+    m_fileTypeManager->tokenise(m_buffer);
 
     m_interface->updateStatus();
 
     setDirty(DIRTY_CONTENT);
 }
 
+Position Editor::findNextWord()
+{
+    return findNextWord(m_cursor);
+}
+
+Position Editor::findNextWord(Position from)
+{
+    Line* line = m_buffer->getLine(from.line);
+
+    vector<LineToken*>::iterator it;
+
+    it = line->tokenAt(from.column, false);
+
+    bool nextLine = false;
+    if (it != line->tokens.end() && (it + 1) != line->tokens.end())
+    {
+        LineToken* curToken = *it;
+        printf("CURRENT TOKEN: %ls\n", curToken->text.c_str());
+
+        do
+        {
+            it++;
+        }
+        while (it != line->tokens.end() && (*it)->isSpace);
+
+        if (it != line->tokens.end())
+        {
+            LineToken* nextToken = *it;
+
+            printf("NEXT TOKEN: %lsn", nextToken->text.c_str());
+            return Position(from.line, nextToken->column);
+        }
+        else
+        {
+            nextLine = true;
+        }
+    }
+    else
+    {
+        nextLine = true;
+    }
+
+    if (nextLine)
+    {
+        printf("END OF LINE\n");
+        if (from.line < m_buffer->getLineCount() - 1)
+        {
+            Line* nextLine = m_buffer->getLine(from.line + 1);
+            if (!nextLine->tokens.empty() && !nextLine->tokens.at(0)->isSpace)
+            {
+                return Position(from.line + 1, 0);
+            }
+            return findNextWord(Position(from.line + 1, 0));
+        }
+        else
+        {
+            printf("RETURNING END OF FILE\n");
+
+            return Position(from.line, line->text.length() - 1);
+        }
+    }
+
+    return Position();
+}
+
+void Editor::moveCursor(Position pos)
+{
+    moveCursorY(pos.line);
+    moveCursorX(pos.column);
+}
+
 void Editor::moveCursorX(unsigned int x)
 {
-    if (m_cursorX == x)
+    if (m_cursor.column == x)
     {
         return;
     }
@@ -300,23 +470,23 @@ void Editor::moveCursorX(unsigned int x)
     }
     else
     {
-        unsigned int width = m_buffer->getLineLength(m_cursorY);
+        unsigned int width = m_buffer->getLineLength(m_cursor.line);
         if (x > width)
         {
             x = width;
         }
     }
 
-    if (m_cursorX != x)
+    if (m_cursor.column != x)
     {
-        m_cursorX = x;
+        m_cursor.column = x;
         setDirty(DIRTY_CONTENT);
     }
 }
 
 void Editor::moveCursorY(unsigned int y)
 {
-    if (m_cursorY == y)
+    if (m_cursor.line == y)
     {
         return;
     }
@@ -330,20 +500,20 @@ void Editor::moveCursorY(unsigned int y)
         y = m_buffer->getLineCount() - 1;
     }
 
-    if (m_cursorY != y)
+    if (m_cursor.line != y)
     {
         unsigned int scrollPos = m_scrollBar->getPos();
-        m_cursorY = y;
-        if (m_cursorY < scrollPos)
+        m_cursor.line = y;
+        if (m_cursor.line < scrollPos)
         {
-            m_scrollBar->setPos(m_cursorY);
+            m_scrollBar->setPos(m_cursor.line);
         }
         else
         {
             int viewLines = getViewLines();
-            if (m_cursorY >= (scrollPos + viewLines))
+            if (m_cursor.line >= (scrollPos + viewLines))
             {
-                m_scrollBar->setPos(m_cursorY - (viewLines - 1));
+                m_scrollBar->setPos(m_cursor.line - (viewLines - 1));
             }
         }
         setDirty(DIRTY_CONTENT);
@@ -355,20 +525,20 @@ void Editor::moveCursorDelta(int dx, int dy)
     // Move Y first as X depends on line width
     if (dy != 0)
     {
-        moveCursorY(m_cursorY + dy);
+        moveCursorY(m_cursor.line + dy);
     }
 
     if (dx != 0)
     {
-        moveCursorX(m_cursorX + dx);
+        moveCursorX(m_cursor.column + dx);
     }
-    printf("Editor::moveCursorDelta: m_cursorX=%d, moveCursorY=%d\n", m_cursorX, m_cursorY);
+    printf("Editor::moveCursorDelta: m_cursorX=%d, moveCursorY=%d\n", m_cursor.column, m_cursor.line);
 }
 
 void Editor::moveCursorXEnd()
 {
-    int width = m_buffer->getLineLength(m_cursorY);
-    m_cursorX = width - 1;
+    int width = m_buffer->getLineLength(m_cursor.line);
+    m_cursor.column = width - 1;
     setDirty(DIRTY_CONTENT);
 }
 
@@ -381,44 +551,126 @@ void Editor::moveCursorPage(int dir)
 
 void Editor::insert(wchar_t c)
 {
-    Line* line = m_buffer->getLine(m_cursorY);
+    Line* line = m_buffer->getLine(m_cursor.line);
 
     unsigned int textLen = line->text.length();
-    if (m_cursorX > textLen)
+    if (m_cursor.column > textLen)
     {
         if (textLen > 0)
         {
-            m_cursorX = textLen;
+            m_cursor.column = textLen;
         }
         else
         {
-            m_cursorX = 0;
+            m_cursor.column = 0;
         }
     }
-    printf("Editor::insert: m_cursorX=%u, textLen=%u\n", m_cursorX, textLen);
+    printf("Editor::insert: m_cursorX=%u, textLen=%u\n", m_cursor.column, textLen);
 
-    line->text.insert(m_cursorX, 1, c);
-    m_cursorX++;
+    line->text.insert(m_cursor.column, 1, c);
+    m_cursor.column++;
 
-    m_format->tokenise(line);
+    m_fileTypeManager->tokenise(m_buffer, line);
 
+    setDirty(DIRTY_CONTENT);
+}
+
+void Editor::insertLine()
+{
+    Line* line = new Line();
+    line->lineEnding = "\n";
+
+    m_buffer->insertLine(m_cursor.line + 1, line);
+    setDirty(DIRTY_CONTENT);
+}
+
+void Editor::splitLine()
+{
+    Line* line = m_buffer->getLine(m_cursor.line);
+
+    wstring text1 = line->text.substr(0, m_cursor.column);
+    wstring text2 = line->text.substr(m_cursor.column);
+
+    line->text = text1;
+
+    Line* newLine = new Line();
+    newLine->lineEnding = line->lineEnding;
+    newLine->text = text2;
+
+    m_buffer->insertLine(m_cursor.line + 1, newLine);
+    m_fileTypeManager->tokenise(m_buffer, line);
+    m_fileTypeManager->tokenise(m_buffer, newLine);
     setDirty(DIRTY_CONTENT);
 }
 
 void Editor::deleteAtCursor()
 {
-    Line* line = m_buffer->getLine(m_cursorY);
-    line->text.erase(m_cursorX, 1);
+    Line* line = m_buffer->getLine(m_cursor.line);
+    line->text.erase(m_cursor.column, 1);
 
-    m_format->tokenise(line);
+    m_fileTypeManager->tokenise(m_buffer, line);
 
+    setDirty(DIRTY_CONTENT);
+}
+
+void Editor::deleteLine()
+{
+    m_buffer->deleteLine(m_cursor.line);
+
+    unsigned int count = m_buffer->getLineCount();
+    if (count == 0)
+    {
+        m_cursor.line = 0;
+        Line* line = new Line();
+        line->lineEnding = "\n";
+
+        m_buffer->insertLine(m_cursor.line, line);
+    }
+
+    if (m_cursor.line >= m_buffer->getLineCount())
+    {
+        m_cursor.line = m_buffer->getLineCount() - 1;
+    }
+
+    setDirty(DIRTY_CONTENT);
+}
+
+void Editor::copyToBuffer(int count)
+{
+    vector<wstring> copyVec;
+
+    int i;
+    for (i = 0; i < count; i++)
+    {
+        Line* line = m_buffer->getLine(m_cursor.line + i);
+        if (line != NULL)
+        {
+            printf("Editor::copyToBuffer: Copying: %ls\n", line->text.c_str());
+            copyVec.push_back(line->text);
+        }
+    }
+    m_vide->setBuffer(copyVec);
+}
+
+void Editor::pasteFromBuffer()
+{
+    vector<wstring> copyVec = m_vide->getBuffer();
+
+    for (wstring text : copyVec)
+    {
+        Line* line = new Line();
+        line->lineEnding = "\n";
+        line->text = text;
+        m_fileTypeManager->tokenise(m_buffer, line);
+
+        m_buffer->insertLine(++m_cursor.line, line);
+    }
     setDirty(DIRTY_CONTENT);
 }
 
 void Editor::setInterfaceStatus(std::wstring message)
 {
-    // TODO: Which window?
-    //((Vide*)m_ui)->setInterfaceStatus(message);
+    m_vide->getWindow()->setInterfaceStatus(message);
 }
 
 unsigned int Editor::getViewLines()

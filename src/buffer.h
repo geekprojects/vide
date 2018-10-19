@@ -25,23 +25,60 @@
 #include <string>
 #include <wchar.h>
 
+#include "tokeniser.h"
+
+struct Position
+{
+    unsigned int line;
+    unsigned int column;
+
+    Position()
+    {
+        line = 0;
+        column = 0;
+    }
+
+    Position(unsigned int l, unsigned int c)
+    {
+        line = l;
+        column = c;
+    }
+};
+
+enum MessageType
+{
+    MESSAGE_INFO = 0,
+    MESSAGE_WARNING = 1,
+    MESSAGE_ERROR = 2,
+};
+
+struct TokenMessage
+{
+    MessageType type;
+    std::string text;
+};
+
 struct LineToken
 {
+    unsigned int column;
     std::wstring text;
-    uint32_t colour;
+    TokenType type;
+    bool isSpace;
+
+    std::vector<TokenMessage> messages;
 };
 
 struct Line
 {
     std::wstring text;
-    std::wstring lineEnding;
+    std::string lineEnding;
 
     std::vector<LineToken*> tokens;
 
     Line()
     {
         text = L"";
-        lineEnding = L"";
+        lineEnding = "";
     }
 
     ~Line()
@@ -49,17 +86,22 @@ struct Line
         clearTokens();
     }
 
+    std::vector<LineToken*>::iterator tokenAt(unsigned int column, bool ignoreSpace);
+
     void clearTokens();
 };
 
 class Buffer
 {
  private:
+    std::string m_filename;
     std::vector<Line*> m_lines;
 
  public:
-    Buffer();
+    Buffer(std::string filename);
     ~Buffer();
+
+    std::string getFilename() { return m_filename; }
 
     size_t getLineCount() { return m_lines.size(); }
     size_t getLineLength(unsigned int line)
@@ -73,6 +115,13 @@ class Buffer
 
     std::vector<Line*>& getLines() { return m_lines; }
     Line* getLine(int y) { return m_lines.at(y); }
+    LineToken* getToken(Position position);
+
+    void insertLine(int asLine, Line* line);
+    void deleteLine(int line);
+
+    bool save();
+    char* writeToMem(uint32_t& size);
 
     void dump();
 

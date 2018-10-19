@@ -18,29 +18,30 @@
  * along with Vide.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "format.h"
+#include "tokeniser.h"
+#include "buffer.h"
 
 #include <wctype.h>
 
 using namespace std;
 
-Format::Format()
+Tokeniser::Tokeniser()
 {
 }
 
-Format::~Format()
+Tokeniser::~Tokeniser()
 {
 }
 
 
-bool Format::tokenise(Buffer* buffer)
+bool Tokeniser::tokenise(Buffer* buffer)
 {
     vector<Line*>::iterator lineIt;
 
     for (lineIt = buffer->getLines().begin(); lineIt != buffer->getLines().end(); lineIt++)
     {
         bool res;
-        res = tokenise(*lineIt);
+        res = tokenise(buffer, *lineIt);
         if (!res)
         {
             return false;
@@ -50,40 +51,20 @@ bool Format::tokenise(Buffer* buffer)
     return true;
 }
 
-bool Format::tokenise(Line* line)
+bool Tokeniser::tokenise(Buffer* buffer, Line* line)
 {
-
     return true;
 }
 
-static uint32_t g_colours[] =
-{
-    0xbbb529,
-    0x77b767,
-    0xcc7832,
-    0x808080,
-    0xffc66d,
-    0xd0d0ff,
-    0xb389c5
-
-/*
-    0xF8F8F2,
-    0xAE81FF,
-    0xE6DB74,
-    0xBCA3A3,
-    0x960050
-*/
-};
-
-SimpleFormat::SimpleFormat()
+SimpleTokeniser::SimpleTokeniser()
 {
 }
 
-SimpleFormat::~SimpleFormat()
+SimpleTokeniser::~SimpleTokeniser()
 {
 }
 
-bool SimpleFormat::tokenise(Line* line)
+bool SimpleTokeniser::tokenise(Buffer* buffer, Line* line)
 {
     line->clearTokens();
 
@@ -93,25 +74,45 @@ bool SimpleFormat::tokenise(Line* line)
 
     for (pos = 0; pos < line->text.length(); pos++)
     {
-        if (token == NULL)
-        {
-            token = new LineToken();
-            token->colour = g_colours[t % (sizeof(g_colours) / sizeof(uint32_t))];
-            line->tokens.push_back(token);
-t++;
-        }
 
         wchar_t c = line->text.at(pos);
         if (iswspace(c))
         {
             token = new LineToken();
-            token->text += c;
             line->tokens.push_back(token);
+            token->column = pos;
+            token->isSpace = true;
+
+            while (pos < line->text.length())
+            {
+                token->text += c;
+                if (pos + 1 >= line->text.length())
+                {
+                    break;
+                }
+
+                c = line->text.at(pos + 1);
+                if (!iswspace(c))
+                {
+                    break;
+                }
+
+                pos++;
+            }
 
             token = NULL;
         }
         else
         {
+            if (token == NULL)
+            {
+                token = new LineToken();
+                token->type = TOKEN_TEXT;
+                token->column = pos;
+                line->tokens.push_back(token);
+                t++;
+            }
+
             token->text += c;
         }
     }
@@ -120,6 +121,8 @@ t++;
     {
         // No tokens for this line. Add an empty one
         token = new LineToken();
+        token->isSpace = true;
+        token->type = TOKEN_TEXT;
         line->tokens.push_back(token);
     }
 
