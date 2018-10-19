@@ -155,7 +155,7 @@ bool CXXTokeniser::tokenise(Buffer* buffer)
             lineToken->text = text;
             lineToken->column = start.column;
 
-#if 0
+#if 1
             char msg[1024];
             snprintf(msg, 1024, "token=%u, cursor=%u", kind, cursorKind);
             TokenMessage message;
@@ -164,35 +164,48 @@ bool CXXTokeniser::tokenise(Buffer* buffer)
             lineToken->messages.push_back(message);
 #endif
 
-            switch (kind)
+            switch (cursorKind)
             {
-                case CXToken_Punctuation:
-                    lineToken->type = TOKEN_TEXT;
+                case CXCursor_CXXAccessSpecifier:
+                    lineToken->type = TOKEN_ACCESS_SPECIFIER;
                     break;
-                case CXToken_Keyword:
-                    lineToken->type = TOKEN_KEYWORD;
-                    if (cursorKind == CXCursor_CXXAccessSpecifier)
-                    {
-                        lineToken->type = TOKEN_ACCESS_SPECIFIER;
-                    }
+
+                case CXCursor_ParmDecl:
+                    lineToken->type = TOKEN_PARAM_VARIABLE;
                     break;
-                case CXToken_Identifier:
-                    if (cursorKind == CXCursor_ParmDecl)
+
+                case CXCursor_FunctionDecl:
+                case CXCursor_CXXMethod:
+                case CXCursor_Constructor:
+                case CXCursor_Destructor:
+                    lineToken->type = TOKEN_FUNCTION;
+                    break;
+
+                case CXCursor_PreprocessingDirective:
+                    lineToken->type = TOKEN_PREPROCESSOR;
+                    break;
+
+                default:
+                    if (kind == CXToken_Comment)
                     {
-                        lineToken->type = TOKEN_PARAM_VARIABLE;
+                        lineToken->type = TOKEN_COMMENT;
                     }
-                    else
+                    else if (kind == CXToken_Identifier)
                     {
                         lineToken->type = TOKEN_IDENTIFIER;
                     }
-                    break;
-
-                case CXToken_Literal:
-                    lineToken->type = TOKEN_TEXT;
-                    break;
-
-                case CXToken_Comment:
-                    lineToken->type = TOKEN_COMMENT;
+                    else if (kind == CXToken_Keyword)
+                    {
+                        lineToken->type = TOKEN_KEYWORD;
+                    }
+                    else if (kind == CXToken_Literal)
+                    {
+                        lineToken->type = TOKEN_LITERAL;
+                    }
+                    else
+                    {
+                        lineToken->type = TOKEN_TEXT;
+                    }
                     break;
             }
 
