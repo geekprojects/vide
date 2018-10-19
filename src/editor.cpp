@@ -45,13 +45,17 @@ Editor::Editor(Vide* vide, Buffer* buffer, FileTypeManager* ftm) : Widget(vide)
 
     m_marginX = 40;
 
-    m_colours.insert(make_pair(TOKEN_TEXT, 0xA9B7C6));
-    m_colours.insert(make_pair(TOKEN_COMMENT, 0x808080));
-    m_colours.insert(make_pair(TOKEN_KEYWORD, 0xCC7832));
-    m_colours.insert(make_pair(TOKEN_IDENTIFIER, 0xA9B7C6));
-    m_colours.insert(make_pair(TOKEN_LOCAL_VARIABLE, 0x9876AA));
+    m_colours.insert(make_pair(TOKEN_TEXT, 0xF8F8F2));
+    m_colours.insert(make_pair(TOKEN_COMMENT, 0x7E8E91));
+    m_colours.insert(make_pair(TOKEN_KEYWORD, 0xF92672));
+    m_colours.insert(make_pair(TOKEN_IDENTIFIER, 0xFD971F));
+    m_colours.insert(make_pair(TOKEN_LOCAL_VARIABLE, 0xef5939));
     m_colours.insert(make_pair(TOKEN_PARAM_VARIABLE, 0x9876AA));
-    m_colours.insert(make_pair(TOKEN_ACCESS_SPECIFIER, 0xff0000));
+    m_colours.insert(make_pair(TOKEN_ACCESS_SPECIFIER, 0x66D9EF));
+    m_colours.insert(make_pair(TOKEN_FUNCTION, 0xA6E22E));
+    m_colours.insert(make_pair(TOKEN_PREPROCESSOR, 0xA6E22E));
+    m_colours.insert(make_pair(TOKEN_LITERAL, 0xAE81FF));
+    m_colours.insert(make_pair(TOKEN_STRING, 0xE6DB74));
 }
 
 Editor::~Editor()
@@ -625,6 +629,13 @@ void Editor::moveCursorXEnd()
 {
     int width = m_buffer->getLineLength(m_cursor.line);
     m_cursor.column = width - 1;
+    setDirty(DIRTY_CONTENT);
+}
+
+void Editor::moveCursorYEnd()
+{
+    moveCursor(Position(m_buffer->getLineCount() - 1, 0));
+
     setDirty(DIRTY_CONTENT);
 }
 
