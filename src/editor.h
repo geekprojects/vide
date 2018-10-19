@@ -96,6 +96,7 @@ class Editor : public Frontier::Widget
     void moveCursorY(unsigned int y);
     void moveCursorDelta(int dx, int dy, bool allowXOver = false);
     void moveCursorXEnd();
+    void moveCursorYEnd();
     void moveCursorNextToken();
     void moveCursorPage(int dir);
 

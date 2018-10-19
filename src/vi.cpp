@@ -105,7 +105,6 @@ void ViInterface::keyNormal(Frontier::InputMessage* inputMessage)
                 m_command = m_prevCommand;
                 m_command.count *= count;
                 m_command.state = STATE_EXEC;
-                m_command.params = "";
 
                 // TODO: Handle repeating insert commands
                 if (m_command.type == TYPE_INSERT)
@@ -199,10 +198,10 @@ void ViInterface::keyNormal(Frontier::InputMessage* inputMessage)
             m_prevCommand = m_command;
         }
     }
-else if (m_command.state == STATE_EDIT)
-{
-            m_prevCommand = m_command;
-}
+    else if (m_command.state == STATE_EDIT)
+    {
+        m_prevCommand = m_command;
+    }
 }
 
 bool ViInterface::runCommand(bool& setPrev, bool& continueRunning)
@@ -244,6 +243,12 @@ bool ViInterface::runCommand(bool& setPrev, bool& continueRunning)
             break;
         case L'l':
             m_editor->moveCursorDelta(1, 0);
+            m_command.type = TYPE_CURSOR;
+            setPrev = false;
+            break;
+
+        case L'G':
+            m_editor->moveCursorYEnd();
             m_command.type = TYPE_CURSOR;
             setPrev = false;
             break;
