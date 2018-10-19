@@ -36,7 +36,13 @@ int main(int argc, char** argv)
         return 0;
     }
 
-    Vide app;
+    string projectDir = ".";
+    if (argc == 2)
+    {
+        projectDir = string(argv[1]);
+    }
+
+    Vide app(projectDir);
 
     app.init();
 
