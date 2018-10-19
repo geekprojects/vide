@@ -1,7 +1,7 @@
 
 bin_PROGRAMS=vide
 
-vide_SOURCES=main.cpp vide.cpp project.cpp videwindow.cpp editor.cpp projectview.cpp utils.cpp buffer.cpp interface.cpp vi.cpp tokeniser.cpp filetypemanager.cpp editortipwindow.cpp
+vide_SOURCES=main.cpp vide.cpp project.cpp videwindow.cpp editor.cpp projectview.cpp utils.cpp buffer.cpp interface.cpp vi.cpp tokeniser.cpp filetypemanager.cpp editortipwindow.cpp structureview.cpp
 
 if HAS_LIBCLANG
 vide_SOURCES+=cxxfiletypemanager.cpp

@@ -24,8 +24,9 @@
 using namespace std;
 using namespace Frontier;
 
-Vide::Vide()
+Vide::Vide(string projectDir)
 {
+    m_projectDir = projectDir;
 }
 
 Vide::~Vide()
@@ -52,8 +53,9 @@ bool Vide::init()
         return false;
     }
 
-    m_project = new Project("/home/ian/projects/vide/testproject");
-m_project->scan();
+    m_project = new Project(m_projectDir);
+    m_project->scan();
+    m_project->index();
 
     m_mainWindow = new VideWindow(this);
 

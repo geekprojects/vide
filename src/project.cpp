@@ -45,9 +45,9 @@ Project::Project(string rootPath)
 
     // Push in order that they should be evaluated
 #ifdef HAS_LIBCLANG
-    m_fileTypeManagers.push_back(new CXXFileTypeManager());
+    m_fileTypeManagers.push_back(new CXXFileTypeManager(this));
 #endif
-    m_fileTypeManagers.push_back(new TextFileTypeManager());
+    m_fileTypeManagers.push_back(new TextFileTypeManager(this));
 
     m_root = NULL;
 }
@@ -71,8 +71,9 @@ bool Project::scan()
 
     scanDirectory(m_root, m_rootPath);
 
-    m_root->dump(0);
 #if 0
+    m_root->dump(0);
+
     vector<string> paths;
     paths.push_back(m_rootPath);
     fsw::monitor* monitor = fsw::monitor_factory::create_monitor(fsw_monitor_type::system_default_monitor_type, paths, process_events);
@@ -103,6 +104,19 @@ bool Project::scanDirectory(ProjectDirectory* entry, std::string path)
         {
             continue;
         }
+
+    string name = string(dirent->d_name);
+    size_t pos = name.rfind(".");
+    string ext = "";
+    if (pos != string::npos)
+    {
+        ext = name.substr(pos + 1);
+    }
+
+    if (ext == "o" || ext == "dSYM")
+    {
+        continue;
+    }
 
         struct stat stat;
         string childPath = path + "/" + dirent->d_name;
@@ -138,7 +152,20 @@ bool Project::scanDirectory(ProjectDirectory* entry, std::string path)
 
 bool Project::index()
 {
-    return indexDirectory(m_root);
+    indexDirectory(m_root);
+
+    // Resolve all parents
+    map<std::string, ProjectDefinition*>::iterator it;
+    for (it = m_index.begin(); it != m_index.end(); it++)
+    {
+        ProjectDefinition* def = it->second;
+        if (def->parent == NULL && def->parentName != "")
+        {
+            def->parent = findDefinition(def->parentName);
+        }
+    }
+
+    return true;
 }
 
 bool Project::indexDirectory(ProjectDirectory* dir)
@@ -158,6 +185,34 @@ bool Project::indexDirectory(ProjectDirectory* dir)
         }
     }
     return true;
+}
+
+ProjectDefinition* Project::findDefinition(std::string name)
+{
+    map<string, ProjectDefinition*>::iterator it = m_index.find(name);
+    if (it != m_index.end())
+    {
+        return it->second;
+    }
+    return NULL;
+}
+
+void Project::addDefinition(ProjectDefinition* def)
+{
+    m_index.insert(make_pair(def->name, def));
+}
+
+void Project::dumpStructure()
+{
+    map<string, ProjectDefinition*>::iterator it;
+    for (it = m_index.begin(); it != m_index.end(); it++)
+    {
+        ProjectDefinition* def = it->second;
+        if (def->parent == NULL)
+        {
+            def->dump(1);
+        }
+    }
 }
 
 ProjectEntry::ProjectEntry(Project* project, ProjectEntryType type, ProjectEntry* parent, std::string name)
@@ -214,6 +269,21 @@ string ProjectEntry::getFilePath()
     return path;
 }
 
+void ProjectEntry::addDefinition(ProjectDefinition* def)
+{
+    m_index.insert(make_pair(def->name, def));
+}
+
+void ProjectEntry::dumpDefinitions()
+{
+    map<string, ProjectDefinition*>::iterator it;
+
+    for (it = m_index.begin(); it != m_index.end(); it++)
+    {
+        printf("ProjectEntry::dumpDefinitions: %s: %s\n", m_name.c_str(), it->second->name.c_str());
+    }
+}
+
 ProjectFile::ProjectFile(Project* project, ProjectEntry* parent, std::string name)
     : ProjectEntry(project, ENTRY_FILE, parent, name)
 {
@@ -223,6 +293,7 @@ ProjectFile::~ProjectFile()
 {
 }
 
+
 ProjectDirectory::ProjectDirectory(Project* project, ProjectEntry* parent, std::string name)
     : ProjectEntry(project, ENTRY_DIR, parent, name)
 {
@@ -230,5 +301,28 @@ ProjectDirectory::ProjectDirectory(Project* project, ProjectEntry* parent, std::
 
 ProjectDirectory::~ProjectDirectory()
 {
+}
+
+
+void ProjectDefinition::dump(int level)
+{
+    string spaces = "";
+    int i;
+    for (i = 0; i < level; i++)
+    {
+        spaces += "    ";
+    }
+
+    printf("ProjectDefinition::dump:%s%s\n", spaces.c_str(), name.c_str());
+
+    for (ProjectDefinitionSource source : sources)
+    {
+        printf("ProjectDefinition::dump:%s -> %s, line %u, type=%u\n", spaces.c_str(), source.entry->getFilePath().c_str(), source.position.line, source.type);
+    }
+
+    for (ProjectDefinition* child : children)
+    {
+        child->dump(level + 1);
+    }
 }
 

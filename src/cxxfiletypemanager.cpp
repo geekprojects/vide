@@ -44,12 +44,9 @@ void addDiagnostic(LineToken* token, CXDiagnostic diag)
     }
 
     CXString spelling = clang_getDiagnosticSpelling(diag);
-    message.text = string(clang_getCString(spelling));
-    printf("%s\n", clang_getCString(spelling));
-    clang_disposeString(spelling);
-
     CXString category = clang_getDiagnosticCategoryText(diag);
-    printf("category: %s\n", clang_getCString(category));
+    message.text = string(clang_getCString(category)) + ": " + string(clang_getCString(spelling));
+    clang_disposeString(spelling);
     clang_disposeString(category);
 
     token->messages.push_back(message);
@@ -57,10 +54,12 @@ void addDiagnostic(LineToken* token, CXDiagnostic diag)
 
 bool CXXTokeniser::tokenise(Buffer* buffer)
 {
+    uint32_t length;
+    char* membuffer = buffer->writeToMem(length);
+
     CXUnsavedFile file[1];
     file[0].Filename = strdup(buffer->getFilename().c_str());
-    uint32_t length;
-    file[0].Contents = buffer->writeToMem(length);
+    file[0].Contents = membuffer;
     file[0].Length = length;
 
     const char* argv[] =
@@ -104,6 +103,10 @@ bool CXXTokeniser::tokenise(Buffer* buffer)
         CXCursor* cursors = new CXCursor[cxTokenCount];
         clang_annotateTokens(unit, cxTokens, cxTokenCount, cursors);
 
+#if 0
+        printf("CXXTokeniser::tokenise: Line: %ls, tokens=%u\n", line->text.c_str(), cxTokenCount);
+#endif
+
         unsigned int lastEnd = 0;
         unsigned int t;
         for (t = 0; t < cxTokenCount; t++)
@@ -118,6 +121,13 @@ bool CXXTokeniser::tokenise(Buffer* buffer)
             Position end = cxlocation2position(tokenEnd);
             unsigned int length = end.column - start.column;
 
+            if (start.line != l)
+            { 
+#if 0
+                printf("CXXTokeniser::tokenise: Token is not on this line?\n");
+#endif
+                break;
+            }
 
             if (lastEnd < start.column)
             {
@@ -137,13 +147,15 @@ bool CXXTokeniser::tokenise(Buffer* buffer)
 
             wstring text = line->text.substr(start.column, length);
 
+#if 0
             printf("CXXTokeniser::tokenise:  %u:  -> [%ls] token kind=%u, cursor kind=%u\n", t, text.c_str(), kind, cursorKind);
+#endif
 
             LineToken* lineToken = new LineToken();
             lineToken->text = text;
             lineToken->column = start.column;
 
-#if 0
+#if 1
             char msg[1024];
             snprintf(msg, 1024, "token=%u, cursor=%u", kind, cursorKind);
             TokenMessage message;
@@ -152,48 +164,53 @@ bool CXXTokeniser::tokenise(Buffer* buffer)
             lineToken->messages.push_back(message);
 #endif
 
-            switch (kind)
+            switch (cursorKind)
             {
-                case CXToken_Punctuation:
-                    lineToken->type = TOKEN_TEXT;
+                case CXCursor_CXXAccessSpecifier:
+                    lineToken->type = TOKEN_ACCESS_SPECIFIER;
                     break;
-                case CXToken_Keyword:
-                    lineToken->type = TOKEN_KEYWORD;
-                    if (cursorKind == CXCursor_CXXAccessSpecifier)
-                    {
-                        lineToken->type = TOKEN_ACCESS_SPECIFIER;
-                    }
+
+                case CXCursor_ParmDecl:
+                    lineToken->type = TOKEN_PARAM_VARIABLE;
                     break;
-                case CXToken_Identifier:
-                    if (cursorKind == CXCursor_ParmDecl)
+
+                case CXCursor_FunctionDecl:
+                case CXCursor_CXXMethod:
+                case CXCursor_Constructor:
+                case CXCursor_Destructor:
+                    lineToken->type = TOKEN_FUNCTION;
+                    break;
+
+                case CXCursor_PreprocessingDirective:
+                    lineToken->type = TOKEN_PREPROCESSOR;
+                    break;
+
+                default:
+                    if (kind == CXToken_Comment)
                     {
-                        lineToken->type = TOKEN_PARAM_VARIABLE;
+                        lineToken->type = TOKEN_COMMENT;
                     }
-                    else
+                    else if (kind == CXToken_Identifier)
                     {
                         lineToken->type = TOKEN_IDENTIFIER;
                     }
-                    break;
-
-                case CXToken_Literal:
-                    lineToken->type = TOKEN_TEXT;
-                    break;
-
-                case CXToken_Comment:
-                    lineToken->type = TOKEN_COMMENT;
+                    else if (kind == CXToken_Keyword)
+                    {
+                        lineToken->type = TOKEN_KEYWORD;
+                    }
+                    else if (kind == CXToken_Literal)
+                    {
+                        lineToken->type = TOKEN_LITERAL;
+                    }
+                    else
+                    {
+                        lineToken->type = TOKEN_TEXT;
+                    }
                     break;
             }
 
             line->tokens.push_back(lineToken);
-
-            unsigned isDef = clang_isCursorDefinition(cursors[t]);
-            // Inspired by: https://github.com/drothlis/clang-ctags/blob/master/clang-ctags
-            if ((isDef && (cursorKind != CXCursor_CXXAccessSpecifier && cursorKind != CXCursor_TemplateTypeParameter && cursorKind != CXCursor_UnexposedDecl)) || (cursorKind == CXCursor_FunctionDecl || cursorKind == CXCursor_CXXMethod || cursorKind == CXCursor_FunctionTemplate))
-            {
-                printf("CXXTokeniser::tokenise:  %u:  -> DEFINITION: Add to structure\n", t);
-            }
         }
-
 
         clang_disposeTokens(unit, cxTokens, cxTokenCount);
 
@@ -217,9 +234,12 @@ bool CXXTokeniser::tokenise(Buffer* buffer)
         printf("%s\n", clang_getCString(str));
         clang_disposeString(str);
 
+        // Attach diagnostic messages to tokens
         unsigned int num;
         num = clang_getDiagnosticNumRanges(diag);
+#if 0
         printf(" -> %u ranges\n", num);
+#endif
         if (num > 0)
         {
             unsigned int r;
@@ -231,7 +251,9 @@ bool CXXTokeniser::tokenise(Buffer* buffer)
 
                 Position start = cxlocation2position(diagStart);
                 Position end = cxlocation2position(diagEnd);
+#if 0
                 printf(" -> %u: %u: %u,%u -> %u,%u\n", i, r, start.line, start.column, end.line, end.column);
+#endif
 
                 if (start.line != end.line)
                 {
@@ -247,7 +269,9 @@ bool CXXTokeniser::tokenise(Buffer* buffer)
                     {
                         break;
                     }
+#if 0
                     printf(" -> %u: %ls\n", i, token->text.c_str());
+#endif
                     addDiagnostic(token, diag);
 
                     pos.column += token->text.length();
@@ -257,19 +281,25 @@ bool CXXTokeniser::tokenise(Buffer* buffer)
         else
         {
             Position pos = cxlocation2position(cxLocation);
+#if 0
             printf(" -> %u: %u,%u\n", i, pos.line, pos.column);
+#endif
             LineToken* token = buffer->getToken(pos);
             if (token != NULL)
             {
+#if 0
                 printf(" -> %u: %ls\n", i, token->text.c_str());
+#endif
                 addDiagnostic(token, diag);
             }
         }
-
     }
 
+    m_ftm->indexStructure(unit, buffer->getProjectFile());
 
     clang_disposeTranslationUnit(unit);
+
+    delete[] membuffer;
 
     return true;
 }
@@ -280,7 +310,7 @@ bool CXXTokeniser::tokenise(Buffer* buffer, Line* line)
     return tokenise(buffer);
 }
 
-CXXFileTypeManager::CXXFileTypeManager()
+CXXFileTypeManager::CXXFileTypeManager(Project* project) : FileTypeManager(project)
 {
     m_tokeniser = new CXXTokeniser(this);
 
@@ -313,26 +343,209 @@ bool CXXFileTypeManager::canHandle(ProjectFile* file)
 
 bool CXXFileTypeManager::index(ProjectFile* file)
 {
-    CXXFileTypeManagerData* data = (CXXFileTypeManagerData*)file->getFileTypeManagerData();
-    if (data == NULL)
+
+    const char* argv[] =
     {
-        data = new CXXFileTypeManagerData();
+        "-x", "c++", NULL
+    };
 
-        const char* argv[] =
+    CXTranslationUnit unit = clang_parseTranslationUnit(
+        m_index,
+        file->getFilePath().c_str(), argv, 2,
+        NULL, 0,
+        CXTranslationUnit_KeepGoing);
+
+    indexStructure(unit, file);
+
+    clang_disposeTranslationUnit(unit);
+
+    return true;
+}
+
+struct StructureVisitorData
+{
+    CXXFileTypeManager* ftm;
+    ProjectFile* file;
+};
+
+static CXChildVisitResult structureVisitorFunc(CXCursor cursor, CXCursor parent, CXClientData client_data)
+{
+    StructureVisitorData* data = (StructureVisitorData*)client_data;
+    return data->ftm->structureVisitor(cursor, parent, data->file);
+}
+
+string buildName(CXCursor cursor)
+{
+    CXString cxName = clang_getCursorDisplayName(cursor);
+    string cursorName = string(clang_getCString(cxName));
+    clang_disposeString(cxName);
+
+    CXCursor parentCursor = clang_getCursorSemanticParent(cursor);
+    CXCursorKind parentCursorKind = clang_getCursorKind(parentCursor);
+    if (parentCursorKind != CXCursor_TranslationUnit)
+    {
+        string parentName = buildName(parentCursor);
+        return parentName + "::" + cursorName;
+    }
+
+    return cursorName;
+}
+
+void CXXFileTypeManager::indexStructure(CXTranslationUnit unit, ProjectFile* file)
+{
+    StructureVisitorData data;
+    data.ftm = this;
+    data.file = file;
+
+    clang_visitChildren(clang_getTranslationUnitCursor(unit), structureVisitorFunc, (CXClientData*)&data);
+}
+
+CXChildVisitResult CXXFileTypeManager::structureVisitor(CXCursor cursor, CXCursor parent, ProjectFile* file)
+{
+    CXSourceLocation sourceLocation = clang_getCursorLocation(cursor);
+
+    int inMainFile = clang_Location_isFromMainFile(sourceLocation);
+    if (!inMainFile)
+    {
+        return CXChildVisit_Continue;
+    }
+
+    CXCursorKind cursorKind = clang_getCursorKind(cursor);
+    unsigned isDef = clang_isCursorDefinition(cursor);
+
+    // Inspired by: https://github.com/drothlis/clang-ctags/blob/master/clang-ctags
+    if ((isDef &&
+            (cursorKind != CXCursor_CXXAccessSpecifier &&
+            cursorKind != CXCursor_TemplateTypeParameter &&
+            cursorKind != CXCursor_UnexposedDecl)) ||
+        cursorKind == CXCursor_FunctionDecl ||
+        cursorKind == CXCursor_CXXMethod ||
+        cursorKind == CXCursor_FunctionTemplate ||
+        cursorKind == CXCursor_Constructor ||
+        cursorKind == CXCursor_Destructor)
+    {
+        if (cursorKind == CXCursor_NonTypeTemplateParameter ||
+            cursorKind == CXCursor_ClassTemplatePartialSpecialization ||
+            cursorKind == CXCursor_ConversionFunction ||
+            cursorKind == CXCursor_TemplateTemplateParameter)
         {
-            "-x", "c++", NULL
-        };
+            printf("CXXTokeniser::structureVisitor: WARN: Ignoring CXCursor %u\n", cursorKind);
 
-        data->unit = clang_parseTranslationUnit(
-            m_index,
-            file->getFilePath().c_str(), argv, 2,
-            NULL, 0,
-            CXTranslationUnit_KeepGoing);
+            return CXChildVisit_Continue;
+        }
 
+        Position pos = cxlocation2position(sourceLocation);
+
+        string defName = buildName(cursor);
+
+        CXCursor parentCursor = clang_getCursorSemanticParent(cursor);
+        CXCursorKind parentCursorKind = clang_getCursorKind(parentCursor);
+        string parentName = "";
+        ProjectDefinition* parentDef = NULL;
+        if (parentCursorKind != CXCursor_TranslationUnit)
+        {
+            parentName = buildName(parentCursor);
+            parentDef = m_project->findDefinition(parentName);
+        }
+
+        ProjectDefinition* def = m_project->findDefinition(defName);
+        if (def == NULL)
+        {
+            def = new ProjectDefinition();
+            def->name = defName;
+            def->parentName = parentName;
+            def->parent = NULL;
+        }
+
+        if (def->parent == NULL && parentName != "")
+        {
+            parentDef = m_project->findDefinition(parentName);
+
+            if (parentDef != NULL)
+            {
+                parentDef->children.push_back(def);
+                def->parent = parentDef;
+            }
+        }
+
+#if 0
+        printf("CXXTokeniser::structureVisitor: Line %u: %s, parent=%s (%p) (kind=%u, isDef=%u)\n", pos.line, defName.c_str(), parentName.c_str(), parentDef, cursorKind, isDef);
+#endif
+
+        ProjectDefinitionSource source;
+        source.entry = file;
+        source.position = pos;
+
+        switch (cursorKind)
+        {
+            case CXCursor_FunctionDecl:
+            case CXCursor_CXXMethod:
+            case CXCursor_Constructor:
+            case CXCursor_Destructor:
+                if (isDef)
+                {
+                    source.type = DEF_FUNCTION_IMPL;
+                }
+                else
+                {
+                    source.type = DEF_FUNCTION_SPEC;
+                }
+                break;
+            case CXCursor_FunctionTemplate:
+                source.type = DEF_FUNCTION_TEMPLATE;
+                break;
+            case CXCursor_Namespace:
+                source.type = DEF_NAMESPACE;
+                break;
+            case CXCursor_ClassDecl:
+            case CXCursor_StructDecl:
+            case CXCursor_UnionDecl:
+                source.type = DEF_CLASS;
+                break;
+            case CXCursor_ClassTemplate:
+                source.type = DEF_CLASS_TEMPLATE;
+                break;
+            case CXCursor_FieldDecl:
+                source.type = DEF_FIELD;
+                break;
+            case CXCursor_EnumDecl:
+                source.type = DEF_ENUM;
+                break;
+            case CXCursor_EnumConstantDecl:
+                source.type = DEF_ENUM_CONSTANT;
+                break;
+            case CXCursor_TypedefDecl:
+                source.type = DEF_TYPEDEF;
+                break;
+            case CXCursor_VarDecl:
+                source.type = DEF_VARIABLE;
+                break;
+
+
+            default:
+                printf("CXXTokeniser::structureVisitor: Unhandled cursor kind: %u\n", cursorKind);
+                exit(1);
+        }
+        def->sources.push_back(source);
+
+        m_project->addDefinition(def);
+        file->addDefinition(def);
+    }
+
+    if (cursorKind == CXCursor_Namespace ||
+        cursorKind == CXCursor_StructDecl ||
+        cursorKind == CXCursor_UnionDecl ||
+        cursorKind == CXCursor_EnumDecl ||
+        cursorKind == CXCursor_ClassDecl ||
+        cursorKind == CXCursor_ClassTemplate ||
+        cursorKind == CXCursor_ClassTemplatePartialSpecialization)
+    {
+        return CXChildVisit_Recurse;
     }
     else
     {
+        return CXChildVisit_Continue;
     }
-    return true;
 }
+
 

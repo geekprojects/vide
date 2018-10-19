@@ -33,6 +33,7 @@ class VideWindow;
 class Vide : public Frontier::FrontierApp
 {
  private:
+    std::string m_projectDir;
     Project* m_project;
     VideWindow* m_mainWindow;
     FontHandle* m_textFont;
@@ -40,8 +41,8 @@ class Vide : public Frontier::FrontierApp
     std::vector<std::wstring> m_buffer;
 
  public:
-    Vide();
-    ~Vide();
+    Vide(std::string projectDir);
+    virtual ~Vide();
 
     virtual bool init();
 

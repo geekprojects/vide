@@ -27,6 +27,7 @@
 
 #include "editor.h"
 #include "projectview.h"
+#include "structureview.h"
 #include "editortipwindow.h"
 
 class Vide;
@@ -37,10 +38,14 @@ class VideWindow : public Frontier::FrontierWindow
 {
  private:
     Vide* m_vide;
-    Frontier::Tabs* m_tabs;
+    Frontier::Tabs* m_leftTabs;
+    Frontier::Tabs* m_editorTabs;
+    Frontier::Tabs* m_rightTabs;
     FontHandle* m_textFont;
     Frontier::Label* m_interfaceStatus;
     ProjectView* m_projectView;
+    StructureView* m_structureView;
+    StructureView* m_fileStructureView;
 
     EditorTipWindow* m_editorTipWindow;
 
@@ -60,7 +65,8 @@ class VideWindow : public Frontier::FrontierWindow
 
     EditorTipWindow* getEditorTipWindow() { return m_editorTipWindow; }
 
-    void openEntry(ProjectEntry* entry);
+    Editor* openEntry(ProjectEntry* entry);
+    Editor* openEntry(ProjectEntry* entry, Position pos);
     void closeEntry(ProjectEntry* entry);
 };
 

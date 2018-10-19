@@ -9,7 +9,8 @@ using namespace Frontier;
 
 EditorTipWindow::EditorTipWindow(FrontierApp* app) : FrontierWindow(app, L"", WINDOW_POPUP)
 {
-m_token = NULL;
+    m_token = NULL;
+    m_frame = NULL;
 }
 
 EditorTipWindow::~EditorTipWindow()
@@ -25,34 +26,37 @@ bool EditorTipWindow::init()
 
 void EditorTipWindow::setToken(LineToken* token, Geek::Vector2D pos)
 {
-if (token != m_token)
-{
-m_token = token;
+    if (token != m_token)
+    {
+        m_token = token;
 
-if (m_token == NULL)
-{
-hide();
-return;
-}
+        if (m_token == NULL)
+        {
+            hide();
+            return;
+        }
 
-Frame* oldFrame = m_frame;
+        Frame* oldFrame = m_frame;
 
 
-m_frame = new Frame(this, false);
+        m_frame = new Frame(this, false);
 
-for (TokenMessage message : token->messages)
-{
-Label* label = new Label(this, Frontier::Utils::string2wstring(message.text));
-m_frame->add(label);
-}
-    setContent(m_frame);
-show();
+        for (TokenMessage message : token->messages)
+        {
+            Label* label = new Label(this, Frontier::Utils::string2wstring(message.text));
+            m_frame->add(label);
+        }
+        setContent(m_frame);
 
-if (oldFrame != NULL)
-{
-delete oldFrame;
-}
-}
-    setPosition(pos);
+        if (oldFrame != NULL)
+        {
+            delete oldFrame;
+        }
+    }
+    if (m_token != NULL)
+    {
+        show();
+        setPosition(pos);
+    }
 }
 

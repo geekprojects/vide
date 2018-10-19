@@ -18,12 +18,14 @@ class CXXTokeniser : public Tokeniser
  protected:
     CXXFileTypeManager* m_ftm;
 
+
  public:
     CXXTokeniser(CXXFileTypeManager* ftm);
     virtual ~CXXTokeniser();
 
     virtual bool tokenise(Buffer* buffer);
     virtual bool tokenise(Buffer* buffer, Line* line);
+
 };
 
 class CXXFileTypeManager : public FileTypeManager
@@ -32,12 +34,15 @@ class CXXFileTypeManager : public FileTypeManager
     CXIndex m_index;
 
  public:
-    CXXFileTypeManager();
+    CXXFileTypeManager(Project* project);
     virtual ~CXXFileTypeManager();
 
     virtual bool canHandle(ProjectFile* file);
 
     virtual bool index(ProjectFile* entry);
+
+    void indexStructure(CXTranslationUnit unit, ProjectFile* file);
+    CXChildVisitResult structureVisitor(CXCursor cursor, CXCursor parent, ProjectFile* file);
 
     CXIndex getIndex() { return m_index; }
 };
