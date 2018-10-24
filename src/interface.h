@@ -61,20 +61,39 @@ enum ViCommandState
     STATE_START,
     STATE_COUNT,
     STATE_COMMAND,
-    STATE_EXTRA,
+    STATE_PARAMS,
     STATE_EDIT,
     STATE_EXEC
 };
 
-struct ViCommand
+enum ViCommandDefinitionFlags
 {
-    ViCommandState state;
-    ViCommandType type;
-    int count;
+    COMMAND_NONE = 0x0,
+    COMMAND_INSERT = 0x1,
+    COMMAND_HAS_PARAM = 0x2,
+    COMMAND_NO_REPEAT = 0x4,
+    COMMAND_SPECIAL_COUNT = 0x8,
+};
 
-    char command;
+class ViInterface;
+struct ViCommand;
+
+typedef bool(ViInterface::*commandFunction_t)(ViCommand*);
+
+struct ViCommandDefinition
+{
     uint32_t key;
     uint32_t modifiers;
+    uint32_t flags;
+    commandFunction_t func;
+    commandFunction_t completeFunc;
+};
+
+struct ViCommand
+{
+    ViCommandDefinition* command;
+    char chr; // HACK
+    int count;
 
     std::string params;
     std::wstring edit;
@@ -86,6 +105,7 @@ class ViInterface : public Interface
     ViMode m_mode;
 
     // This stores the state of the current command in NORMAL mode
+    ViCommandState m_state;
     ViCommand m_command;
     ViCommand m_prevCommand;
 
@@ -98,7 +118,7 @@ class ViInterface : public Interface
 
     bool keyCursor(uint32_t key);
 
-    bool runCommand(bool& setPrev, bool& continueRunning);
+    bool runCommand(ViCommand* command);
     void runExCommand(std::wstring command);
 
     void setMode(ViMode mode);
@@ -110,6 +130,38 @@ class ViInterface : public Interface
     virtual void key(Frontier::InputMessage* inputMessage);
 
     virtual void updateStatus();
+
+    bool commandNop(ViCommand* command);
+    bool commandInserti(ViCommand* command);
+    bool commandInsertI(ViCommand* command);
+    bool commandInsertA(ViCommand* command);
+    bool commandInserta(ViCommand* command);
+    bool commandInsertO(ViCommand* command);
+    bool commandInserto(ViCommand* command);
+
+    bool commandMoveEndOfLine(ViCommand* command);
+    bool commandMoveStartOfLine(ViCommand* command);
+    bool commandMoveEndOfFile(ViCommand* command);
+    bool commandMoveDown(ViCommand* command);
+    bool commandMoveUp(ViCommand* command);
+    bool commandMoveLeft(ViCommand* command);
+    bool commandMoveRight(ViCommand* command);
+    bool commandMoveNextWord(ViCommand* command);
+    bool commandMoveNextWordEnd(ViCommand* command);
+    bool commandMoveWordStart(ViCommand* command);
+    bool commandMovePageDown(ViCommand* command);
+    bool commandMovePageUp(ViCommand* command);
+
+    bool commandDeleteChar(ViCommand* command);
+    bool commandDelete(ViCommand* command);
+
+    bool commandYank(ViCommand* command);
+    bool commandPaste(ViCommand* command);
+
+    bool commandJoin(ViCommand* command);
+
+    bool commandRepeat(ViCommand* command);
+    bool commandEx(ViCommand* command);
 };
 
 #endif
