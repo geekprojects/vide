@@ -24,7 +24,7 @@
 using namespace std;
 using namespace Frontier;
 
-Vide::Vide(string projectDir)
+Vide::Vide(string projectDir) : FrontierApp(L"Vide")
 {
     m_projectDir = projectDir;
 }
