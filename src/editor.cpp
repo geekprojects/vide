@@ -22,6 +22,8 @@
 #include "editor.h"
 #include "vide.h"
 
+#include <wctype.h>
+
 using namespace std;
 using namespace Frontier;
 using namespace Geek;

@@ -23,6 +23,8 @@
 
 #include "utf8.h"
 
+#include <string.h>
+
 using namespace std;
 
 Buffer::Buffer(string filename)

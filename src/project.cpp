@@ -27,8 +27,10 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#if 1
 #include <libfswatch/c++/event.hpp>
 #include <libfswatch/c++/monitor.hpp>
+#endif
 
 #include "filetypemanager.h"
 #ifdef HAS_LIBCLANG

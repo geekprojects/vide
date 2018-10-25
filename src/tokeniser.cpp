@@ -21,6 +21,8 @@
 #include "tokeniser.h"
 #include "buffer.h"
 
+#include <wctype.h>
+
 using namespace std;
 
 Tokeniser::Tokeniser()
@@ -69,6 +71,7 @@ bool SimpleTokeniser::tokenise(Buffer* buffer, Line* line)
     LineToken* token = NULL;
     size_t pos;
     int t = 0;
+
     for (pos = 0; pos < line->text.length(); pos++)
     {
 
