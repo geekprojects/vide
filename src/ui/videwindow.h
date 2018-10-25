@@ -26,9 +26,9 @@
 #include <frontier/widgets/tabs.h>
 
 #include "editor.h"
-#include "projectview.h"
-#include "structureview.h"
-#include "editortipwindow.h"
+#include "ui/views/projectview.h"
+#include "ui/views/structureview.h"
+#include "ui/editortipwindow.h"
 
 class Vide;
 class ProjectEntry;

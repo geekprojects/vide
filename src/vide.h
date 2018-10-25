@@ -24,7 +24,7 @@
 #include <frontier/frontier.h>
 #include <frontier/widgets.h>
 
-#include "videwindow.h"
+#include "ui/videwindow.h"
 #include "filetypemanager.h"
 #include "project.h"
 

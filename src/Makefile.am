@@ -1,14 +1,16 @@
 
-bin_PROGRAMS=vide
-
-vide_SOURCES=main.cpp vide.cpp project.cpp videwindow.cpp editor.cpp projectview.cpp utils.cpp buffer.cpp interface.cpp vi.cpp tokeniser.cpp filetypemanager.cpp editortipwindow.cpp structureview.cpp
+SUBDIRS=ui vi
 
 if HAS_LIBCLANG
-vide_SOURCES+=cxxfiletypemanager.cpp
+SUBDIRS+=cxx
 endif
 
-#vide_LDADD=../libfrontier/libfrontier.la
-#vide_LDFLAGS=-framework Cocoa -framework AppKit
+bin_PROGRAMS=vide
 
-#all:
-#	gcc -g -O0 -o vide main.cpp vide.cpp editor.cpp utils.cpp buffer.cpp mode.cpp vimode.cpp `pkg-config libfrontier --cflags --libs` -lstdc++
+vide_SOURCES=buffer.cpp filetypemanager.cpp main.cpp tokeniser.cpp vide.cpp editor.cpp interface.cpp project.cpp utils.cpp
+
+vide_LDADD=ui/libui.la vi/libvi.la
+if HAS_LIBCLANG
+vide_LDADD+=cxx/libcxx.la
+endif
+
