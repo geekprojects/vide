@@ -72,9 +72,16 @@ struct ViCommandDefinition
     commandFunction_t completeFunc;
 };
 
+struct ViExCommandDefinition
+{
+    std::wstring name;
+    commandFunction_t func;
+};
+
 struct ViCommand
 {
     ViCommandDefinition* command;
+    ViExCommandDefinition* exCommand;
     char chr; // HACK
     int count;
 
@@ -137,6 +144,7 @@ class ViInterface : public Interface
 
     bool commandDeleteChar(ViCommand* command);
     bool commandDelete(ViCommand* command);
+    bool commandDeleteToEnd(ViCommand* command);
 
     bool commandYank(ViCommand* command);
     bool commandPaste(ViCommand* command);
@@ -145,8 +153,11 @@ class ViInterface : public Interface
 
     bool commandRepeat(ViCommand* command);
     bool commandEx(ViCommand* command);
+
+    bool exCommandWrite(ViCommand* command);
 };
 
 extern ViCommandDefinition g_commands[];
+extern ViExCommandDefinition g_exCommands[];
 
 #endif

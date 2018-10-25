@@ -62,6 +62,7 @@ ViCommandDefinition g_commands[] =
     // Deletion
     {KC_X,           KMOD_NONE, COMMAND_NONE, &ViInterface::commandDeleteChar},
     {KC_D,           KMOD_NONE, COMMAND_HAS_PARAM, &ViInterface::commandDelete},
+    {KC_D,           KMOD_SHIFT, COMMAND_NONE, &ViInterface::commandDeleteToEnd},
 
     // Copy & Paste
     {KC_Y,           KMOD_NONE, COMMAND_HAS_PARAM | COMMAND_SPECIAL_COUNT, &ViInterface::commandYank},
@@ -217,7 +218,6 @@ bool ViInterface::commandDeleteChar(ViCommand* command)
 
 bool ViInterface::commandDelete(ViCommand* command)
 {
-
     if (command->params == "d")
     {
         m_editor->deleteLine();
@@ -228,6 +228,12 @@ bool ViInterface::commandDelete(ViCommand* command)
         printf("ViInterface::commandDelete: DELETE WORD\n");
     }
 
+    return true;
+}
+
+bool ViInterface::commandDeleteToEnd(ViCommand* command)
+{
+    m_editor->deleteToEnd();
     return true;
 }
 
@@ -261,10 +267,10 @@ bool ViInterface::commandJoin(ViCommand* command)
 
 bool ViInterface::commandRepeat(ViCommand* command)
 {
-    printf("ViInterface::commandRepeat: Here!\n");
 
     if (m_prevCommand.command != NULL)
     {
+    printf("ViInterface::commandRepeat: edit: %ls\n", m_prevCommand.edit.c_str());
         runCommand(&m_prevCommand);
     }
 

@@ -681,6 +681,9 @@ void Editor::insertLine()
     line->lineEnding = "\n";
 
     m_buffer->insertLine(m_cursor.line + 1, line);
+
+    m_fileTypeManager->tokenise(m_buffer, line);
+
     setDirty(DIRTY_CONTENT);
 }
 
@@ -755,6 +758,17 @@ void Editor::deleteLine()
     setDirty(DIRTY_CONTENT);
 }
 
+void Editor::deleteToEnd()
+{
+    Line* line = m_buffer->getLine(m_cursor.line);
+
+    line->text.erase(m_cursor.column);
+
+    m_fileTypeManager->tokenise(m_buffer, line);
+
+    setDirty(DIRTY_CONTENT);
+}
+
 void Editor::copyToBuffer(int count)
 {
     vector<wstring> copyVec;
@@ -770,6 +784,7 @@ void Editor::copyToBuffer(int count)
         }
     }
     m_vide->setBuffer(copyVec);
+
 }
 
 void Editor::pasteFromBuffer()
@@ -781,10 +796,12 @@ void Editor::pasteFromBuffer()
         Line* line = new Line();
         line->lineEnding = "\n";
         line->text = text;
-        m_fileTypeManager->tokenise(m_buffer, line);
 
         m_buffer->insertLine(++m_cursor.line, line);
     }
+
+    m_fileTypeManager->tokenise(m_buffer);
+
     setDirty(DIRTY_CONTENT);
 }
 

@@ -106,6 +106,7 @@ class Editor : public Frontier::Widget
     void joinLines();
     void deleteAtCursor();
     void deleteLine();
+    void deleteToEnd();
 
     void copyToBuffer(int count);
     void pasteFromBuffer();

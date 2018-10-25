@@ -136,14 +136,15 @@ return;
     {
         runCommand(&m_command);
 
-        if (!(m_command.command->flags & COMMAND_NO_REPEAT))
-        {
-            m_prevCommand = m_command;
-        }
-
         if (!(m_command.command->flags & COMMAND_INSERT))
         {
             printf("ViInterface::keyNormal: Returning to START state\n");
+
+            if (!(m_command.command->flags & COMMAND_NO_REPEAT))
+            {
+                m_prevCommand = m_command;
+            }
+
             m_state = STATE_START;
         }
         else
@@ -195,6 +196,8 @@ void ViInterface::keyInsert(Frontier::InputMessage* inputMessage)
             ((this)->*func)(&m_command);
         }
 
+        m_prevCommand = m_command;
+
         setMode(MODE_NORMAL);
         return;
     }
@@ -203,7 +206,7 @@ void ViInterface::keyInsert(Frontier::InputMessage* inputMessage)
         m_editor->splitLine();
         m_editor->moveCursorDelta(0, 1);
         m_editor->moveCursorX(0);
-        m_prevCommand.edit += '\n';
+        m_command.edit += '\n';
     }
     else if (inputMessage->event.key.key == KC_BACKSPACE)
     {
@@ -218,13 +221,13 @@ void ViInterface::keyInsert(Frontier::InputMessage* inputMessage)
     cursor = keyCursor(inputMessage->event.key.key);
     if (cursor)
     {
-        m_prevCommand.edit = L"";
+        m_command.edit = L"";
         return;
     }
 
     if (iswprint(c))
     {
-        m_prevCommand.edit += c;
+        m_command.edit += c;
         m_editor->insert(c);
     }
 }
@@ -316,9 +319,27 @@ void ViInterface::runExCommand(wstring command)
         return;
     }
 
-    if (command == L"w")
+wstring name = command;
+size_t pos = command.find(' ');
+if (pos != wstring::npos)
+{
+name = command.substr(0, pos);
+}
+
+    ViExCommandDefinition* commandDefinition = NULL;
+    for (i = 0; g_exCommands[i].name != L"" && g_exCommands[i].func != NULL; i++)
     {
-        m_editor->save();
+        ViExCommandDefinition* def = &(g_exCommands[i]);
+        if (def->name == name)
+        {
+            commandDefinition = def;
+        }
+    }
+
+    if (commandDefinition != NULL)
+    {
+        commandFunction_t func = commandDefinition->func;
+        ((this)->*func)(&m_command);
     }
 }
 
