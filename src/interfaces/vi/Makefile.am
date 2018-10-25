@@ -1,7 +1,7 @@
 
 noinst_LTLIBRARIES=libvi.la
 
-libvi_la_SOURCES=vi.cpp
+libvi_la_SOURCES=vi.cpp vicommands.cpp
 
 libvi_la_CPPFLAGS=-I{top_srcdir}/src
 

@@ -147,4 +147,6 @@ class ViInterface : public Interface
     bool commandEx(ViCommand* command);
 };
 
+extern ViCommandDefinition g_commands[];
+
 #endif
