@@ -21,6 +21,7 @@
 
 #include "editor.h"
 #include "vide.h"
+#include "interfaces/vi/vi.h"
 
 #include <wctype.h>
 

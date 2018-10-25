@@ -2,7 +2,7 @@
 #define __VIDE_CXX_FILE_TYPE_MANAGER_H_
 
 #include "tokeniser.h"
-#include "filetypemanager.h"
+#include "filetypes/filetypemanager.h"
 
 #include <clang-c/Index.h>
 

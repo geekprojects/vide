@@ -27,7 +27,7 @@
 
 #include <wchar.h>
 
-#include "filetypemanager.h"
+#include "filetypes/filetypemanager.h"
 #include "buffer.h"
 
 class Project;

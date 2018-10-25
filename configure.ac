@@ -64,9 +64,11 @@ CPPFLAGS="-O0 -g $CPPFLAGS -Wall -Werror -O0"
 AC_CONFIG_FILES([
     Makefile
     src/Makefile
-    src/cxx/Makefile
+    src/filetypes/Makefile
+    src/filetypes/cxx/Makefile
     src/ui/Makefile
     src/ui/views/Makefile
-    src/vi/Makefile
+    src/interfaces/Makefile
+    src/interfaces/vi/Makefile
 ])
 AC_OUTPUT

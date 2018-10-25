@@ -19,7 +19,7 @@
  */
 
 
-#include "interface.h"
+#include "vi.h"
 #include "editor.h"
 
 #include <wctype.h>

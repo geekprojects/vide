@@ -22,8 +22,8 @@
 #define __VIDE_EDITOR_H_
 
 #include "buffer.h"
-#include "interface.h"
-#include "filetypemanager.h"
+#include "interfaces/interface.h"
+#include "filetypes/filetypemanager.h"
 
 #include <frontier/widgets/scrollbar.h>
 

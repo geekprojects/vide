@@ -32,9 +32,9 @@
 #include <libfswatch/c++/monitor.hpp>
 #endif
 
-#include "filetypemanager.h"
+#include "filetypes/filetypemanager.h"
 #ifdef HAS_LIBCLANG
-#include "cxxfiletypemanager.h"
+#include "filetypes/cxx/cxxfiletypemanager.h"
 #endif
 
 using namespace std;

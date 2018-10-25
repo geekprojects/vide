@@ -18,27 +18,10 @@
  * along with Vide.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __VIDE_INTERFACE_H_
-#define __VIDE_INTERFACE_H_
+#ifndef __VIDE_INTERFACES_VI_H_
+#define __VIDE_INTERFACES_VI_H_
 
-#include <frontier/messages.h>
-
-class Editor;
-
-class Interface
-{
- protected:
-
-    Editor* m_editor;
-
- public:
-    Interface(Editor* editor);
-    virtual ~Interface();
-
-    virtual void key(Frontier::InputMessage* inputMessage);
-
-    virtual void updateStatus();
-};
+#include "interfaces/interface.h"
 
 enum ViMode
 {
