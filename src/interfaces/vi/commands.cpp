@@ -40,6 +40,7 @@ ViCommandDefinition g_commands[] =
     {KC_A, KMOD_SHIFT, COMMAND_INSERT, &ViInterface::commandInsertA, &ViInterface::commandMoveLeft},
     {KC_O, KMOD_NONE,  COMMAND_INSERT, &ViInterface::commandInserto},
     {KC_O, KMOD_SHIFT, COMMAND_INSERT, &ViInterface::commandInsertO},
+    {KC_C, KMOD_SHIFT, COMMAND_INSERT, &ViInterface::commandDeleteToEnd},
 
     // Cursor commands
     {KC_DOLLAR,      KMOD_ANY, COMMAND_NO_REPEAT, &ViInterface::commandMoveEndOfLine},
@@ -270,8 +271,23 @@ bool ViInterface::commandRepeat(ViCommand* command)
 
     if (m_prevCommand.command != NULL)
     {
-    printf("ViInterface::commandRepeat: edit: %ls\n", m_prevCommand.edit.c_str());
+        printf("ViInterface::commandRepeat: edit: %ls\n", m_prevCommand.edit.c_str());
+
         runCommand(&m_prevCommand);
+
+        if (!!(m_prevCommand.command->flags & COMMAND_INSERT))
+        {
+            unsigned int i;
+            for (i = 0; i < m_prevCommand.edit.length(); i++)
+            {
+                insertChar(m_prevCommand.edit.at(i));
+            }
+            if (m_prevCommand.command->completeFunc != NULL)
+            {
+                commandFunction_t func = m_prevCommand.command->completeFunc;
+                ((this)->*func)(&m_command);
+            }
+        }
     }
 
     return true;

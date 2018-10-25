@@ -106,7 +106,7 @@ class ViInterface : public Interface
     void keyInsert(Frontier::InputMessage* inputMessage);
     void keyCommand(Frontier::InputMessage* inputMessage);
 
-    bool keyCursor(uint32_t key);
+    void insertChar(wchar_t c);
 
     bool runCommand(ViCommand* command);
     void runExCommand(std::wstring command);
