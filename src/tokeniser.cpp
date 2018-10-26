@@ -40,19 +40,25 @@ bool Tokeniser::tokenise(Buffer* buffer)
 
     for (lineIt = buffer->getLines().begin(); lineIt != buffer->getLines().end(); lineIt++)
     {
-        bool res;
-        res = tokenise(buffer, *lineIt);
-        if (!res)
+        Line* line = *lineIt;
+        if (line->dirty)
         {
-            return false;
+            bool res;
+            res = tokenise(buffer, line);
+            if (!res)
+            {
+                return false;
+            }
         }
     }
+    buffer->clearDirty();
 
     return true;
 }
 
 bool Tokeniser::tokenise(Buffer* buffer, Line* line)
 {
+    line->dirty = false;
     return true;
 }
 
@@ -125,6 +131,8 @@ bool SimpleTokeniser::tokenise(Buffer* buffer, Line* line)
         token->type = TOKEN_TEXT;
         line->tokens.push_back(token);
     }
+
+    line->dirty = false;
 
     return true;
 }

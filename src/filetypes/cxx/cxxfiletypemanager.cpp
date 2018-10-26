@@ -81,6 +81,7 @@ bool CXXTokeniser::tokenise(Buffer* buffer)
     for (Line* line : buffer->getLines())
     {
         line->clearTokens();
+        line->dirty = false;
         if (line->text.length() == 0)
         {
             LineToken* token = new LineToken();
@@ -300,6 +301,8 @@ bool CXXTokeniser::tokenise(Buffer* buffer)
     clang_disposeTranslationUnit(unit);
 
     delete[] membuffer;
+
+    buffer->clearDirty();
 
     return true;
 }

@@ -77,10 +77,13 @@ struct Line
 
     std::vector<LineToken*> tokens;
 
+    bool dirty;
+
     Line()
     {
         text = L"";
         lineEnding = "";
+        dirty = true;
     }
 
     ~Line()
@@ -99,6 +102,7 @@ class Buffer
     std::string m_filename;
     ProjectFile* m_projectFile;
     std::vector<Line*> m_lines;
+    bool m_dirty;
 
  public:
     Buffer(std::string filename);
@@ -135,6 +139,9 @@ class Buffer
 
     void insertLine(int asLine, Line* line);
     void deleteLine(int line);
+    bool isDirty() { return m_dirty; }
+    void setDirtyLine(Line* line);
+    void clearDirty();
 
     bool save();
     char* writeToMem(uint32_t& size);

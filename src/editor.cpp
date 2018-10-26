@@ -82,6 +82,11 @@ void Editor::layout()
 
 bool Editor::draw(Surface* surface)
 {
+    if (m_buffer->isDirty())
+    {
+        m_fileTypeManager->tokenise(m_buffer);
+    }
+
     FontManager* fm = m_ui->getFontManager();
 
     surface->clear(0x002b2b2b);
@@ -670,7 +675,7 @@ void Editor::insert(wchar_t c)
     line->text.insert(m_cursor.column, 1, c);
     m_cursor.column++;
 
-    m_fileTypeManager->tokenise(m_buffer, line);
+    m_buffer->setDirtyLine(line);
 
     setDirty(DIRTY_CONTENT);
 }
@@ -681,8 +686,6 @@ void Editor::insertLine()
     line->lineEnding = "\n";
 
     m_buffer->insertLine(m_cursor.line + 1, line);
-
-    m_fileTypeManager->tokenise(m_buffer, line);
 
     setDirty(DIRTY_CONTENT);
 }
@@ -701,8 +704,9 @@ void Editor::splitLine()
     newLine->text = text2;
 
     m_buffer->insertLine(m_cursor.line + 1, newLine);
-    m_fileTypeManager->tokenise(m_buffer, line);
-    m_fileTypeManager->tokenise(m_buffer, newLine);
+    m_buffer->setDirtyLine(line);
+    m_buffer->setDirtyLine(newLine);
+
     setDirty(DIRTY_CONTENT);
 }
 
@@ -721,7 +725,7 @@ void Editor::joinLines()
     line1->text += line2->text;
     m_buffer->deleteLine(m_cursor.line + 1);
 
-    m_fileTypeManager->tokenise(m_buffer, line1);
+    m_buffer->setDirtyLine(line1);
 
     setDirty(DIRTY_CONTENT);
 }
@@ -731,7 +735,7 @@ void Editor::deleteAtCursor()
     Line* line = m_buffer->getLine(m_cursor.line);
     line->text.erase(m_cursor.column, 1);
 
-    m_fileTypeManager->tokenise(m_buffer, line);
+    m_buffer->setDirtyLine(line);
 
     setDirty(DIRTY_CONTENT);
 }
@@ -764,7 +768,7 @@ void Editor::deleteToEnd()
 
     line->text.erase(m_cursor.column);
 
-    m_fileTypeManager->tokenise(m_buffer, line);
+    m_buffer->setDirtyLine(line);
 
     setDirty(DIRTY_CONTENT);
 }
@@ -799,8 +803,6 @@ void Editor::pasteFromBuffer()
 
         m_buffer->insertLine(++m_cursor.line, line);
     }
-
-    m_fileTypeManager->tokenise(m_buffer);
 
     setDirty(DIRTY_CONTENT);
 }

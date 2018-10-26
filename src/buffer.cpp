@@ -30,6 +30,7 @@ using namespace std;
 Buffer::Buffer(string filename)
 {
     m_filename = filename;
+    m_dirty = true;
 }
 
 Buffer::~Buffer()
@@ -61,6 +62,9 @@ void Buffer::insertLine(int asLine, Line* line)
     {
     }
     m_lines.insert(it, line);
+
+    line->dirty = true;
+    m_dirty = true;
 }
 
 void Buffer::deleteLine(int line)
@@ -71,6 +75,19 @@ void Buffer::deleteLine(int line)
     {
     }
     m_lines.erase(it);
+
+    m_dirty = true;
+}
+
+void Buffer::setDirtyLine(Line* line)
+{
+    line->dirty = true;
+    m_dirty = true;
+}
+
+void Buffer::clearDirty()
+{
+    m_dirty = true;
 }
 
 bool Buffer::save()
@@ -293,6 +310,8 @@ void Line::clearTokens()
         delete *it;
     }
     tokens.clear();
+
+    dirty = true;
 }
 
 
