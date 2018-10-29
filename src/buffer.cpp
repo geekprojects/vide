@@ -87,7 +87,7 @@ void Buffer::setDirtyLine(Line* line)
 
 void Buffer::clearDirty()
 {
-    m_dirty = true;
+    m_dirty = false;
 }
 
 bool Buffer::save()
