@@ -84,8 +84,14 @@ bool Editor::draw(Surface* surface)
 {
     if (m_buffer->isDirty())
     {
+        uint64_t start = m_ui->getTimestamp();
         m_fileTypeManager->tokenise(m_buffer);
+        uint64_t end = m_ui->getTimestamp();
+        uint64_t diff = end - start;
+        printf("Editor::draw: tokenise time=%llu\n", diff);
     }
+
+    uint64_t start = m_ui->getTimestamp();
 
     FontManager* fm = m_ui->getFontManager();
 
@@ -248,6 +254,10 @@ bool Editor::draw(Surface* surface)
 
         drawY += charHeight;
     }
+
+    uint64_t end = m_ui->getTimestamp();
+    uint64_t diff = end - start;
+    printf("Editor::draw: time=%llu\n", diff);
 
     surface->drawLine(m_marginX - 1, 0, m_marginX - 1, m_setSize.height - 1, 0xffBBBBBB);
 
