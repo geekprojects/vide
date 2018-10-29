@@ -69,17 +69,15 @@ void ViInterface::keyNormal(Frontier::InputMessage* inputMessage)
     {
         if (m_state == STATE_START)
         {
-            m_command.count = 0;
-            m_command.params = "";
-            m_command.edit = L"";
+            m_command = new ViCommand();
         }
 
         if (isdigit(chr))
         {
-            m_command.count *= 10;
+            m_command->count *= 10;
 
-            m_command.count += chr - '0';
-            printf("ViInterface::keyNormal: STATE_START: count=%d\n", m_command.count);
+            m_command->count += chr - '0';
+            printf("ViInterface::keyNormal: STATE_START: count=%d\n", m_command->count);
             m_state = STATE_COUNT;
             return;
         }
@@ -87,9 +85,9 @@ void ViInterface::keyNormal(Frontier::InputMessage* inputMessage)
         {
 
             m_state = STATE_COMMAND;
-            if (m_command.count == 0)
+            if (m_command->count == 0)
             {
-                m_command.count = 1;
+                m_command->count = 1;
             }
         }
     }
@@ -115,10 +113,10 @@ void ViInterface::keyNormal(Frontier::InputMessage* inputMessage)
             return;
         }
 
-        m_command.command = commandDefinition;
-        m_command.chr = chr;
+        m_command->command = commandDefinition;
+        m_command->chr = chr;
 
-        if (!!(m_command.command->flags & COMMAND_HAS_PARAM))
+        if (!!(m_command->command->flags & COMMAND_HAS_PARAM))
         {
             m_state = STATE_PARAMS;
         }
@@ -130,21 +128,22 @@ void ViInterface::keyNormal(Frontier::InputMessage* inputMessage)
     else if (m_state == STATE_PARAMS)
     {
         printf("ViInterface::keyNormal: STATE_EXTRA: Extra char: %c\n", chr);
-        m_command.params += chr;
+        m_command->params += chr;
         m_state = STATE_EXEC;
     }
 
     if (m_state == STATE_EXEC)
     {
-        runCommand(&m_command);
+        m_command->position = m_editor->getCursor();
+        runCommand(m_command);
 
-        if (!(m_command.command->flags & COMMAND_INSERT))
+        if (!(m_command->command->flags & COMMAND_INSERT))
         {
             printf("ViInterface::keyNormal: Returning to START state\n");
 
-            if (!(m_command.command->flags & COMMAND_NO_REPEAT))
+            if (!(m_command->command->flags & COMMAND_NO_REPEAT))
             {
-                m_prevCommand = m_command;
+                m_prevCommands.push_back(m_command);
             }
 
             m_state = STATE_START;
@@ -158,7 +157,7 @@ void ViInterface::keyNormal(Frontier::InputMessage* inputMessage)
     }
     else if (m_state == STATE_EDIT)
     {
-        m_prevCommand = m_command;
+        m_prevCommands.push_back(m_command);
     }
 }
 
@@ -195,13 +194,13 @@ void ViInterface::keyInsert(Frontier::InputMessage* inputMessage)
     switch (inputMessage->event.key.key)
     {
         case KC_ESCAPE:
-            if (m_command.command->completeFunc != NULL)
+            if (m_command->command->completeFunc != NULL)
             {
-                commandFunction_t func = m_command.command->completeFunc;
-                ((this)->*func)(&m_command);
+                commandFunction_t func = m_command->command->completeFunc;
+                ((this)->*func)(m_command);
             }
 
-            m_prevCommand = m_command;
+            m_prevCommands.push_back(m_command);
 
             setMode(MODE_NORMAL);
             break;;
@@ -211,38 +210,38 @@ void ViInterface::keyInsert(Frontier::InputMessage* inputMessage)
             {
                 m_editor->moveCursorDelta(-1, 0);
                 m_editor->deleteAtCursor();
-                m_command.edit.pop_back();
+                m_command->edit.pop_back();
             }
             break;
 
         case KC_PAGE_DOWN:
             m_editor->moveCursorPage(1);
-            m_command.edit = L"";
+            m_command->edit = L"";
             break;
 
         case KC_PAGE_UP:
             m_editor->moveCursorPage(-1);
-            m_command.edit = L"";
+            m_command->edit = L"";
             break;
 
         case KC_UP:
             m_editor->moveCursorDelta(0, -1);
-            m_command.edit = L"";
+            m_command->edit = L"";
             break;
 
         case KC_DOWN:
             m_editor->moveCursorDelta(0, 1);
-            m_command.edit = L"";
+            m_command->edit = L"";
             break;
 
         case KC_LEFT:
             m_editor->moveCursorDelta(-1, 0);
-            m_command.edit = L"";
+            m_command->edit = L"";
             break;
 
         case KC_RIGHT:
             m_editor->moveCursorDelta(1, 0);
-            m_command.edit = L"";
+            m_command->edit = L"";
             break;
 
         case KC_RETURN:
@@ -261,11 +260,11 @@ void ViInterface::insertChar(wchar_t c)
         m_editor->splitLine();
         m_editor->moveCursorDelta(0, 1);
         m_editor->moveCursorX(0);
-        m_command.edit += '\n';
+        m_command->edit += '\n';
     }
     else if (iswprint(c))
     {
-        m_command.edit += c;
+        m_command->edit += c;
         m_editor->insert(c);
     }
 }
@@ -346,7 +345,7 @@ void ViInterface::runExCommand(wstring command)
     if (commandDefinition != NULL)
     {
         commandFunction_t func = commandDefinition->func;
-        ((this)->*func)(&m_command);
+        ((this)->*func)(m_command);
     }
 }
 
@@ -359,10 +358,7 @@ void ViInterface::setMode(ViMode mode)
         case MODE_NORMAL:
             m_state = STATE_START;
             //m_command.type = TYPE_NONE;
-            m_command.count = 0;
-            m_command.command = NULL;
-            m_command.params = "";
-            m_command.edit = L"";
+            m_command = new ViCommand();
             break;
 
         case MODE_EX_COMMAND:

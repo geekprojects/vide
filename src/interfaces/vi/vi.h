@@ -22,6 +22,7 @@
 #define __VIDE_INTERFACES_VI_H_
 
 #include "interfaces/interface.h"
+#include "buffer.h"
 
 enum ViMode
 {
@@ -65,11 +66,13 @@ typedef bool(ViInterface::*commandFunction_t)(ViCommand*);
 
 struct ViCommandDefinition
 {
+    std::wstring name;
     uint32_t key;
     uint32_t modifiers;
     uint32_t flags;
     commandFunction_t func;
     commandFunction_t completeFunc;
+    commandFunction_t undoFunc;
 };
 
 struct ViExCommandDefinition
@@ -87,6 +90,30 @@ struct ViCommand
 
     std::string params;
     std::wstring edit;
+
+    Position position;
+    std::wstring undoStr;
+
+    ViCommand()
+    {
+        command = NULL;
+        exCommand = NULL;
+        count = 0;
+        params = "";
+        edit = L"";
+    }
+
+    ViCommand(ViCommand* command)
+    {
+        this->command = command->command;
+        this->exCommand = command->exCommand;
+        this->chr = command->chr;
+        this->count = command->count;
+        this->params = command->params;
+        this->edit = command->edit;
+        this->position = command->position;
+        this->undoStr = command->undoStr;
+    }
 };
 
 class ViInterface : public Interface
@@ -96,8 +123,10 @@ class ViInterface : public Interface
 
     // This stores the state of the current command in NORMAL mode
     ViCommandState m_state;
-    ViCommand m_command;
-    ViCommand m_prevCommand;
+    ViCommand* m_command;
+
+    std::vector<ViCommand*> m_prevCommands;
+    std::vector<ViCommand*> m_redoCommands;
 
     // This stores the extended command
     std::wstring m_exCommand;
@@ -151,6 +180,7 @@ class ViInterface : public Interface
 
     bool commandJoin(ViCommand* command);
 
+    bool commandUndo(ViCommand* command);
     bool commandRepeat(ViCommand* command);
     bool commandEx(ViCommand* command);
 

@@ -30,51 +30,52 @@ using namespace Frontier;
 ViCommandDefinition g_commands[] =
 {
     // Special commands
-    {KC_PERIOD, KMOD_ANY, COMMAND_NO_REPEAT, &ViInterface::commandRepeat},
-    {KC_COLON, KMOD_ANY, COMMAND_NO_REPEAT, &ViInterface::commandEx},
+    {L"Undo",       KC_U, KMOD_NONE, COMMAND_NO_REPEAT, &ViInterface::commandUndo},
+    {L"Repeat",     KC_PERIOD, KMOD_ANY, COMMAND_NO_REPEAT, &ViInterface::commandRepeat},
+    {L"Ex Command", KC_COLON, KMOD_ANY, COMMAND_NO_REPEAT, &ViInterface::commandEx},
 
     // Insert commands
-    {KC_I, KMOD_NONE,  COMMAND_INSERT, &ViInterface::commandNop, &ViInterface::commandMoveLeft},
-    {KC_I, KMOD_SHIFT, COMMAND_INSERT, &ViInterface::commandInsertI, &ViInterface::commandMoveLeft},
-    {KC_A, KMOD_NONE,  COMMAND_INSERT, &ViInterface::commandInserta},
-    {KC_A, KMOD_SHIFT, COMMAND_INSERT, &ViInterface::commandInsertA, &ViInterface::commandMoveLeft},
-    {KC_O, KMOD_NONE,  COMMAND_INSERT, &ViInterface::commandInserto},
-    {KC_O, KMOD_SHIFT, COMMAND_INSERT, &ViInterface::commandInsertO},
-    {KC_C, KMOD_SHIFT, COMMAND_INSERT, &ViInterface::commandDeleteToEnd},
+    {L"Insert", KC_I, KMOD_NONE,  COMMAND_INSERT, &ViInterface::commandNop, &ViInterface::commandMoveLeft},
+    {L"Insert", KC_I, KMOD_SHIFT, COMMAND_INSERT, &ViInterface::commandInsertI, &ViInterface::commandMoveLeft},
+    {L"Insert", KC_A, KMOD_NONE,  COMMAND_INSERT, &ViInterface::commandInserta},
+    {L"Insert", KC_A, KMOD_SHIFT, COMMAND_INSERT, &ViInterface::commandInsertA, &ViInterface::commandMoveLeft},
+    {L"Insert", KC_O, KMOD_NONE,  COMMAND_INSERT, &ViInterface::commandInserto},
+    {L"Insert", KC_O, KMOD_SHIFT, COMMAND_INSERT, &ViInterface::commandInsertO},
+    {L"Insert", KC_C, KMOD_SHIFT, COMMAND_INSERT, &ViInterface::commandDeleteToEnd},
 
     // Cursor commands
-    {KC_DOLLAR,      KMOD_ANY, COMMAND_NO_REPEAT, &ViInterface::commandMoveEndOfLine},
-    {KC_ASCIICIRCUM, KMOD_ANY, COMMAND_NO_REPEAT, &ViInterface::commandMoveStartOfLine},
-    {KC_G,           KMOD_SHIFT, COMMAND_NO_REPEAT, &ViInterface::commandMoveEndOfFile},
-    {KC_J,           KMOD_NONE, COMMAND_NO_REPEAT, &ViInterface::commandMoveDown},
-    {KC_DOWN,        KMOD_NONE, COMMAND_NO_REPEAT, &ViInterface::commandMoveDown},
-    {KC_K,           KMOD_NONE, COMMAND_NO_REPEAT, &ViInterface::commandMoveUp},
-    {KC_UP,          KMOD_NONE, COMMAND_NO_REPEAT, &ViInterface::commandMoveUp},
-    {KC_H,           KMOD_NONE, COMMAND_NO_REPEAT, &ViInterface::commandMoveLeft},
-    {KC_LEFT,        KMOD_NONE, COMMAND_NO_REPEAT, &ViInterface::commandMoveLeft},
-    {KC_L,           KMOD_NONE, COMMAND_NO_REPEAT, &ViInterface::commandMoveRight},
-    {KC_RIGHT,       KMOD_NONE, COMMAND_NO_REPEAT, &ViInterface::commandMoveRight},
-    {KC_W,           KMOD_NONE, COMMAND_NO_REPEAT, &ViInterface::commandMoveNextWord},
-    {KC_E,           KMOD_NONE, COMMAND_NO_REPEAT, &ViInterface::commandMoveNextWordEnd},
-    {KC_B,           KMOD_NONE, COMMAND_NO_REPEAT, &ViInterface::commandMoveWordStart},
-    {KC_F,           KMOD_CONTROL, COMMAND_NO_REPEAT, &ViInterface::commandMovePageDown},
-    {KC_B,           KMOD_CONTROL, COMMAND_NO_REPEAT, &ViInterface::commandMovePageUp},
+    {L"EndOfLine",     KC_DOLLAR,      KMOD_ANY, COMMAND_NO_REPEAT, &ViInterface::commandMoveEndOfLine},
+    {L"StartOfLine",   KC_ASCIICIRCUM, KMOD_ANY, COMMAND_NO_REPEAT, &ViInterface::commandMoveStartOfLine},
+    {L"EndOfFile",     KC_G,           KMOD_SHIFT, COMMAND_NO_REPEAT, &ViInterface::commandMoveEndOfFile},
+    {L"MoveDown",      KC_J,           KMOD_NONE, COMMAND_NO_REPEAT, &ViInterface::commandMoveDown},
+    {L"MoveDown",      KC_DOWN,        KMOD_NONE, COMMAND_NO_REPEAT, &ViInterface::commandMoveDown},
+    {L"MoveUp",        KC_K,           KMOD_NONE, COMMAND_NO_REPEAT, &ViInterface::commandMoveUp},
+    {L"MoveUp",        KC_UP,          KMOD_NONE, COMMAND_NO_REPEAT, &ViInterface::commandMoveUp},
+    {L"MoveLeft",      KC_H,           KMOD_NONE, COMMAND_NO_REPEAT, &ViInterface::commandMoveLeft},
+    {L"MoveLeft",      KC_LEFT,        KMOD_NONE, COMMAND_NO_REPEAT, &ViInterface::commandMoveLeft},
+    {L"MoveRight",     KC_L,           KMOD_NONE, COMMAND_NO_REPEAT, &ViInterface::commandMoveRight},
+    {L"MoveRight",     KC_RIGHT,       KMOD_NONE, COMMAND_NO_REPEAT, &ViInterface::commandMoveRight},
+    {L"MoveWord",      KC_W,           KMOD_NONE, COMMAND_NO_REPEAT, &ViInterface::commandMoveNextWord},
+    {L"MoveWordEnd",   KC_E,           KMOD_NONE, COMMAND_NO_REPEAT, &ViInterface::commandMoveNextWordEnd},
+    {L"MoveWordStart", KC_B,           KMOD_NONE, COMMAND_NO_REPEAT, &ViInterface::commandMoveWordStart},
+    {L"MovePageDown",  KC_F,           KMOD_CONTROL, COMMAND_NO_REPEAT, &ViInterface::commandMovePageDown},
+    {L"MovePageUp",    KC_B,           KMOD_CONTROL, COMMAND_NO_REPEAT, &ViInterface::commandMovePageUp},
 
     // Deletion
-    {KC_X,           KMOD_NONE, COMMAND_NONE, &ViInterface::commandDeleteChar},
-    {KC_D,           KMOD_NONE, COMMAND_HAS_PARAM, &ViInterface::commandDelete},
-    {KC_D,           KMOD_SHIFT, COMMAND_NONE, &ViInterface::commandDeleteToEnd},
+    {L"DeleteChar",  KC_X,           KMOD_NONE, COMMAND_NONE, &ViInterface::commandDeleteChar},
+    {L"Delete",      KC_D,           KMOD_NONE, COMMAND_HAS_PARAM, &ViInterface::commandDelete},
+    {L"DeleteToEnd", KC_D,           KMOD_SHIFT, COMMAND_NONE, &ViInterface::commandDeleteToEnd},
 
     // Copy & Paste
-    {KC_Y,           KMOD_NONE, COMMAND_HAS_PARAM | COMMAND_SPECIAL_COUNT, &ViInterface::commandYank},
-    {KC_P,           KMOD_NONE, COMMAND_NONE, &ViInterface::commandPaste},
+    {L"Yank",  KC_Y,           KMOD_NONE, COMMAND_HAS_PARAM | COMMAND_SPECIAL_COUNT, &ViInterface::commandYank},
+    {L"Paste", KC_P,           KMOD_NONE, COMMAND_NONE, &ViInterface::commandPaste},
 
     // Other text manipulation
-    {KC_J,           KMOD_SHIFT, COMMAND_NONE, &ViInterface::commandJoin},
+    {L"Join", KC_J,           KMOD_SHIFT, COMMAND_NONE, &ViInterface::commandJoin},
 
 
     // End of the list
-    {0,              KMOD_NONE, COMMAND_NONE, NULL}
+    {L"", 0,              KMOD_NONE, COMMAND_NONE, NULL}
 };
 
 bool ViInterface::commandNop(ViCommand* command)
@@ -223,7 +224,7 @@ bool ViInterface::commandDelete(ViCommand* command)
     {
         m_editor->deleteLine();
     }
-    else if (m_command.params == "w")
+    else if (command->params == "w")
     {
         printf("DELETE WORD\n");
         printf("ViInterface::commandDelete: DELETE WORD\n");
@@ -240,8 +241,8 @@ bool ViInterface::commandDeleteToEnd(ViCommand* command)
 
 bool ViInterface::commandYank(ViCommand* command)
 {
-    printf("ViInterface::commandYank: YANKing %d lines\n", m_command.count);
-    m_editor->copyToBuffer(m_command.count);
+    printf("ViInterface::commandYank: YANKing %d lines\n", command->count);
+    m_editor->copyToBuffer(command->count);
     return true;
 }
 
@@ -266,27 +267,64 @@ bool ViInterface::commandJoin(ViCommand* command)
     return true;
 }
 
+bool ViInterface::commandUndo(ViCommand* command)
+{
+    if (m_prevCommands.empty())
+    {
+        // Nothing to undo
+        printf("ViInterface::commandRepeat: Nothing to undo\n");
+        return true;
+    }
+
+    ViCommand* undoCommand = m_prevCommands.back();
+    m_redoCommands.push_back(undoCommand);
+    m_prevCommands.pop_back();
+
+    if (undoCommand == NULL)
+    {
+        return true;
+    }
+
+    printf("ViInterface::commandUndo: %ls at line %d\n", undoCommand->command->name.c_str(), undoCommand->position.line);
+
+    return true;
+}
+
 bool ViInterface::commandRepeat(ViCommand* command)
 {
-
-    if (m_prevCommand.command != NULL)
+    if (m_prevCommands.empty())
     {
-        printf("ViInterface::commandRepeat: edit: %ls\n", m_prevCommand.edit.c_str());
+        // Nothing to repeat
+    printf("ViInterface::commandRepeat: Nothing to repeat\n");
+        return true;
+    }
 
-        runCommand(&m_prevCommand);
+    ViCommand* prevCommand = m_prevCommands.back();
 
-        if (!!(m_prevCommand.command->flags & COMMAND_INSERT))
+    if (prevCommand == NULL)
+    {
+        return true;
+    }
+
+    ViCommand* repeatCommand = new ViCommand(prevCommand);
+    repeatCommand->position = m_editor->getCursor();
+    m_prevCommands.push_back(repeatCommand);
+
+    printf("ViInterface::commandRepeat: Repeating: %ls\n", repeatCommand->command->name.c_str());
+
+    runCommand(repeatCommand);
+
+    if (!!(repeatCommand->command->flags & COMMAND_INSERT))
+    {
+        unsigned int i;
+        for (i = 0; i < repeatCommand->edit.length(); i++)
         {
-            unsigned int i;
-            for (i = 0; i < m_prevCommand.edit.length(); i++)
-            {
-                insertChar(m_prevCommand.edit.at(i));
-            }
-            if (m_prevCommand.command->completeFunc != NULL)
-            {
-                commandFunction_t func = m_prevCommand.command->completeFunc;
-                ((this)->*func)(&m_command);
-            }
+            insertChar(repeatCommand->edit.at(i));
+        }
+        if (repeatCommand->command->completeFunc != NULL)
+        {
+            commandFunction_t func = repeatCommand->command->completeFunc;
+            ((this)->*func)(repeatCommand);
         }
     }
 
