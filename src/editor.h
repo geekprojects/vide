@@ -36,6 +36,43 @@ enum CursorType
     CURSOR_BAR,
 };
 
+enum EditType
+{
+    EDIT_INSERT,
+    EDIT_NEW_LINE,
+    EDIT_SPLIT_LINE,
+    EDIT_JOIN_LINES,
+    EDIT_DELETE_CHAR,
+    EDIT_DELETE_LINE,
+    EDIT_DELETE_TO_END,
+};
+
+struct Edit
+{
+    Position position;
+    EditType editType;
+    std::wstring text;
+
+    Edit() {}
+    Edit(Position _pos, EditType _editType)
+    {
+        position = _pos;
+        editType = _editType;
+    }
+    Edit(Position _pos, EditType _editType, wchar_t _chr)
+    {
+        position = _pos;
+        editType = _editType;
+        text = std::wstring(L"") + _chr;
+    }
+    Edit(Position _pos, EditType _editType, std::wstring _text)
+    {
+        position = _pos;
+        editType = _editType;
+        text = _text;
+    }
+};
+
 class Editor : public Frontier::Widget
 {
  private:
@@ -58,6 +95,9 @@ class Editor : public Frontier::Widget
     unsigned int getViewLines();
 
     void drawCursor();
+
+    void doJoinLines(unsigned int line, Line* line1);
+    void doSplitLine(Position pos, Line* line);
 
  public:
 
@@ -100,16 +140,21 @@ class Editor : public Frontier::Widget
     void moveCursorNextToken();
     void moveCursorPage(int dir);
 
-    void insert(wchar_t c);
-    void insertLine();
-    void splitLine();
-    void joinLines();
-    void deleteAtCursor();
-    void deleteLine();
-    void deleteToEnd();
+    void executeEdits(std::vector<Edit> edits);
+    void executeEdit(Edit edit);
+    void undoEdits(std::vector<Edit> edits);
+    void undoEdit(Edit edit);
+
+    std::vector<Edit> insert(wchar_t c);
+    std::vector<Edit> insertLine();
+    std::vector<Edit> splitLine();
+    std::vector<Edit> joinLines();
+    std::vector<Edit> deleteAtCursor();
+    std::vector<Edit> deleteLine();
+    std::vector<Edit> deleteToEnd();
 
     void copyToBuffer(int count);
-    void pasteFromBuffer();
+    std::vector<Edit>  pasteFromBuffer();
 
     void setInterfaceStatus(std::wstring message);
 };

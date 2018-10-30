@@ -23,6 +23,7 @@
 
 #include "interfaces/interface.h"
 #include "buffer.h"
+#include "editor.h"
 
 enum ViMode
 {
@@ -92,7 +93,7 @@ struct ViCommand
     std::wstring edit;
 
     Position position;
-    std::wstring undoStr;
+    std::vector<Edit> edits;
 
     ViCommand()
     {
@@ -112,7 +113,15 @@ struct ViCommand
         this->params = command->params;
         this->edit = command->edit;
         this->position = command->position;
-        this->undoStr = command->undoStr;
+        this->edits = command->edits;
+    }
+
+    void addEdits(std::vector<Edit> added)
+    {
+        for (Edit edit : added)
+        {
+            edits.push_back(edit);
+        }
     }
 };
 

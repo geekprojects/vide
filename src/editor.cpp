@@ -664,7 +664,160 @@ void Editor::moveCursorPage(int dir)
     moveCursorDelta(0, viewLines * dir);
 }
 
-void Editor::insert(wchar_t c)
+void Editor::executeEdits(std::vector<Edit> edits)
+{
+    for (Edit edit : edits)
+    {
+        executeEdit(edit);
+    }
+
+    setDirty(DIRTY_CONTENT);
+}
+
+void Editor::executeEdit(Edit edit)
+{
+    Line* line = m_buffer->getLine(edit.position.line);
+
+    switch (edit.editType)
+    {
+        case EDIT_INSERT:
+        {
+            unsigned int i;
+            for (i = 0; i < edit.text.length(); i++)
+            {
+                line->text.insert(edit.position.column + i, 1, edit.text.at(i));
+            }
+            m_buffer->setDirtyLine(line);
+        } break;
+
+        case EDIT_NEW_LINE:
+        {
+            Line* newLine = new Line();
+            newLine->lineEnding = "\n";
+
+            m_buffer->insertLine(edit.position.line + 1, newLine);
+        } break;
+
+        case EDIT_SPLIT_LINE:
+        {
+            doSplitLine(edit.position, line);
+        } break;
+
+        case EDIT_JOIN_LINES:
+        {
+             doJoinLines(edit.position.line, line);
+        } break;
+
+        case EDIT_DELETE_CHAR:
+            line->text.erase(edit.position.column, 1);
+            m_buffer->setDirtyLine(line);
+            break;
+
+        case EDIT_DELETE_LINE:
+            m_buffer->deleteLine(edit.position.line);
+            break;
+
+        case EDIT_DELETE_TO_END:
+            line->text.erase(edit.position.column);
+            m_buffer->setDirtyLine(line);
+            break;
+    }
+}
+
+void Editor::undoEdits(std::vector<Edit> edits)
+{
+    vector<Edit>::reverse_iterator rit;
+    printf("Editor::undoEdits: Undoing %lu edits\n", edits.size());
+    for (rit = edits.rbegin(); rit != edits.rend(); rit++)
+    {
+        Edit edit = *rit;
+        undoEdit(edit);
+    }
+
+    setDirty(DIRTY_CONTENT);
+}
+
+void Editor::undoEdit(Edit edit)
+{
+    Line* line = m_buffer->getLine(edit.position.line);
+
+    switch (edit.editType)
+    {
+        case EDIT_INSERT:
+            printf("Editor::undoEdit: EDIT_INSERT: %lu chars\n", edit.text.length());
+            line->text.erase(edit.position.column, edit.text.length());
+            m_buffer->setDirtyLine(line);
+            break;
+
+        case EDIT_NEW_LINE:
+            m_buffer->deleteLine(edit.position.line + 1);
+            printf("Editor::undoEdit: EDIT_NEW_LINE\n");
+            break;
+
+        case EDIT_SPLIT_LINE:
+        {
+            printf("Editor::undoEdit: EDIT_SPLIT_LINE:\n");
+
+            doJoinLines(edit.position.line, line);
+        } break;
+
+        case EDIT_JOIN_LINES:
+            printf("Editor::undoEdit: EDIT_JOIN_LINES:\n");
+            doSplitLine(edit.position, line);
+            break;
+
+        case EDIT_DELETE_CHAR:
+            printf("Editor::undoEdit: EDIT_DELETE_CHAR:\n");
+            line->text.insert(edit.position.column, 1, edit.text.at(0));
+            m_buffer->setDirtyLine(line);
+            break;
+
+        case EDIT_DELETE_LINE:
+        {
+            printf("Editor::undoEdit: EDIT_DELETE_LINE:\n");
+
+            Line* newLine = new Line();
+            newLine->lineEnding = "\n";
+            newLine->text = edit.text;
+            m_buffer->insertLine(edit.position.line, newLine);
+
+            m_buffer->setDirtyLine(line);
+        } break;
+
+        case EDIT_DELETE_TO_END:
+            printf("Editor::undoEdit: EDIT_DELETE_TO_END: %ls\n", edit.text.c_str());
+            line->text += edit.text;
+            m_buffer->setDirtyLine(line);
+            break;
+    }
+}
+
+void Editor::doJoinLines(unsigned int line, Line* line1)
+{
+    Line* line2 = m_buffer->getLine(line + 1);
+
+    line1->text += line2->text;
+    m_buffer->deleteLine(line + 1);
+    m_buffer->setDirtyLine(line1);
+}
+
+void Editor::doSplitLine(Position position, Line* line)
+{
+    wstring text1 = line->text.substr(0, position.column);
+    wstring text2 = line->text.substr(position.column);
+
+    line->text = text1;
+
+    Line* newLine = new Line();
+    newLine->lineEnding = line->lineEnding;
+    newLine->text = text2;
+
+    m_buffer->insertLine(position.line + 1, newLine);
+    m_buffer->setDirtyLine(line);
+    m_buffer->setDirtyLine(newLine);
+}
+
+vector<Edit> Editor::insert(wchar_t c)
 {
     Line* line = m_buffer->getLine(m_cursor.line);
 
@@ -682,105 +835,98 @@ void Editor::insert(wchar_t c)
     }
     printf("Editor::insert: m_cursorX=%u, textLen=%u\n", m_cursor.column, textLen);
 
-    line->text.insert(m_cursor.column, 1, c);
-    m_cursor.column++;
+    vector<Edit> edits;
+    edits.push_back(Edit(m_cursor, EDIT_INSERT, c));
 
-    m_buffer->setDirtyLine(line);
+    executeEdits(edits);
 
-    setDirty(DIRTY_CONTENT);
+    return edits;
 }
 
-void Editor::insertLine()
+vector<Edit> Editor::insertLine()
 {
-    Line* line = new Line();
-    line->lineEnding = "\n";
+    vector<Edit> edits;
+    edits.push_back(Edit(m_cursor, EDIT_NEW_LINE));
 
-    m_buffer->insertLine(m_cursor.line + 1, line);
+    executeEdits(edits);
 
-    setDirty(DIRTY_CONTENT);
+    return edits;
 }
 
-void Editor::splitLine()
+vector<Edit> Editor::splitLine()
 {
-    Line* line = m_buffer->getLine(m_cursor.line);
+    vector<Edit> edits;
+    edits.push_back(Edit(m_cursor, EDIT_SPLIT_LINE));
 
-    wstring text1 = line->text.substr(0, m_cursor.column);
-    wstring text2 = line->text.substr(m_cursor.column);
+    executeEdits(edits);
 
-    line->text = text1;
-
-    Line* newLine = new Line();
-    newLine->lineEnding = line->lineEnding;
-    newLine->text = text2;
-
-    m_buffer->insertLine(m_cursor.line + 1, newLine);
-    m_buffer->setDirtyLine(line);
-    m_buffer->setDirtyLine(newLine);
-
-    setDirty(DIRTY_CONTENT);
+    return edits;
 }
 
-void Editor::joinLines()
+vector<Edit> Editor::joinLines()
 {
+    vector<Edit> edits;
+
     unsigned int count = m_buffer->getLineCount();
 
     if (m_cursor.line >= count - 1)
     {
-        return;
+        return edits;
     }
 
-    Line* line1 = m_buffer->getLine(m_cursor.line);
-    Line* line2 = m_buffer->getLine(m_cursor.line + 1);
+    edits.push_back(Edit(m_cursor, EDIT_JOIN_LINES));
 
-    line1->text += line2->text;
-    m_buffer->deleteLine(m_cursor.line + 1);
+    executeEdits(edits);
 
-    m_buffer->setDirtyLine(line1);
-
-    setDirty(DIRTY_CONTENT);
+    return edits;
 }
 
-void Editor::deleteAtCursor()
+vector<Edit> Editor::deleteAtCursor()
 {
+    vector<Edit> edits;
+
     Line* line = m_buffer->getLine(m_cursor.line);
-    line->text.erase(m_cursor.column, 1);
+    edits.push_back(Edit(m_cursor, EDIT_DELETE_CHAR, line->text.at(m_cursor.column)));
 
-    m_buffer->setDirtyLine(line);
+    executeEdits(edits);
 
-    setDirty(DIRTY_CONTENT);
+    return edits;
 }
 
-void Editor::deleteLine()
+vector<Edit> Editor::deleteLine()
 {
-    m_buffer->deleteLine(m_cursor.line);
+    vector<Edit> edits;
+
+    Line* line = m_buffer->getLine(m_cursor.line);
+    edits.push_back(Edit(m_cursor, EDIT_DELETE_LINE, line->text));
 
     unsigned int count = m_buffer->getLineCount();
-    if (count == 0)
+    if (count == 1)
     {
-        m_cursor.line = 0;
-        Line* line = new Line();
-        line->lineEnding = "\n";
-
-        m_buffer->insertLine(m_cursor.line, line);
+        edits.push_back(Edit(m_cursor, EDIT_NEW_LINE));
     }
+
+    executeEdits(edits);
 
     if (m_cursor.line >= m_buffer->getLineCount())
     {
         m_cursor.line = m_buffer->getLineCount() - 1;
     }
 
-    setDirty(DIRTY_CONTENT);
+    return edits;
 }
 
-void Editor::deleteToEnd()
+vector<Edit> Editor::deleteToEnd()
 {
+    vector<Edit> edits;
+
     Line* line = m_buffer->getLine(m_cursor.line);
+    wstring text = line->text.substr(m_cursor.column);
+    edits.push_back(Edit(m_cursor, EDIT_DELETE_TO_END, text));
 
-    line->text.erase(m_cursor.column);
+    executeEdits(edits);
 
-    m_buffer->setDirtyLine(line);
-
-    setDirty(DIRTY_CONTENT);
+    return edits;
 }
 
 void Editor::copyToBuffer(int count)
@@ -801,20 +947,23 @@ void Editor::copyToBuffer(int count)
 
 }
 
-void Editor::pasteFromBuffer()
+vector<Edit> Editor::pasteFromBuffer()
 {
+    vector<Edit> edits;
+
     vector<wstring> copyVec = m_vide->getBuffer();
 
     for (wstring text : copyVec)
     {
-        Line* line = new Line();
-        line->lineEnding = "\n";
-        line->text = text;
-
-        m_buffer->insertLine(++m_cursor.line, line);
+        m_cursor.column = 0;
+        edits.push_back(Edit(m_cursor, EDIT_NEW_LINE));
+        m_cursor.line++;
+        edits.push_back(Edit(m_cursor, EDIT_INSERT, text));
     }
 
-    setDirty(DIRTY_CONTENT);
+    executeEdits(edits);
+
+    return edits;
 }
 
 void Editor::setInterfaceStatus(std::wstring message)

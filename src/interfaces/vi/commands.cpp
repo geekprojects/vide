@@ -105,7 +105,7 @@ bool ViInterface::commandInserta(ViCommand* command)
 
 bool ViInterface::commandInserto(ViCommand* command)
 {
-    m_editor->insertLine();
+    command->addEdits(m_editor->insertLine());
     m_editor->moveCursorDelta(0, 1);
     m_editor->moveCursorX(0);
     return true;
@@ -114,7 +114,7 @@ bool ViInterface::commandInserto(ViCommand* command)
 bool ViInterface::commandInsertO(ViCommand* command)
 {
     m_editor->moveCursorDelta(0, -1);
-    m_editor->insertLine();
+    command->addEdits(m_editor->insertLine());
     m_editor->moveCursorDelta(0, 1);
     m_editor->moveCursorX(0);
     return true;
@@ -214,7 +214,7 @@ bool ViInterface::commandMovePageUp(ViCommand* command)
 
 bool ViInterface::commandDeleteChar(ViCommand* command)
 {
-    m_editor->deleteAtCursor();
+    command->addEdits(m_editor->deleteAtCursor());
     return true;
 }
 
@@ -222,7 +222,7 @@ bool ViInterface::commandDelete(ViCommand* command)
 {
     if (command->params == "d")
     {
-        m_editor->deleteLine();
+        command->addEdits(m_editor->deleteLine());
     }
     else if (command->params == "w")
     {
@@ -235,7 +235,7 @@ bool ViInterface::commandDelete(ViCommand* command)
 
 bool ViInterface::commandDeleteToEnd(ViCommand* command)
 {
-    m_editor->deleteToEnd();
+    command->addEdits(m_editor->deleteToEnd());
     return true;
 }
 
@@ -248,7 +248,7 @@ bool ViInterface::commandYank(ViCommand* command)
 
 bool ViInterface::commandPaste(ViCommand* command)
 {
-    m_editor->pasteFromBuffer();
+    command->addEdits(m_editor->pasteFromBuffer());
     return true;
 }
 
@@ -259,10 +259,10 @@ bool ViInterface::commandJoin(ViCommand* command)
     if (!iswspace(m_editor->getCharAtCursor()))
     {
         m_editor->moveCursorDelta(1, 0, true);
-        m_editor->insert(L' ');
+        command->addEdits(m_editor->insert(L' '));
     }
 
-    m_editor->joinLines();
+    command->addEdits(m_editor->joinLines());
 
     return true;
 }
@@ -285,7 +285,9 @@ bool ViInterface::commandUndo(ViCommand* command)
         return true;
     }
 
-    printf("ViInterface::commandUndo: %ls at line %d\n", undoCommand->command->name.c_str(), undoCommand->position.line);
+    printf("ViInterface::commandUndo: Undoing %ls (%lu edits)\n", undoCommand->command->name.c_str(), undoCommand->edits.size());
+
+    m_editor->undoEdits(undoCommand->edits);
 
     return true;
 }
@@ -316,6 +318,8 @@ bool ViInterface::commandRepeat(ViCommand* command)
 
     if (!!(repeatCommand->command->flags & COMMAND_INSERT))
     {
+
+// XXX TODO: Replay edits!
         unsigned int i;
         for (i = 0; i < repeatCommand->edit.length(); i++)
         {

@@ -209,7 +209,7 @@ void ViInterface::keyInsert(Frontier::InputMessage* inputMessage)
             if (m_editor->getCursorX() > 0)
             {
                 m_editor->moveCursorDelta(-1, 0);
-                m_editor->deleteAtCursor();
+                m_command->addEdits(m_editor->deleteAtCursor());
                 m_command->edit.pop_back();
             }
             break;
@@ -257,7 +257,7 @@ void ViInterface::insertChar(wchar_t c)
 {
     if (c == L'\n')
     {
-        m_editor->splitLine();
+        m_command->addEdits(m_editor->splitLine());
         m_editor->moveCursorDelta(0, 1);
         m_editor->moveCursorX(0);
         m_command->edit += '\n';
@@ -265,7 +265,8 @@ void ViInterface::insertChar(wchar_t c)
     else if (iswprint(c))
     {
         m_command->edit += c;
-        m_editor->insert(c);
+        m_command->addEdits(m_editor->insert(c));
+        m_editor->moveCursorDelta(1, 0, true);
     }
 }
 
