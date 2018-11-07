@@ -7,7 +7,7 @@
 using namespace std;
 using namespace Frontier;
 
-EditorTipWindow::EditorTipWindow(FrontierApp* app) : FrontierWindow(app, L"", WINDOW_POPUP)
+EditorTipWindow::EditorTipWindow(FrontierApp* app) : FrontierWindow(app, L"", WINDOW_TOOL_TIP)
 {
     m_token = NULL;
     m_frame = NULL;
@@ -36,9 +36,6 @@ void EditorTipWindow::setToken(LineToken* token, Geek::Vector2D pos)
             return;
         }
 
-        Frame* oldFrame = m_frame;
-
-
         m_frame = new Frame(this, false);
 
         for (TokenMessage message : token->messages)
@@ -47,14 +44,12 @@ void EditorTipWindow::setToken(LineToken* token, Geek::Vector2D pos)
             m_frame->add(label);
         }
         setContent(m_frame);
-
-        if (oldFrame != NULL)
-        {
-            delete oldFrame;
-        }
     }
     if (m_token != NULL)
     {
+        // Resize to be as small as possible
+        setSize(Size(0, 0));
+
         show();
         setPosition(pos);
     }

@@ -40,6 +40,7 @@ Editor::Editor(Vide* vide, Buffer* buffer, FileTypeManager* ftm) : Widget(vide)
     m_cursorType = CURSOR_BLOCK;
 
     m_scrollBar = new ScrollBar(vide);
+    m_scrollBar->incRefCount();
     m_scrollBar->setParent(this);
     m_scrollBar->changedPositionSignal().connect(sigc::mem_fun(*this, &Editor::onScrollbarChanged));
 
