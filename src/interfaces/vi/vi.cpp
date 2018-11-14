@@ -134,7 +134,7 @@ void ViInterface::keyNormal(Frontier::InputMessage* inputMessage)
 
     if (m_state == STATE_EXEC)
     {
-        m_command->position = m_editor->getCursor();
+        m_command->position = m_editor->getCursorPosition();
         runCommand(m_command);
 
         if (!(m_command->command->flags & COMMAND_INSERT))

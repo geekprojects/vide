@@ -171,7 +171,7 @@ bool ViInterface::commandMoveNextWord(ViCommand* command)
 
 bool ViInterface::commandMoveNextWordEnd(ViCommand* command)
 {
-    Position cursor = m_editor->getCursor();
+    Position cursor = m_editor->getCursorPosition();
     Position pos = cursor;
     LineToken* token = m_editor->getBuffer()->getToken(cursor);
     printf("ViInterface::commandMoveNextWordEnd: e: token=%p\n", token);
@@ -309,7 +309,7 @@ bool ViInterface::commandRepeat(ViCommand* command)
     }
 
     ViCommand* repeatCommand = new ViCommand(prevCommand);
-    repeatCommand->position = m_editor->getCursor();
+    repeatCommand->position = m_editor->getCursorPosition();
     m_prevCommands.push_back(repeatCommand);
 
     printf("ViInterface::commandRepeat: Repeating: %ls\n", repeatCommand->command->name.c_str());

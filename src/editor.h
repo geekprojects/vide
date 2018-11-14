@@ -118,7 +118,7 @@ class Editor : public Frontier::Widget
     void setBuffer(Buffer* buffer);
     Buffer* getBuffer() { return m_buffer; }
 
-    Position getCursor() { return m_cursor; }
+    Position getCursorPosition() { return m_cursor; }
     unsigned int getCursorX() { return m_cursor.column; }
     unsigned int getCursorY() { return m_cursor.line; }
 
@@ -157,6 +157,8 @@ class Editor : public Frontier::Widget
     std::vector<Edit>  pasteFromBuffer();
 
     void setInterfaceStatus(std::wstring message);
+
+    virtual Frontier::WindowCursor getCursor() { return Frontier::CURSOR_EDIT; }
 };
 
 #endif
