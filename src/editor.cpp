@@ -351,7 +351,7 @@ Widget* Editor::handleMessage(Message* msg)
                             {
                                 int x = inputMessage->event.button.x;
                                 int y = inputMessage->event.button.y;
-                                Geek::Vector2D screenPos = m_vide->getWindow()->getScreenPosition(Geek::Vector2D(x, y));
+                                Geek::Vector2D screenPos = m_vide->getWindow()->getScreenPosition(Geek::Vector2D(x + 1, y + 1));
                                 m_vide->getWindow()->getEditorTipWindow()->setToken(token, screenPos);
 
                                 showTip = true;
@@ -363,6 +363,7 @@ Widget* Editor::handleMessage(Message* msg)
                         }
                     }
                 }
+                return this;
             } break;
 
             case FRONTIER_MSG_INPUT_MOUSE_WHEEL:
