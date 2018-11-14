@@ -103,8 +103,10 @@ void VideWindow::onEditorTabChange(Widget* widget)
         printf("VideWindow::onEditorTabChange: Setting active widget: %p\n", widget);
         setActiveWidget(widget);
 
-        Editor* editor = (Editor*)widget;
+#if 0
+        EditorView* editor = (EditorView*)widget;
         m_fileStructureView->setProjectFile(editor->getBuffer()->getProjectFile());
+#endif
     }
     else
     {
@@ -128,7 +130,9 @@ Editor* VideWindow::openEntry(ProjectEntry* entry)
     string filePath = entry->getFilePath();
     printf("VideWindow::openEntry: filePath=%s\n", filePath.c_str());
 
-    Editor* activeEditor = (Editor*)m_editorTabs->getActiveTab();
+#if 0
+    EditorView* activeEditorView = (EditorView*)m_editorTabs->getActiveTab();
+#endif
 
     Editor* editor = entry->getEditor();
     if (editor == NULL)
@@ -136,18 +140,20 @@ Editor* VideWindow::openEntry(ProjectEntry* entry)
         Buffer* buffer = Buffer::loadFile(filePath.c_str());
         buffer->setProjectFile((ProjectFile*)entry);
 
-        editor = new Editor(m_vide, buffer, entry->getFileTypeManager());
+        editor = new Editor(buffer, entry->getFileTypeManager());
         editor->setBuffer(buffer);
 
-        m_editorTabs->addTab(Frontier::Utils::string2wstring(entry->getName()), editor, true);
+        EditorView* editorView = new EditorView(m_vide, editor);
+        m_editorTabs->addTab(Frontier::Utils::string2wstring(entry->getName()), editorView, true);
 
         entry->setEditor(editor);
-        editor->incRefCount(); // The entry keeps a reference
+        //editor->incRefCount(); // The entry keeps a reference
 
         entry->dumpDefinitions();
     }
     else
     {
+#if 0
         // Make sure the editor is actually on a tab
         int idx = m_editorTabs->findTab(editor);
         if (idx == -1)
@@ -155,9 +161,11 @@ Editor* VideWindow::openEntry(ProjectEntry* entry)
             // Reopen tab
             m_editorTabs->addTab(Frontier::Utils::string2wstring(entry->getName()), editor, true);
         }
+#endif
     }
 
-    if (activeEditor != editor)
+#if 0
+    if (activeEditorView->getEditor() != editor)
     {
         printf("VideWindow::openEntry: Setting active widget: %p\n", editor);
         m_editorTabs->setActiveTab(editor);
@@ -166,8 +174,11 @@ Editor* VideWindow::openEntry(ProjectEntry* entry)
 
         getContent()->setDirty();
     }
+#endif
 
+#if 0
     setActiveWidget(editor);
+#endif
 
     return editor;
 }

@@ -25,7 +25,7 @@
 #include <frontier/widgets/label.h>
 #include <frontier/widgets/tabs.h>
 
-#include "editor.h"
+#include "ui/views/editorview.h"
 #include "ui/views/projectview.h"
 #include "ui/views/structureview.h"
 #include "ui/editortipwindow.h"

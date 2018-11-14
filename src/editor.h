@@ -25,16 +25,7 @@
 #include "interfaces/interface.h"
 #include "filetypes/filetypemanager.h"
 
-#include <frontier/widgets/scrollbar.h>
-
 class Vide;
-class EditorTipWindow;
-
-enum CursorType
-{
-    CURSOR_BLOCK,
-    CURSOR_BAR,
-};
 
 enum EditType
 {
@@ -73,57 +64,30 @@ struct Edit
     }
 };
 
-class Editor : public Frontier::Widget
+class Editor
 {
  private:
-    Vide* m_vide;
-
-    int m_marginX;
     Position m_cursor;
-    CursorType m_cursorType;
-
-    Frontier::ScrollBar* m_scrollBar;
 
     Buffer* m_buffer;
-    Interface* m_interface;
     FileTypeManager* m_fileTypeManager;
-
-    EditorTipWindow* m_tipWindow;
-
-    std::map<TokenType, uint32_t> m_colours;
-
-    unsigned int getViewLines();
-
-    void drawCursor();
 
     void doJoinLines(unsigned int line, Line* line1);
     void doSplitLine(Position pos, Line* line);
 
  public:
-
-    Editor(Vide* window, Buffer* buffer, FileTypeManager* ftm);
+    Editor(Buffer* buffer, FileTypeManager* ftm);
     virtual ~Editor();
-
-    virtual void calculateSize();
-    virtual void layout();
-
-    virtual bool draw(Geek::Gfx::Surface* surface);
 
     bool save();
 
-    virtual Widget* handleMessage(Frontier::Message* msg);
-    void onScrollbarChanged(int pos);
-    void onMouseLeave();
-
     void setBuffer(Buffer* buffer);
     Buffer* getBuffer() { return m_buffer; }
+    FileTypeManager* getFileTypeManager() { return m_fileTypeManager; }
 
     Position getCursorPosition() { return m_cursor; }
     unsigned int getCursorX() { return m_cursor.column; }
     unsigned int getCursorY() { return m_cursor.line; }
-
-    CursorType getCursorType() { return m_cursorType; }
-    void setCursorType(CursorType type) { m_cursorType = type; }
 
     Position findPrevWord();
     Position findPrevWord(Position from);
@@ -155,10 +119,6 @@ class Editor : public Frontier::Widget
 
     void copyToBuffer(int count);
     std::vector<Edit>  pasteFromBuffer();
-
-    void setInterfaceStatus(std::wstring message);
-
-    virtual Frontier::WindowCursor getCursor() { return Frontier::CURSOR_EDIT; }
 };
 
 #endif

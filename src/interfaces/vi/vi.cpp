@@ -374,6 +374,7 @@ void ViInterface::setMode(ViMode mode)
 
 void ViInterface::updateStatus()
 {
+#if 0
     switch (m_mode)
     {
         case MODE_NORMAL:
@@ -389,5 +390,6 @@ void ViInterface::updateStatus()
             m_editor->setCursorType(CURSOR_BLOCK);
             break;
     }
+#endif
 }
 
