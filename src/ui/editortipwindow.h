@@ -4,7 +4,7 @@
 #include <frontier/frontier.h>
 #include <frontier/widgets/frame.h>
 
-#include "buffer.h"
+#include "editor/buffer.h"
 
 class EditorTipWindow : public Frontier::FrontierWindow
 {

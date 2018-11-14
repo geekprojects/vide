@@ -19,7 +19,7 @@
  */
 
 #include "tokeniser.h"
-#include "buffer.h"
+#include "editor/buffer.h"
 
 #include <wctype.h>
 

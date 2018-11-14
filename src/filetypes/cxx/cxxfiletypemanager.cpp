@@ -2,7 +2,7 @@
 #include <string.h>
 
 #include "cxxfiletypemanager.h"
-#include "buffer.h"
+#include "editor/buffer.h"
 #include "project.h"
 
 using namespace std;

@@ -4,7 +4,7 @@
 AC_PREREQ([2.69])
 AC_INIT([FULL-PACKAGE-NAME], [VERSION], [BUG-REPORT-ADDRESS])
 AM_INIT_AUTOMAKE([-Wall -Werror])
-AC_CONFIG_SRCDIR([src/editor.h])
+AC_CONFIG_SRCDIR([src/vide.h])
 AC_CONFIG_HEADERS([src/config.h])
 
 # Checks for programs.
@@ -64,6 +64,7 @@ CPPFLAGS="-O0 -g $CPPFLAGS -Wall -Werror -O0"
 AC_CONFIG_FILES([
     Makefile
     src/Makefile
+    src/editor/Makefile
     src/filetypes/Makefile
     src/filetypes/cxx/Makefile
     src/ui/Makefile

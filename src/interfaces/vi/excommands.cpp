@@ -20,7 +20,6 @@
 
 
 #include "vi.h"
-#include "editor.h"
 
 using namespace std;
 using namespace Frontier;

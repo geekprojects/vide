@@ -25,7 +25,7 @@
 #include <string>
 #include <wchar.h>
 
-#include "tokeniser.h"
+#include "filetypes/tokeniser.h"
 
 class ProjectFile;
 

@@ -21,8 +21,8 @@
 #ifndef __VIDE_UI_VIEWS_EDITOR_VIEW_H_
 #define __VIDE_UI_VIEWS_EDITOR_VIEW_H_
 
-#include "buffer.h"
-#include "editor.h"
+#include "editor/buffer.h"
+#include "editor/editor.h"
 #include "interfaces/interface.h"
 #include "filetypes/filetypemanager.h"
 

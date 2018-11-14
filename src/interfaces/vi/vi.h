@@ -22,8 +22,8 @@
 #define __VIDE_INTERFACES_VI_H_
 
 #include "interfaces/interface.h"
-#include "buffer.h"
-#include "editor.h"
+#include "editor/buffer.h"
+#include "editor/editor.h"
 
 enum ViMode
 {

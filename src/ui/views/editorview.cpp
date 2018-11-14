@@ -19,7 +19,7 @@
  */
 
 
-#include "editor.h"
+#include "editor/editor.h"
 #include "ui/views/editorview.h"
 #include "vide.h"
 #include "interfaces/vi/vi.h"
