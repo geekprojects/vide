@@ -52,6 +52,7 @@ class VideWindow : public Frontier::FrontierWindow
     void onOpenFile();
 
     void onEditorTabChange(Frontier::Widget* widget);
+    void onCloseTab(Frontier::Widget* tab);
 
     virtual bool init();
 

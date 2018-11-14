@@ -67,6 +67,7 @@ bool VideWindow::init()
     m_editorTabs = new Tabs(this);
     mainFrame->addWithSize(m_editorTabs, 50);
     m_editorTabs->changeTabSignal().connect(sigc::mem_fun(*this, &VideWindow::onEditorTabChange));
+    m_editorTabs->closeTabSignal().connect(sigc::mem_fun(*this, &VideWindow::onCloseTab));
 
     m_rightTabs = new Tabs(this);
     m_fileStructureView = new StructureView(m_vide, true);
@@ -97,8 +98,24 @@ void VideWindow::onOpenFile()
 
 void VideWindow::onEditorTabChange(Widget* widget)
 {
-    printf("VideWindow::onEditorTabChange: Setting active widget: %p\n", widget);
-    setActiveWidget(widget);
+    if (widget != NULL)
+    {
+        printf("VideWindow::onEditorTabChange: Setting active widget: %p\n", widget);
+        setActiveWidget(widget);
+
+        Editor* editor = (Editor*)widget;
+        m_fileStructureView->setProjectFile(editor->getBuffer()->getProjectFile());
+    }
+    else
+    {
+        m_fileStructureView->setProjectFile(NULL);
+    }
+}
+
+void VideWindow::onCloseTab(Widget* tab)
+{
+    printf("VideWindow::onCloseTab: Closing tab: %p\n", tab);
+    m_editorTabs->closeTab(tab);
 }
 
 void VideWindow::setInterfaceStatus(std::wstring message)
@@ -121,22 +138,36 @@ Editor* VideWindow::openEntry(ProjectEntry* entry)
 
         editor = new Editor(m_vide, buffer, entry->getFileTypeManager());
         editor->setBuffer(buffer);
-        m_editorTabs->addTab(Frontier::Utils::string2wstring(entry->getName()), editor);
+
+        m_editorTabs->addTab(Frontier::Utils::string2wstring(entry->getName()), editor, true);
+
         entry->setEditor(editor);
+        editor->incRefCount(); // The entry keeps a reference
 
         entry->dumpDefinitions();
+    }
+    else
+    {
+        // Make sure the editor is actually on a tab
+        int idx = m_editorTabs->findTab(editor);
+        if (idx == -1)
+        {
+            // Reopen tab
+            m_editorTabs->addTab(Frontier::Utils::string2wstring(entry->getName()), editor, true);
+        }
     }
 
     if (activeEditor != editor)
     {
         printf("VideWindow::openEntry: Setting active widget: %p\n", editor);
         m_editorTabs->setActiveTab(editor);
-        setActiveWidget(editor);
 
         m_fileStructureView->setProjectFile((ProjectFile*)entry);
 
         getContent()->setDirty();
     }
+
+    setActiveWidget(editor);
 
     return editor;
 }
