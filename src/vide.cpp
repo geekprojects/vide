@@ -44,7 +44,7 @@ bool Vide::init()
 
     m_textFont = getFontManager()->openFont(
         "Hack",
-        FontStyle_Normal,
+        "Regular",
         //36);
         10);
     if (m_textFont == NULL)
