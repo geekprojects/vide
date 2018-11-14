@@ -36,8 +36,6 @@ EditorView::EditorView(Vide* vide, Editor* editor) : Widget(vide)
     m_vide = vide;
     m_editor = editor;
 
-    m_cursorType = CURSOR_BLOCK;
-
     m_scrollBar = new ScrollBar(vide);
     m_scrollBar->incRefCount();
     m_scrollBar->setParent(this);
@@ -58,6 +56,8 @@ EditorView::EditorView(Vide* vide, Editor* editor) : Widget(vide)
     m_colours.insert(make_pair(TOKEN_PREPROCESSOR, 0xA6E22E));
     m_colours.insert(make_pair(TOKEN_LITERAL, 0xAE81FF));
     m_colours.insert(make_pair(TOKEN_STRING, 0xE6DB74));
+
+    updateStatus();
 }
 
 EditorView::~EditorView()
@@ -81,7 +81,7 @@ void EditorView::layout()
 
 bool EditorView::draw(Surface* surface)
 {
-Buffer* buffer = m_editor->getBuffer();
+    Buffer* buffer = m_editor->getBuffer();
     if (buffer->isDirty())
     {
         uint64_t start = m_ui->getTimestamp();
@@ -90,6 +90,10 @@ Buffer* buffer = m_editor->getBuffer();
         uint64_t diff = end - start;
         printf("Editor::draw: tokenise time=%llu\n", diff);
     }
+
+    m_editor->clearDirty();
+
+    CursorType cursorType = m_interface->getCursorType();
 
     uint64_t start = m_ui->getTimestamp();
 
@@ -149,7 +153,7 @@ Buffer* buffer = m_editor->getBuffer();
 
         Line* line = lines.at(lineNumber);
 
-Position cursor = m_editor->getCursorPosition();
+        Position cursor = m_editor->getCursorPosition();
         unsigned int column = cursor.column;
         if (column > line->text.length())
         {
@@ -186,7 +190,7 @@ Position cursor = m_editor->getCursorPosition();
                 if (xpos == column && lineNumber == cursor.line)
                 {
                     // Draw the cursor!
-                    switch (m_cursorType)
+                    switch (cursorType)
                     {
                         case CURSOR_BLOCK:
                             surface->drawRectFilled(drawX, drawY, charWidth, charHeight, 0x00BBBBBB);
@@ -295,6 +299,12 @@ Widget* EditorView::handleMessage(Message* msg)
                     inputMessage->event.key.modifiers);
 
                 m_interface->key(inputMessage);
+                updateStatus();
+
+                if (m_editor->isDirty())
+                {
+                    setDirty(DIRTY_CONTENT);
+                }
 
                 return this;
             } break;
@@ -394,9 +404,9 @@ void EditorView::onMouseLeave()
     m_vide->getWindow()->getEditorTipWindow()->hide();
 }
 
-void EditorView::setInterfaceStatus(std::wstring message)
+void EditorView::updateStatus()
 {
-    m_vide->getWindow()->setInterfaceStatus(message);
+    m_vide->getWindow()->setInterfaceStatus(m_interface->getStatus());
 }
 
 unsigned int EditorView::getViewLines()

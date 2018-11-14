@@ -57,8 +57,8 @@ void Editor::setBuffer(Buffer* buffer)
 #if 0
     m_interface->updateStatus();
 
-    setDirty(DIRTY_CONTENT);
 #endif
+    setDirty();
 }
 
 Position Editor::findPrevWord()
@@ -241,9 +241,8 @@ void Editor::moveCursorX(unsigned int x, bool allowXOver)
     if (m_cursor.column != x)
     {
         m_cursor.column = x;
-#if 0
-        setDirty(DIRTY_CONTENT);
-#endif
+
+        setDirty();
     }
 }
 
@@ -265,9 +264,10 @@ void Editor::moveCursorY(unsigned int y)
 
     if (m_cursor.line != y)
     {
+        m_cursor.line = y;
+
 #if 0
         unsigned int scrollPos = m_scrollBar->getPos();
-        m_cursor.line = y;
         if (m_cursor.line < scrollPos)
         {
             m_scrollBar->setPos(m_cursor.line);
@@ -281,8 +281,8 @@ void Editor::moveCursorY(unsigned int y)
             }
         }
 
-        setDirty(DIRTY_CONTENT);
 #endif
+        setDirty();
     }
 }
 
@@ -305,18 +305,15 @@ void Editor::moveCursorXEnd()
 {
     int width = m_buffer->getLineLength(m_cursor.line);
     m_cursor.column = width - 1;
-#if 0
-    setDirty(DIRTY_CONTENT);
-#endif
+
+    setDirty();
 }
 
 void Editor::moveCursorYEnd()
 {
     moveCursor(Position(m_buffer->getLineCount() - 1, 0));
 
-#if 0
-    setDirty(DIRTY_CONTENT);
-#endif
+    setDirty();
 }
 
 void Editor::moveCursorPage(int dir)
@@ -335,9 +332,7 @@ void Editor::executeEdits(std::vector<Edit> edits)
         executeEdit(edit);
     }
 
-#if 0
-    setDirty(DIRTY_CONTENT);
-#endif
+    setDirty();
 }
 
 void Editor::executeEdit(Edit edit)
@@ -400,9 +395,7 @@ void Editor::undoEdits(std::vector<Edit> edits)
         undoEdit(edit);
     }
 
-#if 0
-    setDirty(DIRTY_CONTENT);
-#endif
+    setDirty();
 }
 
 void Editor::undoEdit(Edit edit)

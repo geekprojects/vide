@@ -22,13 +22,13 @@
 #define __VIDE_INTERFACE_H_
 
 #include <frontier/messages.h>
+#include "ui/views/editorview.h"
 
 class Editor;
 
 class Interface
 {
  protected:
-
     Editor* m_editor;
 
  public:
@@ -37,7 +37,8 @@ class Interface
 
     virtual void key(Frontier::InputMessage* inputMessage);
 
-    virtual void updateStatus();
+    virtual CursorType getCursorType();
+    virtual std::wstring getStatus();
 };
 
 #endif

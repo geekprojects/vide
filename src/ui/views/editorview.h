@@ -21,15 +21,14 @@
 #ifndef __VIDE_UI_VIEWS_EDITOR_VIEW_H_
 #define __VIDE_UI_VIEWS_EDITOR_VIEW_H_
 
-#include "editor/buffer.h"
 #include "editor/editor.h"
-#include "interfaces/interface.h"
-#include "filetypes/filetypemanager.h"
 
 #include <frontier/widgets/scrollbar.h>
 
 class Vide;
 class EditorTipWindow;
+class Interface;
+class Editor;
 
 enum CursorType
 {
@@ -45,7 +44,6 @@ class EditorView : public Frontier::Widget
     Interface* m_interface;
 
     int m_marginX;
-    CursorType m_cursorType;
 
     Frontier::ScrollBar* m_scrollBar;
     EditorTipWindow* m_tipWindow;
@@ -71,10 +69,7 @@ class EditorView : public Frontier::Widget
     void onScrollbarChanged(int pos);
     void onMouseLeave();
 
-    CursorType getCursorType() { return m_cursorType; }
-    void setCursorType(CursorType type) { m_cursorType = type; }
-
-    void setInterfaceStatus(std::wstring message);
+    void updateStatus();
 
     virtual Frontier::WindowCursor getCursor() { return Frontier::CURSOR_EDIT; }
 };

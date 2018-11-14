@@ -30,11 +30,20 @@ Interface::~Interface()
 {
 }
 
-void Interface::updateStatus()
-{
-}
-
 void Interface::key(Frontier::InputMessage* inputMessage)
 {
 }
+
+
+CursorType Interface::getCursorType()
+{
+    return CURSOR_BLOCK;
+}
+
+std::wstring Interface::getStatus()
+{
+    return L"";
+}
+
+
 

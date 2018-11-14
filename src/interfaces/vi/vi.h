@@ -157,7 +157,8 @@ class ViInterface : public Interface
 
     virtual void key(Frontier::InputMessage* inputMessage);
 
-    virtual void updateStatus();
+    virtual CursorType getCursorType();
+    virtual std::wstring getStatus();
 
     bool commandNop(ViCommand* command);
     bool commandInserti(ViCommand* command);

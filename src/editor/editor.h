@@ -22,7 +22,6 @@
 #define __VIDE_EDITOR_H_
 
 #include "buffer.h"
-#include "interfaces/interface.h"
 #include "filetypes/filetypemanager.h"
 
 class Vide;
@@ -68,8 +67,10 @@ class Editor
 {
  private:
     Position m_cursor;
+    bool m_dirty;
 
     Buffer* m_buffer;
+
     FileTypeManager* m_fileTypeManager;
 
     void doJoinLines(unsigned int line, Line* line1);
@@ -88,6 +89,9 @@ class Editor
     Position getCursorPosition() { return m_cursor; }
     unsigned int getCursorX() { return m_cursor.column; }
     unsigned int getCursorY() { return m_cursor.line; }
+    bool isDirty() { return m_dirty; }
+    void setDirty() { m_dirty = true; }
+    void clearDirty() { m_dirty = false; }
 
     Position findPrevWord();
     Position findPrevWord(Position from);

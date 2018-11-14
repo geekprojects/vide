@@ -291,13 +291,11 @@ void ViInterface::keyCommand(Frontier::InputMessage* inputMessage)
         if (m_exCommand.length() > 0)
         {
             m_exCommand = m_exCommand.substr(0, m_exCommand.length() - 1);
-            updateStatus();
         }
     }
     else if (iswprint(inputMessage->event.key.chr))
     {
         m_exCommand += inputMessage->event.key.chr;
-        updateStatus();
     }
 }
 
@@ -368,27 +366,35 @@ void ViInterface::setMode(ViMode mode)
         default:
             break;
     }
-    updateStatus();
 }
 
-void ViInterface::updateStatus()
+CursorType ViInterface::getCursorType()
 {
-#if 0
     switch (m_mode)
     {
         case MODE_NORMAL:
-            m_editor->setInterfaceStatus(L"Normal");
-            m_editor->setCursorType(CURSOR_BLOCK);
-            break;
+            return CURSOR_BLOCK;
         case MODE_INSERT:
-            m_editor->setInterfaceStatus(L"Insert");
-            m_editor->setCursorType(CURSOR_BAR);
-            break;
+            return CURSOR_BAR;
         case MODE_EX_COMMAND:
-            m_editor->setInterfaceStatus(L"Command: " + m_exCommand);
-            m_editor->setCursorType(CURSOR_BLOCK);
-            break;
+            return CURSOR_BLOCK;
+        default:
+            return CURSOR_BLOCK;
     }
-#endif
 }
+
+wstring ViInterface::getStatus()
+{
+    switch (m_mode)
+    {
+        case MODE_NORMAL:
+            return L"Normal";
+        case MODE_INSERT:
+            return L"Insert";
+        case MODE_EX_COMMAND:
+            return L"Command: " + m_exCommand;
+    }
+}
+
+
 
