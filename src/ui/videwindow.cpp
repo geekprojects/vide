@@ -28,9 +28,10 @@
 using namespace std;
 using namespace Frontier;
 
-VideWindow::VideWindow(Vide* vide) : FrontierWindow(vide, L"Vide", WINDOW_NORMAL)
+VideWindow::VideWindow(Vide* vide, Project* project) : FrontierWindow(vide, L"Vide", WINDOW_NORMAL)
 {
     m_vide = vide;
+    m_project = project;
 }
 
 VideWindow::~VideWindow()
@@ -56,7 +57,7 @@ bool VideWindow::init()
     rootFrame->add(mainFrame);
 
     m_leftTabs = new Tabs(this);
-    m_projectView = new ProjectView(m_vide);
+    m_projectView = new ProjectView(m_vide, m_project);
     m_leftTabs->addTab(L"Files", m_projectView);
 
     m_structureView = new StructureView(m_vide, false);
@@ -92,7 +93,7 @@ bool VideWindow::init()
 void VideWindow::onOpenFile()
 {
     printf("VideWindow::onOpenFile: Here!\n");
-    string file = getApp()->chooseFile();
+    string file = getApp()->chooseFile(0, "", "");
     printf("VideWindow::onOpenFile: file=%s\n", file.c_str());
 }
 

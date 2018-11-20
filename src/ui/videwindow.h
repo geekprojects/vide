@@ -38,6 +38,8 @@ class VideWindow : public Frontier::FrontierWindow
 {
  private:
     Vide* m_vide;
+    Project* m_project;
+
     Frontier::Tabs* m_leftTabs;
     Frontier::Tabs* m_editorTabs;
     Frontier::Tabs* m_rightTabs;
@@ -57,7 +59,7 @@ class VideWindow : public Frontier::FrontierWindow
     virtual bool init();
 
  public:
-    VideWindow(Vide* app);
+    VideWindow(Vide* app, Project* project);
     ~VideWindow();
 
     FontHandle* getTextFont() { return m_textFont; }
@@ -66,6 +68,7 @@ class VideWindow : public Frontier::FrontierWindow
 
     EditorTipWindow* getEditorTipWindow() { return m_editorTipWindow; }
 
+    Project* getProject() { return m_project; }
     Editor* openEntry(ProjectEntry* entry);
     Editor* openEntry(ProjectEntry* entry, Position pos);
     void closeEntry(ProjectEntry* entry);

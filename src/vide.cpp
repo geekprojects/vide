@@ -20,13 +20,15 @@
 
 
 #include "vide.h"
+#include "ui/welcomewindow.h"
+
+#define PROJECT_FILE "vide.project"
 
 using namespace std;
 using namespace Frontier;
 
-Vide::Vide(string projectDir) : FrontierApp(L"Vide")
+Vide::Vide() : FrontierApp(L"Vide")
 {
-    m_projectDir = projectDir;
 }
 
 Vide::~Vide()
@@ -53,13 +55,44 @@ bool Vide::init()
         return false;
     }
 
-    m_project = new Project(m_projectDir);
-    m_project->scan();
-    m_project->index();
+    m_welcomeWindow = new WelcomeWindow(this);
+    m_welcomeWindow->show();
 
-    m_mainWindow = new VideWindow(this);
+    return true;
+}
 
-    m_mainWindow->show();
+void Vide::hideWelcomeWindow()
+{
+    m_welcomeWindow->hide();
+}
+
+bool Vide::openProject(string path)
+{
+    printf("Vide::openProject: path=%s\n", path.c_str());
+    unsigned int len = path.length();
+    unsigned int projectFileLen = strlen(PROJECT_FILE);
+    if (len > projectFileLen && path.substr(len - projectFileLen) == PROJECT_FILE)
+    {
+        printf("Vide::openProject: Found project file\n");
+        unsigned int len = path.length();
+        path = path.substr(0, (len - projectFileLen));
+        printf("Vide::openProject: path(2)=%s\n", path.c_str());
+    }
+    else
+    {
+        printf("Vide::openProject: No project file found\n");
+        return false;
+    }
+
+    Project* project = new Project(path);
+    project->scan();
+    project->index();
+
+    VideWindow* window = new VideWindow(this, project);
+
+    window->show();
+
+    m_videWindows.push_back(window);
 
     return true;
 }

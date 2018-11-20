@@ -348,6 +348,7 @@ Widget* EditorView::handleMessage(Message* msg)
                     }
                     else if (inputMessage->inputMessageType == FRONTIER_MSG_INPUT_MOUSE_MOTION)
                     {
+                        VideWindow* videWindow = (VideWindow*)getWindow();
                         LineToken* token = m_editor->getBuffer()->getToken(Position(mouseCursorY, mouseCursorX));
                         bool showTip = false;
                         if (token != NULL)
@@ -356,15 +357,15 @@ Widget* EditorView::handleMessage(Message* msg)
                             {
                                 int x = inputMessage->event.button.x;
                                 int y = inputMessage->event.button.y;
-                                Geek::Vector2D screenPos = m_vide->getWindow()->getScreenPosition(Geek::Vector2D(x + 1, y + 1));
-                                m_vide->getWindow()->getEditorTipWindow()->setToken(token, screenPos);
+                                Geek::Vector2D screenPos = videWindow->getScreenPosition(Geek::Vector2D(x + 1, y + 1));
+                                videWindow->getEditorTipWindow()->setToken(token, screenPos);
 
                                 showTip = true;
                             }
                         }
                         if (!showTip)
                         {
-                            m_vide->getWindow()->getEditorTipWindow()->hide();
+                            videWindow->getEditorTipWindow()->hide();
                         }
                     }
                 }
@@ -401,12 +402,17 @@ void EditorView::onScrollbarChanged(int pos)
 
 void EditorView::onMouseLeave()
 {
-    m_vide->getWindow()->getEditorTipWindow()->hide();
+    VideWindow* videWindow = (VideWindow*)getWindow();
+    videWindow->getEditorTipWindow()->hide();
 }
 
 void EditorView::updateStatus()
 {
-    m_vide->getWindow()->setInterfaceStatus(m_interface->getStatus());
+    VideWindow* videWindow = (VideWindow*)getWindow();
+    if (videWindow != NULL)
+    {
+        videWindow->setInterfaceStatus(m_interface->getStatus());
+    }
 }
 
 unsigned int EditorView::getViewLines()

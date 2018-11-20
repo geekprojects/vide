@@ -34,6 +34,7 @@ class ProjectView : public Frontier::Frame
 {
  private:
     Vide* m_vide;
+    Project* m_project;
     Frontier::Scroller* m_scroller;
     Frontier::List* m_projectList;
 
@@ -42,7 +43,7 @@ class ProjectView : public Frontier::Frame
     void onItemClicked(Frontier::ListItem* item);
 
  public:
-    ProjectView(Vide* vide);
+    ProjectView(Vide* vide, Project* project);
     virtual ~ProjectView();
 
     virtual void update();

@@ -30,9 +30,10 @@ static std::wstring string2wstring(const std::string &s)
     return ws;
 }
 
-ProjectView::ProjectView(Vide* vide) : Frame(vide, false)
+ProjectView::ProjectView(Vide* vide, Project* project) : Frame(vide, false)
 {
     m_vide = vide;
+    m_project = project;
     m_margin = 0;
 }
 
@@ -53,8 +54,7 @@ void ProjectView::update()
     rootItem->setOpen(true);
     m_projectList->addItem(rootItem);
 
-    Project* project = m_vide->getProject();
-    ProjectDirectory* root = project->getRoot();
+    ProjectDirectory* root = m_project->getRoot();
     addDirectory(rootItem, root);
 }
 
@@ -104,7 +104,7 @@ void ProjectView::onItemClicked(Frontier::ListItem* item)
     printf("ProjectView::onItemClicked: entry=%s\n", entry->getName().c_str());
     if (entry->getType() == ENTRY_FILE)
     {
-        m_vide->getWindow()->openEntry(entry);
+        ((VideWindow*)getWindow())->openEntry(entry);
     }
 }
 

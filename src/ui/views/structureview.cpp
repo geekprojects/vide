@@ -50,7 +50,8 @@ void StructureView::update()
     map<string, ProjectDefinition*> index;
     if (!m_fileView)
     {
-        index = m_vide->getProject()->getIndex();
+        VideWindow* videWindow = (VideWindow*)getWindow();
+        index = videWindow->getProject()->getIndex();
     }
     else
     {
@@ -176,7 +177,7 @@ void StructureView::addDefinition(Frontier::TreeListItem* parent, ProjectDefinit
 void StructureView::onItemClicked(Frontier::ListItem* item)
 {
     ProjectDefinitionSource* source = (ProjectDefinitionSource*)item->getPrivateData();
-    m_vide->getWindow()->openEntry(source->entry, source->position);
+    ((VideWindow*)getWindow())->openEntry(source->entry, source->position);
 }
 
 
