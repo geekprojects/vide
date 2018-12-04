@@ -44,6 +44,7 @@ class VideWindow : public Frontier::FrontierWindow
     Frontier::Tabs* m_editorTabs;
     Frontier::Tabs* m_rightTabs;
     FontHandle* m_textFont;
+    Frontier::Label* m_editorStatus;
     Frontier::Label* m_interfaceStatus;
     ProjectView* m_projectView;
     StructureView* m_structureView;
@@ -64,6 +65,7 @@ class VideWindow : public Frontier::FrontierWindow
 
     FontHandle* getTextFont() { return m_textFont; }
 
+    void setEditorStatus(std::wstring message);
     void setInterfaceStatus(std::wstring message);
 
     EditorTipWindow* getEditorTipWindow() { return m_editorTipWindow; }

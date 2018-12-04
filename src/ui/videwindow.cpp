@@ -77,7 +77,7 @@ bool VideWindow::init()
 
     Frame* statusFrame = new Frame(this, true);
     statusFrame->add(m_interfaceStatus);
-    statusFrame->add(new Label(this, L"test.cpp", ALIGN_RIGHT));
+    statusFrame->add(m_editorStatus = new Label(this, L"", ALIGN_RIGHT));
     rootFrame->add(statusFrame);
 
     setContent(rootFrame);
@@ -117,6 +117,11 @@ void VideWindow::onCloseTab(Widget* tab)
 {
     printf("VideWindow::onCloseTab: Closing tab: %p\n", tab);
     m_editorTabs->closeTab(tab);
+}
+
+void VideWindow::setEditorStatus(std::wstring message)
+{
+    m_editorStatus->setText(message);
 }
 
 void VideWindow::setInterfaceStatus(std::wstring message)
