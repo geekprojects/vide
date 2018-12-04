@@ -50,13 +50,12 @@ class EditorView : public Frontier::Widget
     Position m_selectEnd;
 
     Frontier::ScrollBar* m_scrollBar;
-    EditorTipWindow* m_tipWindow;
 
     std::map<TokenType, uint32_t> m_colours;
 
     unsigned int getViewLines();
 
-    void drawCursor();
+    void drawCursor(Geek::Gfx::Surface* surface, int x, int y, int w, int h);
 
     bool hasSelection()
     {

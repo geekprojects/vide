@@ -97,7 +97,6 @@ bool EditorView::draw(Surface* surface)
 
     m_editor->clearDirty();
 
-    CursorType cursorType = m_interface->getCursorType();
     Position cursor = m_editor->getCursorPosition();
 
     uint64_t start = m_ui->getTimestamp();
@@ -202,16 +201,7 @@ bool EditorView::draw(Surface* surface)
 
                 if (xpos == cursor.column && drawPos.line == cursor.line)
                 {
-                    // Draw the cursor!
-                    switch (cursorType)
-                    {
-                        case CURSOR_BLOCK:
-                            surface->drawRectFilled(drawX, drawY, charWidth, charHeight, 0x00BBBBBB);
-                            break;
-                        case CURSOR_BAR:
-                            surface->drawRectFilled(drawX, drawY, 1, charHeight, 0x00BBBBBB);
-                            break;
-                    }
+                    drawCursor(surface, drawX, drawY, charWidth, charHeight);
                 }
 
                 if (tokenPos < token->text.length())
@@ -243,6 +233,7 @@ bool EditorView::draw(Surface* surface)
 
                 drawX += charWidth;
             }
+
             if (!token->messages.empty())
             {
                 int maxType = 0;
@@ -269,6 +260,10 @@ bool EditorView::draw(Surface* surface)
                 surface->drawLine(startX, drawY + charHeight - 1, drawX, drawY + charHeight - 1, messageCol);
             }
         }
+            if (xpos == cursor.column && drawPos.line == cursor.line)
+            {
+                drawCursor(surface, drawX, drawY, charWidth, charHeight);
+            }
 
         drawY += charHeight;
     }
@@ -288,6 +283,22 @@ bool EditorView::draw(Surface* surface)
     m_scrollBar->draw(&scrollbarVP);
 
     return true;
+}
+
+void EditorView::drawCursor(Surface* surface, int x, int y, int w, int h)
+{
+    CursorType cursorType = m_interface->getCursorType();
+
+    // Draw the cursor!
+    switch (cursorType)
+    {
+        case CURSOR_BLOCK:
+            surface->drawRectFilled(x, y, w, h, 0x00BBBBBB);
+            break;
+        case CURSOR_BAR:
+            surface->drawRectFilled(x, y, 1, h, 0x00BBBBBB);
+            break;
+    }
 }
 
 Widget* EditorView::handleMessage(Message* msg)
