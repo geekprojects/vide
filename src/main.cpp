@@ -35,11 +35,32 @@ int main(int argc, char** argv)
         return 0;
     }
 
+    const char* project = NULL;
+    if (argc == 2)
+    {
+        project = argv[1];
+    }
+
     Vide vide;
     vide.init();
+
+    if (project != NULL)
+    {
+        vide.hideWelcomeWindow();
+        bool res;
+        res = vide.openProject(project);
+        if (!res)
+        {
+            vide.showWelcomeWindow();
+        }
+    }
+    else
+    {
+        vide.showWelcomeWindow();
+    }
+
     vide.main();
 
     return 0;
 }
-
 

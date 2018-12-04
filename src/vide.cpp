@@ -22,6 +22,9 @@
 #include "vide.h"
 #include "ui/welcomewindow.h"
 
+#include <sys/stat.h>
+#include <unistd.h>
+
 #define PROJECT_FILE "vide.project"
 
 using namespace std;
@@ -56,9 +59,13 @@ bool Vide::init()
     }
 
     m_welcomeWindow = new WelcomeWindow(this);
-    m_welcomeWindow->show();
 
     return true;
+}
+
+void Vide::showWelcomeWindow()
+{
+    m_welcomeWindow->show();
 }
 
 void Vide::hideWelcomeWindow()
@@ -71,17 +78,41 @@ bool Vide::openProject(string path)
     printf("Vide::openProject: path=%s\n", path.c_str());
     unsigned int len = path.length();
     unsigned int projectFileLen = strlen(PROJECT_FILE);
-    if (len > projectFileLen && path.substr(len - projectFileLen) == PROJECT_FILE)
+
+    struct stat pathStat;
+    int res = stat(path.c_str(), &pathStat);
+    if (res != 0)
     {
-        printf("Vide::openProject: Found project file\n");
-        unsigned int len = path.length();
-        path = path.substr(0, (len - projectFileLen));
-        printf("Vide::openProject: path(2)=%s\n", path.c_str());
+        int err = errno;
+        printf("Vide::openProject: Failed to stat path: %s\n", strerror(err));
+        return false;
+    }
+
+    bool isDir = S_ISDIR(pathStat.st_mode);
+
+    if (!isDir)
+    {
+        if (len > projectFileLen && path.substr(len - projectFileLen) == PROJECT_FILE)
+        {
+            printf("Vide::openProject: Found project file\n");
+            unsigned int len = path.length();
+            path = path.substr(0, (len - projectFileLen));
+            printf("Vide::openProject: path(2)=%s\n", path.c_str());
+        }
+        else
+        {
+            printf("Vide::openProject: Not a vide.project file\n");
+            return false;
+        }
     }
     else
     {
-        printf("Vide::openProject: No project file found\n");
-        return false;
+        res = access((path + "/" + PROJECT_FILE).c_str(), R_OK);
+        if (res != 0)
+        {
+            printf("Vide::openProject: Specified path doesn't contain a Vide project file. Create a project first!\n");
+            return false;
+        }
     }
 
     Project* project = new Project(path);

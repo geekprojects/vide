@@ -53,6 +53,7 @@ class Vide : public Frontier::FrontierApp
     void setBuffer(std::vector<std::wstring> buffer) { m_buffer = buffer; }
     std::vector<std::wstring> getBuffer() { return m_buffer; }
 
+    void showWelcomeWindow();
     void hideWelcomeWindow();
 
     bool openProject(std::string path);
