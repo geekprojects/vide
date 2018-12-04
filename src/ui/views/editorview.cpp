@@ -45,6 +45,10 @@ EditorView::EditorView(Vide* vide, Editor* editor) : Widget(vide)
 
     m_marginX = 40;
 
+    m_selecting = false;
+    m_selectStart.set(-1, -1);
+    m_selectEnd.set(-1, -1);
+
     m_colours.insert(make_pair(TOKEN_TEXT, 0xF8F8F2));
     m_colours.insert(make_pair(TOKEN_COMMENT, 0x7E8E91));
     m_colours.insert(make_pair(TOKEN_KEYWORD, 0xF92672));
@@ -94,6 +98,7 @@ bool EditorView::draw(Surface* surface)
     m_editor->clearDirty();
 
     CursorType cursorType = m_interface->getCursorType();
+    Position cursor = m_editor->getCursorPosition();
 
     uint64_t start = m_ui->getTimestamp();
 
@@ -120,6 +125,10 @@ bool EditorView::draw(Surface* surface)
     int drawX = 0;
     int drawY = 0;
 
+    Position selectStart = MIN(m_selectStart, m_selectEnd);
+    Position selectEnd = MAX(m_selectStart, m_selectEnd);
+    bool hasSel = hasSelection();
+
     int scrollPos = m_scrollBar->getPos();
 
     vector<Line*> lines = buffer->getLines();
@@ -128,16 +137,16 @@ bool EditorView::draw(Surface* surface)
     unsigned int ypos = 0;
     for (ypos = 0; ypos < viewLines; ypos++)
     {
-        unsigned int lineNumber = scrollPos + ypos;
+        Position drawPos(scrollPos + ypos, 0);
 
-        if (lineNumber >= lines.size())
+        if (drawPos.line >= lines.size())
         {
             break;
         }
 
         // Draw margin
         wchar_t marginbuffer[1024];
-        swprintf(marginbuffer, 1024, L"%4d", lineNumber + 1);
+        swprintf(marginbuffer, 1024, L"%4d", drawPos.line + 1);
 
         fm->write(textFont,
             surface,
@@ -151,13 +160,11 @@ bool EditorView::draw(Surface* surface)
         drawX = m_marginX;
         unsigned int xpos = 0;
 
-        Line* line = lines.at(lineNumber);
+        Line* line = lines.at(drawPos.line);
 
-        Position cursor = m_editor->getCursorPosition();
-        unsigned int column = cursor.column;
-        if (column > line->text.length())
+        if (drawPos.line == cursor.line && cursor.column > line->text.length())
         {
-            column = line->text.length();
+            cursor.column = line->text.length();
         }
 
         if (line->tokens.empty())
@@ -173,21 +180,27 @@ bool EditorView::draw(Surface* surface)
             unsigned int startX = drawX;
             unsigned int tokenLen = token->text.length();
 
-            if (lineNumber == cursor.line && (tokenIt + 1) == line->tokens.end() && column >= xpos + tokenLen)
+            if (drawPos.line == cursor.line && (tokenIt + 1) == line->tokens.end() && drawPos.column >= xpos + tokenLen)
             {
                 //cursorX = xpos + fragLen;
                 tokenLen++;
             }
 
             unsigned int tokenPos;
-            for (tokenPos = 0; tokenPos < tokenLen; xpos++, tokenPos++)
+            for (tokenPos = 0; tokenPos < tokenLen; xpos++, tokenPos++, drawPos.column++)
             {
                 if (drawX + charWidth > (m_setSize.width - m_scrollBar->getWidth()))
                 {
                     break;
                 }
 
-                if (xpos == column && lineNumber == cursor.line)
+                if (hasSel && drawPos >= selectStart && drawPos < selectEnd)
+                {
+                    // Highlight the selected region
+                    surface->drawRectFilled(drawX, drawY, charWidth, charHeight, 0x00214283);
+                }
+
+                if (xpos == cursor.column && drawPos.line == cursor.line)
                 {
                     // Draw the cursor!
                     switch (cursorType)
@@ -335,21 +348,41 @@ Widget* EditorView::handleMessage(Message* msg)
                     int charHeight = textFont->getPixelHeight(72);
 
                     int scrollPos = m_scrollBar->getPos();
-                    int mouseCursorX = x / charWidth;
-                    int mouseCursorY = scrollPos + (y / charHeight);
+
+                    Position mousePos;
+                    mousePos.line = scrollPos + (y / charHeight);
+                    mousePos.column = x / charWidth;
  
                     if (inputMessage->inputMessageType == FRONTIER_MSG_INPUT_MOUSE_BUTTON)
                     {
-                        m_editor->moveCursorX(mouseCursorX);
-                        m_editor->moveCursorY(mouseCursorY);
+                        if (inputMessage->event.button.direction)
+                        {
+                            m_selecting = true;
+                            m_selectStart = mousePos;
+                            m_selectEnd = mousePos;
+                            m_editor->moveCursorX(mousePos.column);
+                            m_editor->moveCursorY(mousePos.line);
+                        }
+                        else
+                        {
+                            m_selecting = false;
+                        }
 
                         setDirty(DIRTY_CONTENT);
                         return this;
                     }
                     else if (inputMessage->inputMessageType == FRONTIER_MSG_INPUT_MOUSE_MOTION)
                     {
+                        if (m_selecting)
+                        {
+                            m_selectEnd = mousePos;
+                            m_editor->moveCursorX(mousePos.column);
+                            m_editor->moveCursorY(mousePos.line);
+                            setDirty(DIRTY_CONTENT);
+                        }
+
                         VideWindow* videWindow = (VideWindow*)getWindow();
-                        LineToken* token = m_editor->getBuffer()->getToken(Position(mouseCursorY, mouseCursorX));
+                        LineToken* token = m_editor->getBuffer()->getToken(mousePos);
                         bool showTip = false;
                         if (token != NULL)
                         {
@@ -412,6 +445,9 @@ void EditorView::updateStatus()
     if (videWindow != NULL)
     {
         videWindow->setInterfaceStatus(m_interface->getStatus());
+        wchar_t editorStatus[1024];
+        swprintf(editorStatus, 1024, L"Line: %d, Col: %d", m_editor->getCursorPosition().line + 1, m_editor->getCursorPosition().column + 1);
+        videWindow->setEditorStatus(wstring(editorStatus));
     }
 }
 

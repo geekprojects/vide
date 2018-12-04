@@ -45,6 +45,10 @@ class EditorView : public Frontier::Widget
 
     int m_marginX;
 
+    bool m_selecting;
+    Position m_selectStart;
+    Position m_selectEnd;
+
     Frontier::ScrollBar* m_scrollBar;
     EditorTipWindow* m_tipWindow;
 
@@ -53,6 +57,11 @@ class EditorView : public Frontier::Widget
     unsigned int getViewLines();
 
     void drawCursor();
+
+    bool hasSelection()
+    {
+        return ((int)m_selectStart.line != -1 && m_selectStart != m_selectEnd);
+    }
 
  public:
     EditorView(Vide* window, Editor* editor);
