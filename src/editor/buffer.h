@@ -36,14 +36,65 @@ struct Position
 
     Position()
     {
-        line = 0;
-        column = 0;
+        set(0, 0);
     }
 
     Position(unsigned int l, unsigned int c)
     {
+        set(l, c);
+    }
+
+    void set(unsigned int l, unsigned int c)
+    {
         line = l;
         column = c;
+    }
+
+    bool operator < (Position& rhs)
+    {
+        if (line < rhs.line)
+        {
+            return true;
+        }
+        else if (line > rhs.line)
+        {
+            return false;
+        }
+        else
+        {
+            return (column < rhs.column);
+        }
+    }
+
+    bool operator > (Position& rhs)
+    {
+        if (line > rhs.line)
+        {
+            return true;
+        }
+        else if (line < rhs.line)
+        {
+            return false;
+        }
+        else
+        {
+            return (column > rhs.column);
+        }
+    }
+
+    bool operator >= (Position& rhs)
+    {
+        return !((*this) < rhs);
+    }
+
+    bool operator == (Position& rhs)
+    {
+        return (line == rhs.line && column == rhs.column);
+    }
+
+    bool operator != (Position& rhs)
+    {
+        return (line != rhs.line || column != rhs.column);
     }
 };
 
