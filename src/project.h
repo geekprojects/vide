@@ -30,9 +30,12 @@
 #include "filetypes/filetypemanager.h"
 #include "editor/buffer.h"
 
+class Vide;
 class Project;
 class ProjectEntry;
 class Editor;
+class FileTypeManager;
+struct FileTypeManagerData;
 
 enum ProjectDefinitionType
 {
@@ -166,19 +169,18 @@ class ProjectIndex
 class Project
 {
  private:
+    Vide* m_vide;
     std::string m_rootPath;
 
     ProjectDirectory* m_root;
 
     std::map<std::string, ProjectDefinition*> m_index;
 
-    std::vector<FileTypeManager*> m_fileTypeManagers;
-
     bool scanDirectory(ProjectDirectory* entry, std::string path);
     bool indexDirectory(ProjectDirectory* dir);
 
  public:
-    Project(std::string rootPath);
+    Project(Vide* vide, std::string rootPath);
     ~Project();
 
     bool scan();

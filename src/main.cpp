@@ -26,9 +26,12 @@ using namespace Frontier;
 
 int main(int argc, char** argv)
 {
+    Vide vide;
+    vide.init();
+
     if (argc == 3 && !strcmp(argv[1], "project"))
     {
-        Project* project = new Project(argv[2]);
+        Project* project = new Project(&vide, argv[2]);
         project->scan();
         project->index();
         project->dumpStructure();
@@ -41,8 +44,6 @@ int main(int argc, char** argv)
         project = argv[1];
     }
 
-    Vide vide;
-    vide.init();
 
     if (project != NULL)
     {

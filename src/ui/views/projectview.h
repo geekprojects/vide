@@ -22,12 +22,14 @@
 #define __VIDE_PROJECT_WIDGET_H_
 
 #include "vide.h"
+#include "project.h"
 
 #include <frontier/widgets/frame.h>
 #include <frontier/widgets/scroller.h>
 #include <frontier/widgets/list.h>
 
 class Vide;
+class Project;
 class ProjectDirectory;
 
 class ProjectView : public Frontier::Frame

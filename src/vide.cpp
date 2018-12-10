@@ -21,6 +21,7 @@
 
 #include "vide.h"
 #include "ui/welcomewindow.h"
+#include "plugins/plugins.h"
 
 #include <sys/stat.h>
 #include <unistd.h>
@@ -36,6 +37,7 @@ Vide::Vide() : FrontierApp(L"Vide")
 
 Vide::~Vide()
 {
+    delete m_pluginManager;
 }
 
 bool Vide::init()
@@ -60,7 +62,36 @@ bool Vide::init()
 
     m_welcomeWindow = new WelcomeWindow(this);
 
+    m_pluginManager = new VidePluginManager();
+    m_pluginManager->init(this);
+
     return true;
+}
+
+void Vide::registerFileTypeManager(FileTypeManager* ftm)
+{
+    m_fileTypeManagers.push_back(ftm);
+}
+
+FileTypeManager* Vide::findFileTypeManager(ProjectFile* file)
+{
+    FileTypeManager* selected = NULL;
+    FileTypeManagerPriority selectedPriority = PRIORITY_UNSUPPORTED;
+    for (FileTypeManager* ftm : m_fileTypeManagers)
+    {
+        FileTypeManagerPriority priority;
+        priority = ftm->canHandle(file);
+        if (priority != -1)
+        {
+            if (selected == NULL || (priority != PRIORITY_UNSUPPORTED && priority > selectedPriority))
+            {
+                selected = ftm;
+                selectedPriority = priority;
+            }
+        }
+    }
+
+    return selected;
 }
 
 void Vide::showWelcomeWindow()
@@ -115,7 +146,7 @@ bool Vide::openProject(string path)
         }
     }
 
-    Project* project = new Project(path);
+    Project* project = new Project(this, path);
     project->scan();
     project->index();
 

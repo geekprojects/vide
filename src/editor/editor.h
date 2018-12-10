@@ -25,6 +25,7 @@
 #include "filetypes/filetypemanager.h"
 
 class Vide;
+class FileTypeManager;
 
 enum EditType
 {

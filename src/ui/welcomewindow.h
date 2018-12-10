@@ -6,6 +6,8 @@
 
 #include "vide.h"
 
+class Vide;
+
 class WelcomeWindow : public Frontier::FrontierWindow
 {
  private:

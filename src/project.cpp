@@ -21,6 +21,7 @@
 
 #include "project.h"
 #include "config.h"
+#include "vide.h"
 
 #include <dirent.h>
 #include <unistd.h>
@@ -33,21 +34,13 @@
 #endif
 
 #include "filetypes/filetypemanager.h"
-#ifdef HAS_LIBCLANG
-#include "filetypes/cxx/cxxfiletypemanager.h"
-#endif
 
 using namespace std;
 
-Project::Project(string rootPath)
+Project::Project(Vide* vide, string rootPath)
 {
+    m_vide = vide;
     m_rootPath = rootPath;
-
-    // Push in order that they should be evaluated
-#ifdef HAS_LIBCLANG
-    m_fileTypeManagers.push_back(new CXXFileTypeManager(this));
-#endif
-    m_fileTypeManagers.push_back(new TextFileTypeManager(this));
 
     m_root = NULL;
 }
@@ -132,15 +125,10 @@ bool Project::scanDirectory(ProjectDirectory* entry, std::string path)
         {
             ProjectFile* child = new ProjectFile(this, entry, dirent->d_name);
 
-            for (FileTypeManager* ftm : m_fileTypeManagers)
+            FileTypeManager* ftm = m_vide->findFileTypeManager(child);
+            if (ftm != NULL)
             {
-                bool canHandle;
-                canHandle = ftm->canHandle(child);
-                if (canHandle)
-                {
-                    child->setFileTypeManager(ftm);
-                    break;
-                }
+                child->setFileTypeManager(ftm);
             }
 
             entry->addChild(child);

@@ -156,7 +156,7 @@ bool CXXTokeniser::tokenise(Buffer* buffer)
             lineToken->text = text;
             lineToken->column = start.column;
 
-#if 1
+#if 0
             char msg[1024];
             snprintf(msg, 1024, "token=%u, cursor=%u", kind, cursorKind);
             TokenMessage message;
@@ -313,7 +313,9 @@ bool CXXTokeniser::tokenise(Buffer* buffer, Line* line)
     return tokenise(buffer);
 }
 
-CXXFileTypeManager::CXXFileTypeManager(Project* project) : FileTypeManager(project)
+VIDE_PLUGIN(CXXFileTypeManager);
+
+CXXFileTypeManager::CXXFileTypeManager(Vide* vide) : FileTypeManager(vide)
 {
     m_tokeniser = new CXXTokeniser(this);
 
@@ -325,7 +327,7 @@ CXXFileTypeManager::~CXXFileTypeManager()
   clang_disposeIndex(m_index);
 }
 
-bool CXXFileTypeManager::canHandle(ProjectFile* file)
+FileTypeManagerPriority CXXFileTypeManager::canHandle(ProjectFile* file)
 {
     string name = file->getName();
     size_t pos = name.rfind(".");
@@ -338,10 +340,10 @@ bool CXXFileTypeManager::canHandle(ProjectFile* file)
 
     if (ext == "cpp" || ext == "c" || ext == "h")
     {
-        return true;
+        return PRIORITY_HIGH;
     }
 
-    return false;
+    return PRIORITY_UNSUPPORTED;
 }
 
 bool CXXFileTypeManager::index(ProjectFile* file)
@@ -405,6 +407,8 @@ void CXXFileTypeManager::indexStructure(CXTranslationUnit unit, ProjectFile* fil
 
 CXChildVisitResult CXXFileTypeManager::structureVisitor(CXCursor cursor, CXCursor parent, ProjectFile* file)
 {
+    Project* project = file->getProject();
+
     CXSourceLocation sourceLocation = clang_getCursorLocation(cursor);
 
     int inMainFile = clang_Location_isFromMainFile(sourceLocation);
@@ -448,10 +452,10 @@ CXChildVisitResult CXXFileTypeManager::structureVisitor(CXCursor cursor, CXCurso
         if (parentCursorKind != CXCursor_TranslationUnit)
         {
             parentName = buildName(parentCursor);
-            parentDef = m_project->findDefinition(parentName);
+            parentDef = project->findDefinition(parentName);
         }
 
-        ProjectDefinition* def = m_project->findDefinition(defName);
+        ProjectDefinition* def = project->findDefinition(defName);
         if (def == NULL)
         {
             def = new ProjectDefinition();
@@ -462,7 +466,7 @@ CXChildVisitResult CXXFileTypeManager::structureVisitor(CXCursor cursor, CXCurso
 
         if (def->parent == NULL && parentName != "")
         {
-            parentDef = m_project->findDefinition(parentName);
+            parentDef = project->findDefinition(parentName);
 
             if (parentDef != NULL)
             {
@@ -531,7 +535,7 @@ CXChildVisitResult CXXFileTypeManager::structureVisitor(CXCursor cursor, CXCurso
         }
         def->sources.push_back(source);
 
-        m_project->addDefinition(def);
+        project->addDefinition(def);
         file->addDefinition(def);
     }
 

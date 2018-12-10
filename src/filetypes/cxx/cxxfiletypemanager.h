@@ -18,7 +18,6 @@ class CXXTokeniser : public Tokeniser
  protected:
     CXXFileTypeManager* m_ftm;
 
-
  public:
     CXXTokeniser(CXXFileTypeManager* ftm);
     virtual ~CXXTokeniser();
@@ -34,10 +33,10 @@ class CXXFileTypeManager : public FileTypeManager
     CXIndex m_index;
 
  public:
-    CXXFileTypeManager(Project* project);
+    CXXFileTypeManager(Vide* vide);
     virtual ~CXXFileTypeManager();
 
-    virtual bool canHandle(ProjectFile* file);
+    virtual FileTypeManagerPriority canHandle(ProjectFile* file);
 
     virtual bool index(ProjectFile* entry);
 

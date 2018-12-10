@@ -2,26 +2,35 @@
 #define __VIDE_FILE_TYPE_MANAGER_H_
 
 #include "tokeniser.h"
+#include "plugins/plugins.h"
 
 class Project;
 class ProjectFile;
+class VidePlugin;
 
 struct FileTypeManagerData
 {
 };
 
-class FileTypeManager
+enum FileTypeManagerPriority
+{
+    PRIORITY_UNSUPPORTED =  -1,
+    PRIORITY_LOW =  1,
+    PRIORITY_HIGH =  100,
+};
+
+class FileTypeManager : public VidePlugin
 {
  protected:
-
-    Project* m_project;
     Tokeniser* m_tokeniser;
 
  public:
-    FileTypeManager(Project* project);
+    FileTypeManager(Vide* vide);
     virtual ~FileTypeManager();
 
-    virtual bool canHandle(ProjectFile* file);
+    virtual bool init();
+
+    virtual FileTypeManagerPriority canHandle(ProjectFile* file);
 
     Tokeniser* getTokeniser() { return m_tokeniser; }
 
@@ -36,10 +45,10 @@ class TextFileTypeManager : public FileTypeManager
  protected:
 
  public:
-    TextFileTypeManager(Project* project);
+    TextFileTypeManager(Vide* vide);
     virtual ~TextFileTypeManager();
 
-    virtual bool canHandle(ProjectFile* file);
+    virtual FileTypeManagerPriority canHandle(ProjectFile* file);
 };
 
 #endif

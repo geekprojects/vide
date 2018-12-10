@@ -31,22 +31,32 @@
 
 class VideWindow;
 class WelcomeWindow;
+class VidePluginManager;
 
 class Vide : public Frontier::FrontierApp
 {
  private:
     WelcomeWindow* m_welcomeWindow;
 
+    VidePluginManager* m_pluginManager;
+
+    std::vector<FileTypeManager*> m_fileTypeManagers;
+
     std::vector<VideWindow*> m_videWindows;
     FontHandle* m_textFont;
 
     std::vector<std::wstring> m_buffer;
+
+
 
  public:
     Vide();
     virtual ~Vide();
 
     virtual bool init();
+
+    void registerFileTypeManager(FileTypeManager* ftm);
+    FileTypeManager* findFileTypeManager(ProjectFile* file);
 
     FontHandle* getTextFont() { return m_textFont; }
 

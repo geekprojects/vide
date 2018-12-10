@@ -1,19 +1,27 @@
 
 #include "filetypemanager.h"
 #include "project.h"
+#include "vide.h"
 
-FileTypeManager::FileTypeManager(Project* project)
+using namespace std;
+
+FileTypeManager::FileTypeManager(Vide* vide) : VidePlugin(vide)
 {
-    m_project = project;
 }
 
 FileTypeManager::~FileTypeManager()
 {
 }
 
-bool FileTypeManager::canHandle(ProjectFile* file)
+bool FileTypeManager::init()
 {
-    return false;
+    getVide()->registerFileTypeManager(this);
+    return true;
+}
+
+FileTypeManagerPriority FileTypeManager::canHandle(ProjectFile* file)
+{
+    return PRIORITY_UNSUPPORTED;
 }
 
 bool FileTypeManager::index(ProjectFile* file)
@@ -42,7 +50,9 @@ bool FileTypeManager::tokenise(Buffer* buffer, Line* line)
     return m_tokeniser->tokenise(buffer, line);
 }
 
-TextFileTypeManager::TextFileTypeManager(Project* project) : FileTypeManager(project)
+VIDE_PLUGIN(TextFileTypeManager);
+
+TextFileTypeManager::TextFileTypeManager(Vide* vide) : FileTypeManager(vide)
 {
     m_tokeniser = new SimpleTokeniser();
 }
@@ -52,10 +62,10 @@ TextFileTypeManager::~TextFileTypeManager()
     delete m_tokeniser;
 }
 
-bool TextFileTypeManager::canHandle(ProjectFile* file)
+FileTypeManagerPriority TextFileTypeManager::canHandle(ProjectFile* file)
 {
     // We'll take anything!
-    return true;
+    return PRIORITY_LOW;
 }
 
 
