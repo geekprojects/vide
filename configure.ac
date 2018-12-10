@@ -16,6 +16,8 @@ AC_PROG_LIBTOOL
 AC_PROG_RANLIB
 PKG_PROG_PKG_CONFIG
 
+AC_CANONICAL_HOST
+
 # Checks for libraries.
 
 # Checks for header files.
@@ -61,6 +63,12 @@ LIBS="$LIBS $libfrontier_LIBS"
 CPPFLAGS="$CPPFLAGS"
 CPPFLAGS="-O0 -g $CPPFLAGS -Wall -Werror -O0"
 
+case $host_os in
+    darwin*)
+        LDFLAGS+=-all_load
+        ;;
+esac
+
 AC_CONFIG_FILES([
     Makefile
     src/Makefile
@@ -71,5 +79,6 @@ AC_CONFIG_FILES([
     src/ui/views/Makefile
     src/interfaces/Makefile
     src/interfaces/vi/Makefile
+    src/plugins/Makefile
 ])
 AC_OUTPUT
