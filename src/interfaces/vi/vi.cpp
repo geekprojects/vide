@@ -51,6 +51,10 @@ void ViInterface::key(Frontier::InputMessage* inputMessage)
             keyCommand(inputMessage);
             break;
 
+        case MODE_VISUAL:
+            keyVisual(inputMessage);
+            break;
+
         default:
             break;
     }
@@ -393,6 +397,8 @@ wstring ViInterface::getStatus()
             return L"Insert";
         case MODE_EX_COMMAND:
             return L"Command: " + m_exCommand;
+        case MODE_VISUAL:
+            return L"Visual";
     }
 }
 

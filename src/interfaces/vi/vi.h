@@ -30,6 +30,7 @@ enum ViMode
     MODE_NORMAL,
     MODE_INSERT,
     MODE_EX_COMMAND, // Extended command mode
+    MODE_VISUAL,
 };
 
 enum ViCommandType
@@ -94,6 +95,9 @@ struct ViCommand
 
     Position position;
     std::vector<Edit> edits;
+    std::vector<Edit> repeatedEdits;
+
+    bool isCopy;
 
     ViCommand()
     {
@@ -102,6 +106,7 @@ struct ViCommand
         count = 0;
         params = "";
         edit = L"";
+        isCopy = false;
     }
 
     ViCommand(ViCommand* command)
@@ -114,13 +119,21 @@ struct ViCommand
         this->edit = command->edit;
         this->position = command->position;
         this->edits = command->edits;
+        this->isCopy = true;
     }
 
     void addEdits(std::vector<Edit> added)
     {
         for (Edit edit : added)
         {
-            edits.push_back(edit);
+            if (!isCopy)
+            {
+                edits.push_back(edit);
+            }
+            else
+            {
+                repeatedEdits.push_back(edit);
+            }
         }
     }
 };
@@ -143,6 +156,7 @@ class ViInterface : public Interface
     void keyNormal(Frontier::InputMessage* inputMessage);
     void keyInsert(Frontier::InputMessage* inputMessage);
     void keyCommand(Frontier::InputMessage* inputMessage);
+    void keyVisual(Frontier::InputMessage* inputMessage);
 
     void insertChar(wchar_t c);
 
@@ -193,6 +207,7 @@ class ViInterface : public Interface
     bool commandUndo(ViCommand* command);
     bool commandRepeat(ViCommand* command);
     bool commandEx(ViCommand* command);
+    bool commandVisual(ViCommand* command);
 
     bool exCommandWrite(ViCommand* command);
 };

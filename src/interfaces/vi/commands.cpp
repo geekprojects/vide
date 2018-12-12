@@ -32,6 +32,7 @@ ViCommandDefinition g_commands[] =
     {L"Undo",       KC_U, KMOD_NONE, COMMAND_NO_REPEAT, &ViInterface::commandUndo},
     {L"Repeat",     KC_PERIOD, KMOD_ANY, COMMAND_NO_REPEAT, &ViInterface::commandRepeat},
     {L"Ex Command", KC_COLON, KMOD_ANY, COMMAND_NO_REPEAT, &ViInterface::commandEx},
+    {L"Visual",     KC_V, KMOD_NONE, COMMAND_NO_REPEAT, &ViInterface::commandVisual},
 
     // Insert commands
     {L"Insert", KC_I, KMOD_NONE,  COMMAND_INSERT, &ViInterface::commandNop, &ViInterface::commandMoveLeft},
@@ -271,7 +272,7 @@ bool ViInterface::commandUndo(ViCommand* command)
     if (m_prevCommands.empty())
     {
         // Nothing to undo
-        printf("ViInterface::commandRepeat: Nothing to undo\n");
+        printf("ViInterface::commandUndo: Nothing to undo\n");
         return true;
     }
 
@@ -296,7 +297,7 @@ bool ViInterface::commandRepeat(ViCommand* command)
     if (m_prevCommands.empty())
     {
         // Nothing to repeat
-    printf("ViInterface::commandRepeat: Nothing to repeat\n");
+        printf("ViInterface::commandRepeat: Nothing to repeat\n");
         return true;
     }
 
@@ -317,8 +318,6 @@ bool ViInterface::commandRepeat(ViCommand* command)
 
     if (!!(repeatCommand->command->flags & COMMAND_INSERT))
     {
-
-// XXX TODO: Replay edits!
         unsigned int i;
         for (i = 0; i < repeatCommand->edit.length(); i++)
         {
@@ -331,6 +330,8 @@ bool ViInterface::commandRepeat(ViCommand* command)
         }
     }
 
+    repeatCommand->edits = repeatCommand->repeatedEdits;
+
     return true;
 }
 
@@ -340,6 +341,13 @@ bool ViInterface::commandEx(ViCommand* command)
 
     setMode(MODE_EX_COMMAND);
 
+    return true;
+}
+
+bool ViInterface::commandVisual(ViCommand* command)
+{
+    setMode(MODE_VISUAL);
+    m_editor->setSelectEnd(m_editor->getCursorPosition());
     return true;
 }
 
