@@ -70,6 +70,9 @@ class Editor
     Position m_cursor;
     bool m_dirty;
 
+    Position m_selectStart;
+    Position m_selectEnd;
+
     Buffer* m_buffer;
 
     FileTypeManager* m_fileTypeManager;
@@ -93,6 +96,16 @@ class Editor
     bool isDirty() { return m_dirty; }
     void setDirty() { m_dirty = true; }
     void clearDirty() { m_dirty = false; }
+
+    Position getSelectStart() { return m_selectStart; }
+    Position getSelectEnd() { return m_selectEnd; }
+    void setSelectStart(Position pos) { m_selectStart = pos; }
+    void setSelectEnd(Position pos) { m_selectEnd = pos; }
+    void clearSelection() { m_selectStart.line = -1; m_selectEnd.line = -1; }
+    bool hasSelection()
+    {
+        return ((int)m_selectStart.line != -1 && m_selectStart != m_selectEnd);
+    }
 
     Position findPrevWord();
     Position findPrevWord(Position from);

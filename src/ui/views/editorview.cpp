@@ -46,8 +46,6 @@ EditorView::EditorView(Vide* vide, Editor* editor) : Widget(vide)
     m_marginX = 40;
 
     m_selecting = false;
-    m_selectStart.set(-1, -1);
-    m_selectEnd.set(-1, -1);
 
     m_colours.insert(make_pair(TOKEN_TEXT, 0xF8F8F2));
     m_colours.insert(make_pair(TOKEN_COMMENT, 0x7E8E91));
@@ -66,6 +64,7 @@ EditorView::EditorView(Vide* vide, Editor* editor) : Widget(vide)
 
 EditorView::~EditorView()
 {
+    m_scrollBar->decRefCount();
 }
 
 void EditorView::calculateSize()
@@ -124,9 +123,16 @@ bool EditorView::draw(Surface* surface)
     int drawX = 0;
     int drawY = 0;
 
-    Position selectStart = MIN(m_selectStart, m_selectEnd);
-    Position selectEnd = MAX(m_selectStart, m_selectEnd);
-    bool hasSel = hasSelection();
+    Position selectStart = m_editor->getSelectStart();
+    Position selectEnd = m_editor->getSelectEnd();
+    if (selectStart > selectEnd)
+    {
+        Position tmp = selectEnd;
+        selectEnd = selectStart;
+        selectStart = tmp;
+    }
+
+    bool hasSel = m_editor->hasSelection();
 
     int scrollPos = m_scrollBar->getPos();
 
@@ -369,8 +375,8 @@ Widget* EditorView::handleMessage(Message* msg)
                         if (inputMessage->event.button.direction)
                         {
                             m_selecting = true;
-                            m_selectStart = mousePos;
-                            m_selectEnd = mousePos;
+                            m_editor->setSelectStart(mousePos);
+                            m_editor->setSelectEnd(mousePos);
                             m_editor->moveCursorX(mousePos.column);
                             m_editor->moveCursorY(mousePos.line);
                         }
@@ -386,7 +392,7 @@ Widget* EditorView::handleMessage(Message* msg)
                     {
                         if (m_selecting)
                         {
-                            m_selectEnd = mousePos;
+                            m_editor->setSelectEnd(mousePos);
                             m_editor->moveCursorX(mousePos.column);
                             m_editor->moveCursorY(mousePos.line);
                             setDirty(DIRTY_CONTENT);
@@ -455,6 +461,7 @@ void EditorView::updateStatus()
     VideWindow* videWindow = (VideWindow*)getWindow();
     if (videWindow != NULL)
     {
+
         videWindow->setInterfaceStatus(m_interface->getStatus());
         wchar_t editorStatus[1024];
         swprintf(editorStatus, 1024, L"Line: %d, Col: %d", m_editor->getCursorPosition().line + 1, m_editor->getCursorPosition().column + 1);
