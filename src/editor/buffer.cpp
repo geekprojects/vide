@@ -186,15 +186,17 @@ Buffer* Buffer::loadFile(const char* filename)
     fseek(fd, 0, SEEK_SET);
 
     char* fileData = new char[length + 128];
-    size_t read = fread(fileData, 1, length, fd);
-    fclose(fd);
-    if (read == 0)
+    if (length > 0)
     {
-        return NULL;
+        size_t read = fread(fileData, 1, length, fd);
+        fclose(fd);
+        if (read == 0)
+        {
+            return NULL;
+        }
     }
 
     memset(fileData + length, 0, 128);
-
 
     char* pos = fileData;
     char* end = fileData + length;
@@ -262,8 +264,16 @@ Buffer* Buffer::loadFile(const char* filename)
             line->text += cur;
         }
     }
+
     if (line != NULL)
     {
+        buffer->m_lines.push_back(line);
+    }
+
+    if (buffer->m_lines.empty())
+    {
+        line = new Line();
+        line->text = L"";
         buffer->m_lines.push_back(line);
     }
 
