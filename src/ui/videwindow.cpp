@@ -141,6 +141,11 @@ Editor* VideWindow::openEntry(ProjectEntry* entry)
     if (editor == NULL)
     {
         Buffer* buffer = entry->open();
+        if (buffer == NULL)
+        {
+            printf("ERROR: VideWindow::openEntry: Failed to open buffer\n");
+            return NULL;
+        }
 
         editor = new Editor(buffer, entry->getFileTypeManager());
         editor->setBuffer(buffer);

@@ -301,6 +301,12 @@ Buffer* ProjectFile::open()
     }
 
     m_buffer = Buffer::loadFile(getFilePath().c_str());
+    if (m_buffer == NULL)
+    {
+        printf("ERROR: Failed to open file: %s\n", getFilePath().c_str());
+        return NULL;
+    }
+
     m_buffer->setProjectFile(this);
 
     getProject()->openEntrySignal().emit(this);
