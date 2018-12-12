@@ -19,6 +19,8 @@ VidePluginManager::~VidePluginManager()
 {
     for (VidePlugin* plugin : m_plugins)
     {
+        plugin->shutdown();
+
         delete plugin;
     }
 }
@@ -76,6 +78,11 @@ VidePlugin::~VidePlugin()
 }
 
 bool VidePlugin::init()
+{
+    return true;
+}
+
+bool VidePlugin::shutdown()
 {
     return true;
 }

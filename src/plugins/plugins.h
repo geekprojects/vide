@@ -35,6 +35,7 @@ class VidePlugin
     virtual std::string getPluginName() { return m_pluginName; }
 
     virtual bool init();
+    virtual bool shutdown();
 
     Vide* getVide() { return m_vide; }
 };
