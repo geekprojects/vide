@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.69])
-AC_INIT([FULL-PACKAGE-NAME], [VERSION], [BUG-REPORT-ADDRESS])
+AC_INIT([Vide], [0.1], [ian@geekprojects.com])
 AM_INIT_AUTOMAKE([-Wall -Werror])
 AC_CONFIG_SRCDIR([src/vide.h])
 AC_CONFIG_HEADERS([src/config.h])
@@ -55,6 +55,9 @@ if test x$LIBCLANG = xtrue; then
     AC_DEFINE(HAS_LIBCLANG, 1, [libclang])
     LIBS="$LIBS -lclang"
 fi
+
+AC_SEARCH_LIBS([git_libgit2_init], [git2], [LIBGIT2="true" ], [ LIBGIT2="false"])
+AM_CONDITIONAL([HAS_LIBGIT2], [test x$LIBGIT2 = xtrue])
 
 PKG_CHECK_MODULES(libfrontier, libfrontier >= 1)
 CPPFLAGS="$CPPFLAGS $libfrontier_CFLAGS"
