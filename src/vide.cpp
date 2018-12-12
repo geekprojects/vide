@@ -151,11 +151,25 @@ bool Vide::openProject(string path)
     project->index();
 
     VideWindow* window = new VideWindow(this, project);
+    m_videWindows.push_back(window);
+
+    m_openProjectSignal.emit(project);
 
     window->show();
 
-    m_videWindows.push_back(window);
-
     return true;
 }
+
+VideWindow* Vide::getProjectWindow(Project* project)
+{
+    for (VideWindow* vw: m_videWindows)
+    {
+        if (vw->getProject() == project)
+        {
+            return vw;
+        }
+    }
+    return NULL;
+}
+
 

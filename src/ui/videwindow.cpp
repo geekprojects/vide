@@ -140,8 +140,7 @@ Editor* VideWindow::openEntry(ProjectEntry* entry)
     EditorView* editorView = NULL;
     if (editor == NULL)
     {
-        Buffer* buffer = Buffer::loadFile(filePath.c_str());
-        buffer->setProjectFile((ProjectFile*)entry);
+        Buffer* buffer = entry->open();
 
         editor = new Editor(buffer, entry->getFileTypeManager());
         editor->setBuffer(buffer);

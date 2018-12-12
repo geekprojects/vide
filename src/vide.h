@@ -47,7 +47,7 @@ class Vide : public Frontier::FrontierApp
 
     std::vector<std::wstring> m_buffer;
 
-
+    sigc::signal<void, Project*> m_openProjectSignal;
 
  public:
     Vide();
@@ -67,6 +67,10 @@ class Vide : public Frontier::FrontierApp
     void hideWelcomeWindow();
 
     bool openProject(std::string path);
+    VideWindow* getProjectWindow(Project* project);
+
+    // Hooks for plugins
+    sigc::signal<void, Project*> openProjectSignal() { return m_openProjectSignal; }
 };
 
 #endif

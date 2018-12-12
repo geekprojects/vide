@@ -27,6 +27,8 @@
 
 #include <wchar.h>
 
+#include <sigc++/sigc++.h>
+
 #include "filetypes/filetypemanager.h"
 #include "editor/buffer.h"
 
@@ -107,6 +109,8 @@ class ProjectEntry
     void addChild(ProjectEntry* entry);
     std::vector<ProjectEntry*>& getChildren() { return m_children; }
 
+    virtual Buffer* open();
+
     void setEditor(Editor* editor) { m_editor = editor; }
     Editor* getEditor() { return m_editor; }
 
@@ -125,10 +129,13 @@ class ProjectEntry
 class ProjectFile : public ProjectEntry
 {
  private:
+    Buffer* m_buffer;
 
  public:
     ProjectFile(Project* project, ProjectEntry* parent, std::string name);
     virtual ~ProjectFile();
+
+    virtual Buffer* open();
 };
 
 class ProjectDirectory : public ProjectEntry
@@ -176,6 +183,8 @@ class Project
 
     std::map<std::string, ProjectDefinition*> m_index;
 
+    sigc::signal<void, ProjectEntry*> m_openEntrySignal;
+
     bool scanDirectory(ProjectDirectory* entry, std::string path);
     bool indexDirectory(ProjectDirectory* dir);
 
@@ -192,6 +201,8 @@ class Project
     ProjectDefinition* findDefinition(std::string name);
     void addDefinition(ProjectDefinition* def);
     std::map<std::string, ProjectDefinition*>& getIndex() { return m_index; }
+
+    sigc::signal<void, ProjectEntry*> openEntrySignal() { return m_openEntrySignal; }
 
     void dumpStructure();
 };

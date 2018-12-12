@@ -224,6 +224,11 @@ void ProjectEntry::addChild(ProjectEntry* entry)
     m_children.push_back(entry);
 }
 
+Buffer* ProjectEntry::open()
+{
+    return NULL;
+}
+
 void ProjectEntry::dump(int level)
 {
     string spaces = "";
@@ -253,7 +258,13 @@ string ProjectEntry::getFilePath()
         path = m_project->getRootPath();
     }
 
-    path += "/" + m_name;
+    unsigned int size = path.length();
+    if (path.substr(size -1, 1) != "/")
+    {
+        path += "/";
+    }
+
+    path += m_name;
     return path;
 }
 
@@ -275,11 +286,28 @@ void ProjectEntry::dumpDefinitions()
 ProjectFile::ProjectFile(Project* project, ProjectEntry* parent, std::string name)
     : ProjectEntry(project, ENTRY_FILE, parent, name)
 {
+    m_buffer = NULL;
 }
 
 ProjectFile::~ProjectFile()
 {
 }
+
+Buffer* ProjectFile::open()
+{
+    if (m_buffer != NULL)
+    {
+        return m_buffer;
+    }
+
+    m_buffer = Buffer::loadFile(getFilePath().c_str());
+    m_buffer->setProjectFile(this);
+
+    getProject()->openEntrySignal().emit(this);
+
+    return m_buffer;
+}
+
 
 
 ProjectDirectory::ProjectDirectory(Project* project, ProjectEntry* parent, std::string name)
