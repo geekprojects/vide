@@ -66,7 +66,7 @@ void ProjectView::addDirectory(TreeListItem* parent, ProjectDirectory* dir)
         switch (entry->getType())
         {
             case ENTRY_FILE:
-                item = new TextListItem(m_vide, FRONTIER_ICON_FILE, string2wstring(entry->getName()));
+                item = new TreeListItem(m_vide, FRONTIER_ICON_FILE, string2wstring(entry->getName()));
                 parent->addItem(item);
                 break;
 
