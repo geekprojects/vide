@@ -105,6 +105,7 @@ class ProjectEntry
     ProjectEntryType getType() { return m_type; }
     std::string getName() { return m_name; }
     std::string getFilePath();
+    std::string getFileDir();
 
     void addChild(ProjectEntry* entry);
     std::vector<ProjectEntry*>& getChildren() { return m_children; }
