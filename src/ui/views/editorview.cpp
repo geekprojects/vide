@@ -111,6 +111,19 @@ bool EditorView::draw(Surface* surface)
     int charHeight = textFont->getPixelHeight(72);
     unsigned int viewLines = m_setSize.height / charHeight;
 
+    // Make sure that we are scrolled to wherever the cursor is
+    unsigned int scrollPos = m_scrollBar->getPos();
+    if (cursor.line < scrollPos)
+    {
+        scrollPos = cursor.line;
+        m_scrollBar->setPos(scrollPos);
+    }
+    else if (cursor.line >= (scrollPos + viewLines))
+    {
+        scrollPos = (cursor.line - viewLines) + 1;
+        m_scrollBar->setPos(scrollPos);
+    }
+
     // Set the default colour to the TEXT colour
     uint32_t defaultColour = 0xffffff;
     map<TokenType, uint32_t>::iterator it;
@@ -134,7 +147,6 @@ bool EditorView::draw(Surface* surface)
 
     bool hasSel = m_editor->hasSelection();
 
-    int scrollPos = m_scrollBar->getPos();
 
     vector<Line*> lines = buffer->getLines();
 
@@ -424,9 +436,8 @@ Widget* EditorView::handleMessage(Message* msg)
 
             case FRONTIER_MSG_INPUT_MOUSE_WHEEL:
             {
-                int scrollPos = m_scrollBar->getPos();
-                scrollPos -= inputMessage->event.wheel.scrollY;
-                m_scrollBar->setPos(scrollPos);
+                m_editor->moveCursorDelta(0, -inputMessage->event.wheel.scrollY);
+                setDirty(DIRTY_CONTENT);
 
                 return this;
             } break;
