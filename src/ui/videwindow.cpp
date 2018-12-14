@@ -190,6 +190,7 @@ Editor* VideWindow::openEntry(ProjectEntry* entry)
     }
 
     setActiveWidget(editorView);
+    editorView->updateStatus();
 
     return editor;
 }
