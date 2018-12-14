@@ -22,6 +22,7 @@
 #define __VIDE_UI_VIEWS_EDITOR_VIEW_H_
 
 #include "editor/editor.h"
+#include "ui/views/view.h"
 
 #include <frontier/widgets/scrollbar.h>
 
@@ -36,7 +37,7 @@ enum CursorType
     CURSOR_BAR,
 };
 
-class EditorView : public Frontier::Widget
+class EditorView : public Frontier::Widget, public View
 {
  private:
     Vide* m_vide;

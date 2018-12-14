@@ -2,6 +2,7 @@
 #define __VIDE_STRUCTURE_WIDGET_H_
 
 #include "vide.h"
+#include "ui/views/view.h"
 
 #include <frontier/widgets/frame.h>
 #include <frontier/widgets/scroller.h>
@@ -9,7 +10,7 @@
 
 struct ProjectDefinition;
 
-class StructureView : public Frontier::Frame
+class StructureView : public Frontier::Frame, public View
 {
  private:
     Vide* m_vide;

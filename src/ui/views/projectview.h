@@ -23,6 +23,7 @@
 
 #include "vide.h"
 #include "project.h"
+#include "ui/views/view.h"
 
 #include <frontier/widgets/frame.h>
 #include <frontier/widgets/scroller.h>
@@ -32,7 +33,7 @@ class Vide;
 class Project;
 class ProjectDirectory;
 
-class ProjectView : public Frontier::Frame
+class ProjectView : public Frontier::Frame, public View
 {
  private:
     Vide* m_vide;
