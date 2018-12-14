@@ -91,6 +91,7 @@ bool Project::scanDirectory(ProjectDirectory* entry, std::string path)
         return false;
     }
 
+    vector<string> names;
     while ((dirent = readdir(fd)) != NULL)
     {
         if (dirent->d_name[0] == '.')
@@ -98,32 +99,38 @@ bool Project::scanDirectory(ProjectDirectory* entry, std::string path)
             continue;
         }
 
-    string name = string(dirent->d_name);
-    size_t pos = name.rfind(".");
-    string ext = "";
-    if (pos != string::npos)
-    {
-        ext = name.substr(pos + 1);
+        string name = string(dirent->d_name);
+        size_t pos = name.rfind(".");
+        string ext = "";
+        if (pos != string::npos)
+        {
+            ext = name.substr(pos + 1);
+        }
+
+        if (ext == "o" || ext == "dSYM" || ext == "Plo" || ext == "a" || ext == "la" || ext == "la" || ext == "lo")
+        {
+            continue;
+        }
+        names.push_back(dirent->d_name);
     }
 
-    if (ext == "o" || ext == "dSYM")
-    {
-        continue;
-    }
+    std::sort(names.begin(), names.end());
 
+    for (string name : names)
+    {
         struct stat stat;
-        string childPath = path + "/" + dirent->d_name;
+        string childPath = path + "/" + name;
 
         lstat(childPath.c_str(), &stat);
         if (S_ISDIR(stat.st_mode))
         {
-            ProjectDirectory* child = new ProjectDirectory(this, entry, dirent->d_name);
+            ProjectDirectory* child = new ProjectDirectory(this, entry, name);
             entry->addChild(child);
             scanDirectory(child, childPath);
         }
         else if (S_ISREG(stat.st_mode))
         {
-            ProjectFile* child = new ProjectFile(this, entry, dirent->d_name);
+            ProjectFile* child = new ProjectFile(this, entry, name);
 
             FileTypeManager* ftm = m_vide->findFileTypeManager(child);
             if (ftm != NULL)
@@ -266,6 +273,18 @@ string ProjectEntry::getFilePath()
 
     path += m_name;
     return path;
+}
+
+string ProjectEntry::getFileDir()
+{
+    if (m_parent != NULL)
+    {
+        return m_parent->getFilePath();
+    }
+    else
+    {
+        return m_project->getRootPath();
+    }
 }
 
 void ProjectEntry::addDefinition(ProjectDefinition* def)
