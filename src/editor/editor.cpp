@@ -243,6 +243,7 @@ void Editor::moveCursorX(unsigned int x, bool allowXOver)
         m_cursor.column = x;
 
         setDirty();
+        m_cursorMovedSignal.emit();
     }
 }
 
@@ -283,6 +284,7 @@ void Editor::moveCursorY(unsigned int y)
 
 #endif
         setDirty();
+        m_cursorMovedSignal.emit();
     }
 }
 

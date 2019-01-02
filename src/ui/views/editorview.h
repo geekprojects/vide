@@ -68,6 +68,8 @@ class EditorView : public Frontier::Widget, public View
     virtual bool draw(Geek::Gfx::Surface* surface);
 
     virtual Widget* handleMessage(Frontier::Message* msg);
+
+    void cursorMoved();
     void onScrollbarChanged(int pos);
     void onMouseLeave();
 

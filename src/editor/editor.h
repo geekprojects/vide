@@ -24,6 +24,8 @@
 #include "buffer.h"
 #include "filetypes/filetypemanager.h"
 
+#include <sigc++/sigc++.h>
+
 class Vide;
 class FileTypeManager;
 
@@ -76,6 +78,8 @@ class Editor
     Buffer* m_buffer;
 
     FileTypeManager* m_fileTypeManager;
+
+    sigc::signal<void> m_cursorMovedSignal;
 
     void doJoinLines(unsigned int line, Line* line1);
     void doSplitLine(Position pos, Line* line);
@@ -137,6 +141,8 @@ class Editor
 
     void copyToBuffer(int count);
     std::vector<Edit>  pasteFromBuffer();
+
+    sigc::signal<void> cursorMovedSignal() { return m_cursorMovedSignal; }
 };
 
 #endif

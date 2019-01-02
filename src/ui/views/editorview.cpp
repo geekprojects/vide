@@ -35,6 +35,7 @@ EditorView::EditorView(Vide* vide, Editor* editor) : Widget(vide)
 {
     m_vide = vide;
     m_editor = editor;
+    m_editor->cursorMovedSignal().connect(sigc::mem_fun(*this, &EditorView::cursorMoved));
 
     m_scrollBar = new ScrollBar(vide);
     m_scrollBar->incRefCount();
@@ -113,16 +114,6 @@ bool EditorView::draw(Surface* surface)
 
     // Make sure that we are scrolled to wherever the cursor is
     unsigned int scrollPos = m_scrollBar->getPos();
-    if (cursor.line < scrollPos)
-    {
-        scrollPos = cursor.line;
-        m_scrollBar->setPos(scrollPos);
-    }
-    else if (cursor.line >= (scrollPos + viewLines))
-    {
-        scrollPos = (cursor.line - viewLines) + 1;
-        m_scrollBar->setPos(scrollPos);
-    }
 
     // Set the default colour to the TEXT colour
     uint32_t defaultColour = 0xffffff;
@@ -389,8 +380,7 @@ Widget* EditorView::handleMessage(Message* msg)
                             m_selecting = true;
                             m_editor->setSelectStart(mousePos);
                             m_editor->setSelectEnd(mousePos);
-                            m_editor->moveCursorX(mousePos.column);
-                            m_editor->moveCursorY(mousePos.line);
+                            m_editor->moveCursor(mousePos);
                         }
                         else
                         {
@@ -436,7 +426,10 @@ Widget* EditorView::handleMessage(Message* msg)
 
             case FRONTIER_MSG_INPUT_MOUSE_WHEEL:
             {
-                m_editor->moveCursorDelta(0, -inputMessage->event.wheel.scrollY);
+                int scrollPos = m_scrollBar->getPos();
+                scrollPos -= inputMessage->event.wheel.scrollY;
+                m_scrollBar->setPos(scrollPos);
+
                 setDirty(DIRTY_CONTENT);
 
                 return this;
@@ -458,13 +451,33 @@ Widget* EditorView::handleMessage(Message* msg)
 void EditorView::onScrollbarChanged(int pos)
 {
     printf("Editor::onScrollbarChanged: pos=%d\n", pos);
-
 }
 
 void EditorView::onMouseLeave()
 {
     VideWindow* videWindow = (VideWindow*)getWindow();
     videWindow->getEditorTipWindow()->hide();
+}
+
+void EditorView::cursorMoved()
+{
+    unsigned int scrollPos = m_scrollBar->getPos();
+    Position cursor = m_editor->getCursorPosition();
+
+    if (cursor.line < scrollPos)
+    {
+        scrollPos = cursor.line;
+        m_scrollBar->setPos(scrollPos);
+    }
+    else
+    {
+        unsigned int viewLines = getViewLines();
+        if (cursor.line >= (scrollPos + viewLines))
+        {
+            scrollPos = (cursor.line - viewLines) + 1;
+            m_scrollBar->setPos(scrollPos);
+        }
+    }
 }
 
 void EditorView::updateStatus()
