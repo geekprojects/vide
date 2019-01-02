@@ -27,7 +27,7 @@
 #include "ui/videwindow.h"
 #include "ui/welcomewindow.h"
 #include "filetypes/filetypemanager.h"
-#include "project.h"
+#include "project/project.h"
 
 class VideWindow;
 class WelcomeWindow;

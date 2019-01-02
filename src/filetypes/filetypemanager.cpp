@@ -1,6 +1,6 @@
 
 #include "filetypemanager.h"
-#include "project.h"
+#include "project/project.h"
 #include "vide.h"
 
 using namespace std;

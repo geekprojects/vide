@@ -3,7 +3,7 @@
 
 #include "cxxfiletypemanager.h"
 #include "editor/buffer.h"
-#include "project.h"
+#include "project/project.h"
 
 using namespace std;
 

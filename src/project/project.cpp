@@ -19,7 +19,7 @@
  */
 
 
-#include "project.h"
+#include "project/project.h"
 #include "config.h"
 #include "vide.h"
 

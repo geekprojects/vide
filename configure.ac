@@ -63,8 +63,10 @@ PKG_CHECK_MODULES(libfrontier, libfrontier >= 1)
 CPPFLAGS="$CPPFLAGS $libfrontier_CFLAGS"
 LIBS="$LIBS $libfrontier_LIBS"
 
-CPPFLAGS="$CPPFLAGS"
-CPPFLAGS="-O0 -g $CPPFLAGS -Wall -Werror -O0"
+CPPFLAGS="-g $CPPFLAGS -Wall -Werror"
+
+#CPPFLAGS="-O0 -g $CPPFLAGS -Wall -Werror -O0  -fsanitize=address -fno-omit-frame-pointer -fsanitize-address-use-after-scope "
+#LDFLAGS="$LDFLAGS -fsanitize=address "
 
 case $host_os in
     darwin*)
@@ -76,6 +78,7 @@ AC_CONFIG_FILES([
     Makefile
     src/Makefile
     src/editor/Makefile
+    src/project/Makefile
     src/filetypes/Makefile
     src/filetypes/cxx/Makefile
     src/ui/Makefile

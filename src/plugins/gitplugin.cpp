@@ -1,7 +1,7 @@
 
 #include "plugins/gitplugin.h"
 
-#include "project.h"
+#include "project/project.h"
 #include "vide.h"
 #include "ui/videwindow.h"
 

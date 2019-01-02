@@ -22,7 +22,7 @@
 #define __VIDE_PROJECT_WIDGET_H_
 
 #include "vide.h"
-#include "project.h"
+#include "project/project.h"
 #include "ui/views/view.h"
 
 #include <frontier/widgets/frame.h>
