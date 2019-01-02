@@ -64,14 +64,32 @@ bool CXXTokeniser::tokenise(Buffer* buffer)
 
     const char* argv[] =
     {
-        "-x", "c++",
+        "-x",
+        "c++",
         "-Wall",
-        "-I/Users/ian/projects/vide/testproject/include", NULL
+#ifdef __APPLE__
+        "-I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include",
+        "-I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include/c++/v1",
+#endif
+        "-I/usr/include",
+        "-I/usr/local/include",
+        strdup((string("-I") + buffer->getProjectFile()->getProject()->getRootPath()).c_str()),
+        strdup((string("-I") + buffer->getProjectFile()->getProject()->getRootPath() + "/src").c_str()),
+        strdup((string("-I") + buffer->getProjectFile()->getProject()->getRootPath() + "/include").c_str()),
+        strdup((string("-I") + buffer->getProjectFile()->getFileDir()).c_str())
     };
+
+    int argc = sizeof(argv) / sizeof(char*);
+    printf("CXXTokeniser::tokenise: argc=%d\n", argc);
+
+    for (const char* arg : argv)
+    {
+        printf("CXXTokeniser::tokenise: arg: %s\n", arg);
+    }
 
     CXTranslationUnit unit = clang_parseTranslationUnit(
         m_ftm->getIndex(),
-        buffer->getFilename().c_str(), argv, 4,
+        buffer->getFilename().c_str(), argv, argc,
         file, 1,
         CXTranslationUnit_KeepGoing);
 
