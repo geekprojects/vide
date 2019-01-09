@@ -45,6 +45,10 @@ LineToken* Buffer::getToken(Position pos)
     }
 
     Line* line = m_lines.at(pos.line);
+    if (pos.column >= line->text.length())
+    {
+        pos.column = line->text.length() - 1;
+    }
     vector<LineToken*>::iterator it = line->tokenAt(pos.column, false);
 
     if (it != line->tokens.end())

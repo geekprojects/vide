@@ -69,6 +69,11 @@ Position Editor::findPrevWord()
 Position Editor::findPrevWord(Position from)
 {
     Line* line = m_buffer->getLine(from.line);
+    if (from.column >= line->text.length())
+    {
+        from.column = line->text.length() - 1;
+    }
+
     vector<LineToken*>::iterator it;
     it = line->tokenAt(from.column, false);
 
