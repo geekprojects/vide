@@ -76,14 +76,14 @@ void Vide::registerFileTypeManager(FileTypeManager* ftm)
 FileTypeManager* Vide::findFileTypeManager(ProjectFile* file)
 {
     FileTypeManager* selected = NULL;
-    FileTypeManagerPriority selectedPriority = PRIORITY_UNSUPPORTED;
+    FileHandlerPriority selectedPriority = PRIORITY_UNSUPPORTED;
     for (FileTypeManager* ftm : m_fileTypeManagers)
     {
-        FileTypeManagerPriority priority;
+        FileHandlerPriority priority;
         priority = ftm->canHandle(file);
-        if (priority != -1)
+        if (priority != PRIORITY_UNSUPPORTED)
         {
-            if (selected == NULL || (priority != PRIORITY_UNSUPPORTED && priority > selectedPriority))
+            if (selected == NULL || priority > selectedPriority)
             {
                 selected = ftm;
                 selectedPriority = priority;
@@ -93,6 +93,33 @@ FileTypeManager* Vide::findFileTypeManager(ProjectFile* file)
 
     return selected;
 }
+
+void Vide::registerBuildTool(BuildTool* ftm)
+{
+    m_buildTools.push_back(ftm);
+}
+
+BuildTool* Vide::findBuildTool(Project* project)
+{
+    BuildTool* selected = NULL;
+    FileHandlerPriority selectedPriority = PRIORITY_UNSUPPORTED;
+    for (BuildTool* bt : m_buildTools)
+    {
+        FileHandlerPriority priority;
+        priority = bt->canHandle(project);
+        if (priority != PRIORITY_UNSUPPORTED)
+        {
+            if (selected == NULL || priority > selectedPriority)
+            {
+                selected = bt;
+                selectedPriority = priority;
+            }
+        }
+    }
+
+    return selected;
+}
+
 
 void Vide::showWelcomeWindow()
 {
@@ -147,6 +174,14 @@ bool Vide::openProject(string path)
     }
 
     Project* project = new Project(this, path);
+    bool loaded;
+    loaded = project->load();
+    if (!loaded)
+    {
+        delete project;
+        return false;
+    }
+
     project->scan();
     project->index();
 

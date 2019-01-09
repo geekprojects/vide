@@ -63,6 +63,10 @@ PKG_CHECK_MODULES(libfrontier, libfrontier >= 1)
 CPPFLAGS="$CPPFLAGS $libfrontier_CFLAGS"
 LIBS="$LIBS $libfrontier_LIBS"
 
+PKG_CHECK_MODULES(yamlcpp, yaml-cpp >= 0.6)
+LIBS="$LIBS $yamlcpp_LIBS"
+CPPFLAGS="$CPPFLAGS $yamlcpp_CFLAGS"
+
 CPPFLAGS="-g $CPPFLAGS -Wall -Werror"
 
 #CPPFLAGS="-O0 -g $CPPFLAGS -Wall -Werror -O0  -fsanitize=address -fno-omit-frame-pointer -fsanitize-address-use-after-scope "
@@ -81,6 +85,7 @@ AC_CONFIG_FILES([
     src/project/Makefile
     src/filetypes/Makefile
     src/filetypes/cxx/Makefile
+    src/buildtools/Makefile
     src/ui/Makefile
     src/ui/views/Makefile
     src/interfaces/Makefile

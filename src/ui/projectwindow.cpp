@@ -103,19 +103,19 @@ void ProjectWindow::create()
     string path = Utils::wstring2string(m_projectDirInput->getText());
     if (path != "")
     {
-        path += "/vide.project";
+        string projectFile = path + "/vide.project";
 
         int res;
-        res = access(path.c_str(), R_OK);
+        res = access(projectFile.c_str(), R_OK);
         if (res == 0)
         {
             // Project file already exists
             return;
         }
 
-        FILE* fd = fopen(path.c_str(), "w");
-        fprintf(fd, "Hello, world\n");
-        fclose(fd);
+        Project* project = new Project(m_vide, path);
+        project->init();
+        project->save();
 
         m_vide->hideWelcomeWindow();
         m_vide->openProject(path);

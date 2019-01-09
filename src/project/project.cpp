@@ -50,6 +50,64 @@ Project::~Project()
 
 }
 
+bool Project::init()
+{
+    m_config["version"] = "1.0";
+    m_config["root"] = m_rootPath;
+
+    m_buildTool = m_vide->findBuildTool(this);
+    if (m_buildTool != NULL)
+    {
+        printf("Project::init: buildTool: %s\n", m_buildTool->getPluginName().c_str());
+        m_config["buildTool"]["name"] = m_buildTool->getPluginName();
+    }
+    else
+    {
+        printf("Project::init: Unable to detect build tool\n");
+    }
+
+    return true;
+}
+
+bool Project::load()
+{
+    try
+    {
+        m_config = YAML::LoadFile(getConfigPath().c_str());
+    }
+    catch (const exception e)
+    {
+        printf("Project::load: Failed to load project file: %s\n", e.what());
+        return false;
+    }
+
+if (m_config["buildTool"]["name"])
+{
+string buildToolName = m_config["buildTool"]["name"].as<std::string>();
+m_buildTool = (BuildTool*)m_vide->getPluginManager()->findPlugin(buildToolName);
+}
+
+    return true;
+}
+
+bool Project::save()
+{
+    YAML::Emitter emitter;
+
+    emitter << m_config;
+
+    FILE* fd = fopen(getConfigPath().c_str(), "w");
+    fwrite(emitter.c_str(), emitter.size(), 1, fd);
+    fclose(fd);
+
+    return true;
+}
+
+string Project::getConfigPath()
+{
+    return m_rootPath + "/vide.project";
+}
+
 void process_events(const vector<fsw::event>& events, void *context)
 {
     for (const fsw::event& evt : events)

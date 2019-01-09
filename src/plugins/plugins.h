@@ -55,6 +55,8 @@ class VidePluginManager
     bool init(Vide* vide);
 
     static void registerPluginInit(VidePluginInit* pluginInit);
+
+    VidePlugin* findPlugin(std::string name);
 };
 
 

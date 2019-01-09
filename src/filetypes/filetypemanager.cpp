@@ -19,7 +19,7 @@ bool FileTypeManager::init()
     return true;
 }
 
-FileTypeManagerPriority FileTypeManager::canHandle(ProjectFile* file)
+FileHandlerPriority FileTypeManager::canHandle(ProjectFile* file)
 {
     return PRIORITY_UNSUPPORTED;
 }
@@ -62,7 +62,7 @@ TextFileTypeManager::~TextFileTypeManager()
     delete m_tokeniser;
 }
 
-FileTypeManagerPriority TextFileTypeManager::canHandle(ProjectFile* file)
+FileHandlerPriority TextFileTypeManager::canHandle(ProjectFile* file)
 {
     // We'll take anything!
     return PRIORITY_LOW;

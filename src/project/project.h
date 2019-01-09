@@ -27,6 +27,7 @@
 
 #include <wchar.h>
 
+#include <yaml-cpp/yaml.h>
 #include <sigc++/sigc++.h>
 
 #include "filetypes/filetypemanager.h"
@@ -36,6 +37,7 @@ class Vide;
 class Project;
 class ProjectEntry;
 class Editor;
+class BuildTool;
 class FileTypeManager;
 struct FileTypeManagerData;
 
@@ -163,8 +165,6 @@ class ProjectIndexEntry
  public:
     ProjectIndexEntry();
     virtual ~ProjectIndexEntry();
-
-    
 };
 
 class ProjectIndex
@@ -180,9 +180,13 @@ class Project
     Vide* m_vide;
     std::string m_rootPath;
 
+    YAML::Node m_config;
+
     ProjectDirectory* m_root;
 
     std::map<std::string, ProjectDefinition*> m_index;
+
+    BuildTool* m_buildTool;
 
     sigc::signal<void, ProjectEntry*> m_openEntrySignal;
 
@@ -193,6 +197,13 @@ class Project
     Project(Vide* vide, std::string rootPath);
     ~Project();
 
+    bool init();
+    bool load();
+    bool save();
+    std::string getConfigPath();
+
+    YAML::Node& getConfig() { return m_config; }
+
     bool scan();
     bool index();
 
@@ -202,6 +213,8 @@ class Project
     ProjectDefinition* findDefinition(std::string name);
     void addDefinition(ProjectDefinition* def);
     std::map<std::string, ProjectDefinition*>& getIndex() { return m_index; }
+
+    BuildTool* getBuildTool() { return m_buildTool; }
 
     sigc::signal<void, ProjectEntry*> openEntrySignal() { return m_openEntrySignal; }
 

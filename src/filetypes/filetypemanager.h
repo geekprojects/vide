@@ -3,6 +3,7 @@
 
 #include "tokeniser.h"
 #include "plugins/plugins.h"
+#include "vide.h"
 
 class Project;
 class ProjectFile;
@@ -10,13 +11,6 @@ class VidePlugin;
 
 struct FileTypeManagerData
 {
-};
-
-enum FileTypeManagerPriority
-{
-    PRIORITY_UNSUPPORTED =  -1,
-    PRIORITY_LOW =  1,
-    PRIORITY_HIGH =  100,
 };
 
 class FileTypeManager : public VidePlugin
@@ -30,7 +24,7 @@ class FileTypeManager : public VidePlugin
 
     virtual bool init();
 
-    virtual FileTypeManagerPriority canHandle(ProjectFile* file);
+    virtual FileHandlerPriority canHandle(ProjectFile* file);
 
     Tokeniser* getTokeniser() { return m_tokeniser; }
 
@@ -48,7 +42,7 @@ class TextFileTypeManager : public FileTypeManager
     TextFileTypeManager(Vide* vide);
     virtual ~TextFileTypeManager();
 
-    virtual FileTypeManagerPriority canHandle(ProjectFile* file);
+    virtual FileHandlerPriority canHandle(ProjectFile* file);
 };
 
 #endif

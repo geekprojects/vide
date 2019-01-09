@@ -68,6 +68,18 @@ void VidePluginManager::registerPluginInit(VidePluginInit* pluginInit)
     g_pluginInitList->inits.push_back(pluginInit);
 }
 
+VidePlugin* VidePluginManager::findPlugin(string name)
+{
+    for (VidePlugin* plugin : m_plugins)
+    {
+        if (plugin->getPluginName() == name)
+        {
+            return plugin;
+        }
+    }
+    return NULL;
+}
+
 VidePlugin::VidePlugin(Vide* vide)
 {
     m_vide = vide;

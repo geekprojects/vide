@@ -20,6 +20,7 @@
 
 #include "utils.h"
 
+#include <unistd.h>
 #include <wchar.h>
 
 using namespace std;
@@ -55,5 +56,58 @@ wstring Utils::string2wstring(const char* str)
         out += str[i];
     }
     return out;
+}
+
+bool Utils::fileIsReadable(std::string path)
+{
+    int res;
+    res = access(path.c_str(), R_OK);
+    return res == 0;
+}
+
+bool Utils::fileIsExecutable(std::string path)
+{
+    int res;
+    res = access(path.c_str(), X_OK | R_OK);
+    return res == 0;
+}
+
+string Utils::exec(string dir, string cmd)
+{
+    FILE *fp;
+
+    char* cwd = getcwd(NULL, 0);
+
+    chdir(dir.c_str());
+
+    printf("Utils::exec: cmd: %s\n", cmd.c_str());
+    fp = popen(cmd.c_str(), "r");
+    if (fp == NULL)
+    {
+        chdir(cwd);
+        free(cwd);
+        return "";
+    }
+
+    char buffer[1024];
+    string result = "";
+    while (true)
+    {
+        int res;
+        res = fread(buffer, 1, 1024, fp);
+        if (res <= 0)
+        {
+            break;
+        }
+
+        result += string(buffer, res);
+    }
+
+    pclose(fp);
+
+    chdir(cwd);
+    free(cwd);
+
+    return result;
 }
 

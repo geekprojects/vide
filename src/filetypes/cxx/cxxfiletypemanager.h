@@ -36,7 +36,7 @@ class CXXFileTypeManager : public FileTypeManager
     CXXFileTypeManager(Vide* vide);
     virtual ~CXXFileTypeManager();
 
-    virtual FileTypeManagerPriority canHandle(ProjectFile* file);
+    virtual FileHandlerPriority canHandle(ProjectFile* file);
 
     virtual bool index(ProjectFile* entry);
 
@@ -44,6 +44,8 @@ class CXXFileTypeManager : public FileTypeManager
     CXChildVisitResult structureVisitor(CXCursor cursor, CXCursor parent, ProjectFile* file);
 
     CXIndex getIndex() { return m_index; }
+
+    CXTranslationUnit parse(ProjectFile* file, CXUnsavedFile* unsavedFile);
 };
 
 

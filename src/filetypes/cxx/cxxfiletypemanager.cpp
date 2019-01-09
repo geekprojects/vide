@@ -62,37 +62,11 @@ bool CXXTokeniser::tokenise(Buffer* buffer)
     file[0].Contents = membuffer;
     file[0].Length = length;
 
-    const char* argv[] =
+    CXTranslationUnit unit = m_ftm->parse(buffer->getProjectFile(), file);
+    if (unit == NULL)
     {
-        "-x",
-        "c++",
-        "-Wall",
-#ifdef __APPLE__
-        "-I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include",
-        "-I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include/c++/v1",
-#endif
-        "-I/usr/include",
-        "-I/usr/local/include",
-        strdup((string("-I") + buffer->getProjectFile()->getProject()->getRootPath()).c_str()),
-        strdup((string("-I") + buffer->getProjectFile()->getProject()->getRootPath() + "/src").c_str()),
-        strdup((string("-I") + buffer->getProjectFile()->getProject()->getRootPath() + "/include").c_str()),
-        strdup((string("-I") + buffer->getProjectFile()->getFileDir()).c_str())
-    };
-
-    int argc = sizeof(argv) / sizeof(char*);
-    printf("CXXTokeniser::tokenise: argc=%d\n", argc);
-
-    for (const char* arg : argv)
-    {
-        printf("CXXTokeniser::tokenise: arg: %s\n", arg);
+        return false;
     }
-
-    CXTranslationUnit unit = clang_parseTranslationUnit(
-        m_ftm->getIndex(),
-        buffer->getFilename().c_str(), argv, argc,
-        file, 1,
-        CXTranslationUnit_KeepGoing);
-
     CXFile cxfile = clang_getFile(unit, buffer->getFilename().c_str());
 
     unsigned int l = 0;
@@ -345,7 +319,7 @@ CXXFileTypeManager::~CXXFileTypeManager()
   clang_disposeIndex(m_index);
 }
 
-FileTypeManagerPriority CXXFileTypeManager::canHandle(ProjectFile* file)
+FileHandlerPriority CXXFileTypeManager::canHandle(ProjectFile* file)
 {
     string name = file->getName();
     size_t pos = name.rfind(".");
@@ -356,7 +330,8 @@ FileTypeManagerPriority CXXFileTypeManager::canHandle(ProjectFile* file)
         ext = name.substr(pos + 1);
     }
 
-    if (ext == "cpp" || ext == "c" || ext == "h")
+    // We handle C, C++, ObjC, ObjC++
+    if (ext == "cpp" || ext == "c" || ext == "h" || ext == "mm" || ext == "m")
     {
         return PRIORITY_HIGH;
     }
@@ -366,17 +341,21 @@ FileTypeManagerPriority CXXFileTypeManager::canHandle(ProjectFile* file)
 
 bool CXXFileTypeManager::index(ProjectFile* file)
 {
+    Project* project = file->getProject();
 
-    const char* argv[] =
+    YAML::Node config = project->getConfig();
+    if (!config["filetypes"]["cxx"])
     {
-        "-x", "c++", NULL
-    };
+        YAML::Node cxxflags;
+        cxxflags.push_back("-Wall");
+        cxxflags.push_back("-Werror");
+    }
 
-    CXTranslationUnit unit = clang_parseTranslationUnit(
-        m_index,
-        file->getFilePath().c_str(), argv, 2,
-        NULL, 0,
-        CXTranslationUnit_KeepGoing);
+    CXTranslationUnit unit = parse(file, NULL);
+    if (unit == NULL)
+    {
+        return false;
+    }
 
     indexStructure(unit, file);
 
@@ -573,4 +552,59 @@ CXChildVisitResult CXXFileTypeManager::structureVisitor(CXCursor cursor, CXCurso
     }
 }
 
+CXTranslationUnit CXXFileTypeManager::parse(ProjectFile* file, CXUnsavedFile* unsavedFile)
+{
+    BuildTool* buildTool = file->getProject()->getBuildTool();
+    vector<string> args;
+    if (buildTool != NULL)
+    {
+        args = buildTool->getFileFlags(file);
+    }
 
+    int argc = 5;
+#ifdef __APPLE__
+    argc += 2;
+#endif
+    argc += args.size();
+    printf("CXXFileTypeManager::parse: argc=%d\n", argc);
+
+    const char* argv[argc];
+    argv[0] = "-x";
+    argv[1] = "c++";
+    argv[2] = "-Wall";
+    argv[3] = "-I/usr/include";
+    argv[4] = "-I/usr/local/include";
+#ifdef __APPLE__
+    argv[5] = "-I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include";
+    argv[6] = "-I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include/c++/v1";
+#endif
+
+    unsigned int i = 5;
+#ifdef __APPLE__
+    i += 2;
+#endif
+
+    for (string arg : args)
+    {
+        argv[i++] = strdup(arg.c_str());
+    }
+
+    for (const char* arg : argv)
+    {
+        printf("CXXFileTypeManager::parse: arg: %s\n", arg);
+    }
+
+    int unsavedFileCount = 0;
+    if (unsavedFile != NULL)
+    {
+        unsavedFileCount = 1;
+    }
+
+    CXTranslationUnit unit = clang_parseTranslationUnit(
+        getIndex(),
+        file->getFilePath().c_str(), argv, argc,
+        unsavedFile, unsavedFileCount,
+        CXTranslationUnit_DetailedPreprocessingRecord | CXTranslationUnit_KeepGoing);
+    return unit;
+}
+ 

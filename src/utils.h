@@ -29,6 +29,11 @@ class Utils
     static std::string wstring2string(std::wstring str);
     static std::wstring string2wstring(std::string str);
     static std::wstring string2wstring(const char* str);
+
+    static bool fileIsReadable(std::string path);
+    static bool fileIsExecutable(std::string path);
+
+    static std::string exec(std::string dir, std::string cmd);
 };
 
 #endif

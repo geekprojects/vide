@@ -24,14 +24,25 @@
 #include <frontier/frontier.h>
 #include <frontier/widgets.h>
 
+enum FileHandlerPriority
+{
+    PRIORITY_UNSUPPORTED =  -1,
+    PRIORITY_LOW =  1,
+    PRIORITY_MEDIUM =  50,
+    PRIORITY_HIGH =  100,
+};
+
+
 #include "ui/videwindow.h"
 #include "ui/welcomewindow.h"
 #include "filetypes/filetypemanager.h"
+#include "buildtools/buildtool.h"
 #include "project/project.h"
 
 class VideWindow;
 class WelcomeWindow;
 class VidePluginManager;
+class BuildTool;
 
 class Vide : public Frontier::FrontierApp
 {
@@ -41,6 +52,7 @@ class Vide : public Frontier::FrontierApp
     VidePluginManager* m_pluginManager;
 
     std::vector<FileTypeManager*> m_fileTypeManagers;
+    std::vector<BuildTool*> m_buildTools;
 
     std::vector<VideWindow*> m_videWindows;
     FontHandle* m_textFont;
@@ -57,6 +69,10 @@ class Vide : public Frontier::FrontierApp
 
     void registerFileTypeManager(FileTypeManager* ftm);
     FileTypeManager* findFileTypeManager(ProjectFile* file);
+    void registerBuildTool(BuildTool* bt);
+    BuildTool* findBuildTool(Project* project);
+
+    VidePluginManager* getPluginManager() { return m_pluginManager; }
 
     FontHandle* getTextFont() { return m_textFont; }
 
