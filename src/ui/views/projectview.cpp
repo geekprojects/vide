@@ -23,6 +23,7 @@
 
 using namespace std;
 using namespace Frontier;
+using namespace Geek;
 
 static std::wstring string2wstring(const std::string &s)
 {
@@ -30,7 +31,7 @@ static std::wstring string2wstring(const std::string &s)
     return ws;
 }
 
-ProjectView::ProjectView(Vide* vide, Project* project) : Frame(vide, false)
+ProjectView::ProjectView(Vide* vide, Project* project) : Frame(vide, L"ProjectView", false)
 {
     m_vide = vide;
     m_project = project;
@@ -101,7 +102,7 @@ void ProjectView::onItemClicked(Frontier::ListItem* item)
         return;
     }
 
-    printf("ProjectView::onItemClicked: entry=%s\n", entry->getName().c_str());
+    log(DEBUG, "onItemClicked: entry=%s", entry->getName().c_str());
     if (entry->getType() == ENTRY_FILE)
     {
         ((VideWindow*)getWindow())->openEntry(entry);

@@ -31,7 +31,7 @@ using namespace Frontier;
 using namespace Geek;
 using namespace Geek::Gfx;
 
-EditorView::EditorView(Vide* vide, Editor* editor) : Widget(vide)
+EditorView::EditorView(Vide* vide, Editor* editor) : Widget(vide, L"EditorView")
 {
     m_vide = vide;
     m_editor = editor;
@@ -88,25 +88,25 @@ bool EditorView::draw(Surface* surface)
     Buffer* buffer = m_editor->getBuffer();
     if (buffer->isDirty())
     {
-        uint64_t start = m_ui->getTimestamp();
+        uint64_t start = m_app->getTimestamp();
         m_editor->getFileTypeManager()->tokenise(buffer);
-        uint64_t end = m_ui->getTimestamp();
+        uint64_t end = m_app->getTimestamp();
         uint64_t diff = end - start;
-        printf("Editor::draw: tokenise time=%llu\n", diff);
+        log(DEBUG, "draw: tokenise time=%llu", diff);
     }
 
     m_editor->clearDirty();
 
     Position cursor = m_editor->getCursorPosition();
 
-    uint64_t start = m_ui->getTimestamp();
+    uint64_t start = m_app->getTimestamp();
 
-    FontManager* fm = m_ui->getFontManager();
+    FontManager* fm = m_app->getFontManager();
 
     surface->clear(0x002b2b2b);
     //surface->clear(0x272822);
 
-    FontHandle* textFont = ((Vide*)m_ui)->getTextFont();
+    FontHandle* textFont = ((Vide*)m_app)->getTextFont();
 
     int charWidth = fm->width(textFont, L"M");
     int charHeight = textFont->getPixelHeight(72);
@@ -277,9 +277,9 @@ bool EditorView::draw(Surface* surface)
         drawY += charHeight;
     }
 
-    uint64_t end = m_ui->getTimestamp();
+    uint64_t end = m_app->getTimestamp();
     uint64_t diff = end - start;
-    printf("Editor::draw: time=%llu\n", diff);
+    log(DEBUG, "draw: time=%llu", diff);
 
     surface->drawLine(m_marginX - 1, 0, m_marginX - 1, m_setSize.height - 1, 0xffBBBBBB);
 
@@ -325,7 +325,7 @@ Widget* EditorView::handleMessage(Message* msg)
                     c = inputMessage->event.key.chr;
                 }
 
-                printf("Editor::handleMessage: Key press: 0x%x (%d) -> %lc, modifiers=0x%x\n",
+                log(DEBUG, "handleMessage: Key press: 0x%x (%d) -> %lc, modifiers=0x%x",
                     inputMessage->event.key.key,
                     inputMessage->event.key.key,
                     c,
@@ -361,8 +361,8 @@ Widget* EditorView::handleMessage(Message* msg)
                 {
                     x -= m_marginX;
 
-                    FontManager* fm = m_ui->getFontManager();
-                    FontHandle* textFont = ((Vide*)m_ui)->getTextFont();
+                    FontManager* fm = m_app->getFontManager();
+                    FontHandle* textFont = ((Vide*)m_app)->getTextFont();
 
                     int charWidth = fm->width(textFont, L"M");
                     int charHeight = textFont->getPixelHeight(72);
@@ -436,13 +436,13 @@ Widget* EditorView::handleMessage(Message* msg)
             } break;
 
             default:
-                //printf("Editor::handleMessage: Unhandled input message type: %d\n", inputMessage->inputMessageType);
+                //log(WARN, "handleMessage: Unhandled input message type: %d", inputMessage->inputMessageType);
                 break;
         }
     }
     else
     {
-        printf("Editor::handleMessage: Unhandled message type: %d\n", msg->messageType);
+        log(WARN, "handleMessage: Unhandled message type: %d", msg->messageType);
     }
 
     return NULL;
@@ -450,7 +450,7 @@ Widget* EditorView::handleMessage(Message* msg)
 
 void EditorView::onScrollbarChanged(int pos)
 {
-    printf("Editor::onScrollbarChanged: pos=%d\n", pos);
+    log(DEBUG, "onScrollbarChanged: pos=%d", pos);
 }
 
 void EditorView::onMouseLeave()
@@ -495,7 +495,7 @@ void EditorView::updateStatus()
 
 unsigned int EditorView::getViewLines()
 {
-    FontHandle* textFont = ((Vide*)m_ui)->getTextFont();
+    FontHandle* textFont = ((Vide*)m_app)->getTextFont();
     int charHeight = textFont->getPixelHeight(72);
     return m_setSize.height / charHeight;
 }

@@ -21,6 +21,8 @@
 #ifndef __VIDE_FORMAT_H_
 #define __VIDE_FORMAT_H_
 
+#include <geek/core-logger.h>
+
 class Buffer;
 struct Line;
 
@@ -40,7 +42,7 @@ enum TokenType
     TOKEN_STRING,
 };
 
-class Tokeniser
+class Tokeniser : public Geek::Logger
 {
  protected:
 

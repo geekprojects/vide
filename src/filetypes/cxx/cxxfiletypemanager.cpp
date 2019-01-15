@@ -6,6 +6,7 @@
 #include "project/project.h"
 
 using namespace std;
+using namespace Geek;
 
 CXXTokeniser::CXXTokeniser(CXXFileTypeManager* ftm)
 {
@@ -25,7 +26,7 @@ Position cxlocation2position(CXSourceLocation loc)
     return Position(line - 1, column - 1);
 }
 
-void addDiagnostic(LineToken* token, CXDiagnostic diag)
+void CXXTokeniser::addDiagnostic(LineToken* token, CXDiagnostic diag)
 {
     TokenMessage message;
 
@@ -39,7 +40,7 @@ void addDiagnostic(LineToken* token, CXDiagnostic diag)
             message.type = MESSAGE_ERROR;
             break;
         default:
-            printf("addDiagnostic: Ignoring diagnostic: severity=%d\n", severity);
+            log(WARN, "addDiagnostic: Ignoring diagnostic: severity=%d", severity);
             return;
     }
 
@@ -97,7 +98,7 @@ bool CXXTokeniser::tokenise(Buffer* buffer)
         clang_annotateTokens(unit, cxTokens, cxTokenCount, cursors);
 
 #if 0
-        printf("CXXTokeniser::tokenise: Line: %ls, tokens=%u\n", line->text.c_str(), cxTokenCount);
+        log(DEBUG, "tokenise: Line: %ls, tokens=%u", line->text.c_str(), cxTokenCount);
 #endif
 
         unsigned int lastEnd = 0;
@@ -117,7 +118,7 @@ bool CXXTokeniser::tokenise(Buffer* buffer)
             if (start.line != l)
             { 
 #if 0
-                printf("CXXTokeniser::tokenise: Token is not on this line?\n");
+                log(DEBUG, "tokenise: Token is not on this line?");
 #endif
                 break;
             }
@@ -134,14 +135,14 @@ bool CXXTokeniser::tokenise(Buffer* buffer)
             }
 
 #if 0
-            printf("CXXTokeniser::tokenise:  %u:  -> start: line=%u, col=%u, end: line=%u, col=%u, length=%u\n", t, start.line, start.column, end.line, end.column, length);
+            log(DEBUG, "tokenise:  %u:  -> start: line=%u, col=%u, end: line=%u, col=%u, length=%u", t, start.line, start.column, end.line, end.column, length);
 #endif
             lastEnd = end.column;
 
             wstring text = line->text.substr(start.column, length);
 
 #if 0
-            printf("CXXTokeniser::tokenise:  %u:  -> [%ls] token kind=%u, cursor kind=%u\n", t, text.c_str(), kind, cursorKind);
+            log(DEBUG, "tokenise:  %u:  -> [%ls] token kind=%u, cursor kind=%u", t, text.c_str(), kind, cursorKind);
 #endif
 
             LineToken* lineToken = new LineToken();
@@ -224,14 +225,14 @@ bool CXXTokeniser::tokenise(Buffer* buffer)
         }
 
         CXString str = clang_formatDiagnostic(diag, clang_defaultDiagnosticDisplayOptions());
-        printf("%s\n", clang_getCString(str));
+        log(DEBUG, "%s", clang_getCString(str));
         clang_disposeString(str);
 
         // Attach diagnostic messages to tokens
         unsigned int num;
         num = clang_getDiagnosticNumRanges(diag);
 #if 0
-        printf(" -> %u ranges\n", num);
+        log(DEBUG, " -> %u ranges", num);
 #endif
         if (num > 0)
         {
@@ -245,12 +246,12 @@ bool CXXTokeniser::tokenise(Buffer* buffer)
                 Position start = cxlocation2position(diagStart);
                 Position end = cxlocation2position(diagEnd);
 #if 0
-                printf(" -> %u: %u: %u,%u -> %u,%u\n", i, r, start.line, start.column, end.line, end.column);
+                log(DEBUG, " -> %u: %u: %u,%u -> %u,%u", i, r, start.line, start.column, end.line, end.column);
 #endif
 
                 if (start.line != end.line)
                 {
-                    printf("CXXTokeniser::tokenise: TODO: Multi-line diagnostics\n");
+                    log(WARN, "tokenise: TODO: Multi-line diagnostics");
                     continue;
                 }
 
@@ -263,7 +264,7 @@ bool CXXTokeniser::tokenise(Buffer* buffer)
                         break;
                     }
 #if 0
-                    printf(" -> %u: %ls\n", i, token->text.c_str());
+                    log(DEBUG, " -> %u: %ls", i, token->text.c_str());
 #endif
                     addDiagnostic(token, diag);
 
@@ -275,13 +276,13 @@ bool CXXTokeniser::tokenise(Buffer* buffer)
         {
             Position pos = cxlocation2position(cxLocation);
 #if 0
-            printf(" -> %u: %u,%u\n", i, pos.line, pos.column);
+            log(DEBUG, " -> %u: %u,%u", i, pos.line, pos.column);
 #endif
             LineToken* token = buffer->getToken(pos);
             if (token != NULL)
             {
 #if 0
-                printf(" -> %u: %ls\n", i, token->text.c_str());
+                log(DEBUG, " -> %u: %ls", i, token->text.c_str());
 #endif
                 addDiagnostic(token, diag);
             }
@@ -433,7 +434,7 @@ CXChildVisitResult CXXFileTypeManager::structureVisitor(CXCursor cursor, CXCurso
             cursorKind == CXCursor_ConversionFunction ||
             cursorKind == CXCursor_TemplateTemplateParameter)
         {
-            printf("CXXTokeniser::structureVisitor: WARN: Ignoring CXCursor %u\n", cursorKind);
+            log(WARN, "structureVisitor: Ignoring CXCursor %u", cursorKind);
 
             return CXChildVisit_Continue;
         }
@@ -473,7 +474,7 @@ CXChildVisitResult CXXFileTypeManager::structureVisitor(CXCursor cursor, CXCurso
         }
 
 #if 0
-        printf("CXXTokeniser::structureVisitor: Line %u: %s, parent=%s (%p) (kind=%u, isDef=%u)\n", pos.line, defName.c_str(), parentName.c_str(), parentDef, cursorKind, isDef);
+        log(DEBUG, "structureVisitor: Line %u: %s, parent=%s (%p) (kind=%u, isDef=%u)", pos.line, defName.c_str(), parentName.c_str(), parentDef, cursorKind, isDef);
 #endif
 
         ProjectDefinitionSource source;
@@ -527,7 +528,7 @@ CXChildVisitResult CXXFileTypeManager::structureVisitor(CXCursor cursor, CXCurso
 
 
             default:
-                printf("CXXTokeniser::structureVisitor: Unhandled cursor kind: %u\n", cursorKind);
+                log(ERROR, "structureVisitor: Unhandled cursor kind: %u", cursorKind);
                 exit(1);
         }
         def->sources.push_back(source);
@@ -566,7 +567,7 @@ CXTranslationUnit CXXFileTypeManager::parse(ProjectFile* file, CXUnsavedFile* un
     argc += 2;
 #endif
     argc += args.size();
-    printf("CXXFileTypeManager::parse: argc=%d\n", argc);
+    log(DEBUG, "parse: argc=%d", argc);
 
     const char* argv[argc];
     argv[0] = "-x";
@@ -591,7 +592,7 @@ CXTranslationUnit CXXFileTypeManager::parse(ProjectFile* file, CXUnsavedFile* un
 
     for (const char* arg : argv)
     {
-        printf("CXXFileTypeManager::parse: arg: %s\n", arg);
+        log(DEBUG, "parse: arg: %s", arg);
     }
 
     int unsavedFileCount = 0;

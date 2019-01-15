@@ -27,6 +27,7 @@
 
 using namespace std;
 using namespace Frontier;
+using namespace Geek;
 
 VideWindow::VideWindow(Vide* vide, Project* project) : FrontierWindow(vide, L"Vide", WINDOW_NORMAL)
 {
@@ -92,16 +93,16 @@ bool VideWindow::init()
 
 void VideWindow::onOpenFile()
 {
-    printf("VideWindow::onOpenFile: Here!\n");
+    log(DEBUG, "onOpenFile: Here!");
     string file = getApp()->chooseFile(0, "", "");
-    printf("VideWindow::onOpenFile: file=%s\n", file.c_str());
+    log(DEBUG, "onOpenFile: file=%s", file.c_str());
 }
 
 void VideWindow::onEditorTabChange(Widget* widget)
 {
     if (widget != NULL)
     {
-        printf("VideWindow::onEditorTabChange: Setting active widget: %p\n", widget);
+        log(DEBUG, "onEditorTabChange: Setting active widget: %p", widget);
         setActiveWidget(widget);
 
         EditorView* editor = (EditorView*)widget;
@@ -115,7 +116,7 @@ void VideWindow::onEditorTabChange(Widget* widget)
 
 void VideWindow::onCloseTab(Widget* tab)
 {
-    printf("VideWindow::onCloseTab: Closing tab: %p\n", tab);
+    log(DEBUG, "onCloseTab: Closing tab: %p", tab);
     m_editorTabs->closeTab(tab);
 }
 
@@ -132,7 +133,7 @@ void VideWindow::setInterfaceStatus(std::wstring message)
 Editor* VideWindow::openEntry(ProjectEntry* entry)
 {
     string filePath = entry->getFilePath();
-    printf("VideWindow::openEntry: filePath=%s\n", filePath.c_str());
+    log(DEBUG, "openEntry: filePath=%s", filePath.c_str());
 
     EditorView* activeEditorView = (EditorView*)m_editorTabs->getActiveTab();
 
@@ -143,7 +144,7 @@ Editor* VideWindow::openEntry(ProjectEntry* entry)
         Buffer* buffer = entry->open();
         if (buffer == NULL)
         {
-            printf("ERROR: VideWindow::openEntry: Failed to open buffer\n");
+            log(ERROR, "openEntry: Failed to open buffer");
             return NULL;
         }
 
@@ -181,7 +182,7 @@ Editor* VideWindow::openEntry(ProjectEntry* entry)
 
     if (activeEditorView != editorView)
     {
-        printf("VideWindow::openEntry: Setting active widget: %p\n", editor);
+        log(DEBUG, "openEntry: Setting active widget: %p", editor);
         m_editorTabs->setActiveTab(editorView);
 
         m_fileStructureView->setProjectFile((ProjectFile*)entry);
@@ -199,7 +200,7 @@ Editor* VideWindow::openEntry(ProjectEntry* entry, Position pos)
 {
     Editor* editor = openEntry(entry);
     editor->moveCursor(pos);
-    printf("VideWindow::openEntry: line=%u, column=%u\n", pos.line, pos.column);
+    log(DEBUG, "openEntry: line=%u, column=%u", pos.line, pos.column);
     return editor;
 }
 

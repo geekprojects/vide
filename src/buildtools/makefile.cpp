@@ -5,6 +5,7 @@
 #include <geek/core-string.h>
 
 using namespace std;
+using namespace Geek;
 
 VIDE_PLUGIN(MakefileBuildTool)
 
@@ -29,7 +30,7 @@ FileHandlerPriority MakefileBuildTool::canHandle(Project* project)
         }
     }
 
-    printf("MakefileBuildTool::canHandle: Found Makefile: %s\n", makefile.c_str());
+    log(DEBUG, "canHandle: Found Makefile: %s", makefile.c_str());
 
     return PRIORITY_MEDIUM;
 }
@@ -50,10 +51,10 @@ vector<string> MakefileBuildTool::getFileFlags(ProjectFile* file)
     {
         obj = name.substr(0, pos) + ".o";
     }
-    printf("MakefileBuildTool::getFileFlags: %s -> %s\n", name.c_str(), obj.c_str());
+    log(DEBUG, "getFileFlags: %s -> %s", name.c_str(), obj.c_str());
 
     std::string makeDB = Utils::exec(file->getFileDir(), "make -n -W " + name + " " + obj);
-    printf("MakefileBuildTool::getFileFlags: makeDB:\n%s\n", makeDB.c_str());
+    log(DEBUG, "getFileFlags: makeDB:\n%s", makeDB.c_str());
 
     vector<string> result = Geek::Core::splitString(makeDB, ' ');
     if (!result.empty())
@@ -62,7 +63,7 @@ vector<string> MakefileBuildTool::getFileFlags(ProjectFile* file)
 
         for (string arg : result)
         {
-            printf("MakefileBuildTool::getFileFlags: arg: %s\n", arg.c_str());
+            log(DEBUG, "getFileFlags: arg: %s", arg.c_str());
             if (arg.at(0) == '-' &&
                 (arg.at(1) == 'I' ||
                  arg.at(1) == 'W' ||
@@ -71,7 +72,7 @@ vector<string> MakefileBuildTool::getFileFlags(ProjectFile* file)
                  arg.find("-std") == 0
                 ))
             {
-                printf("MakefileBuildTool::getFileFlags:  -> Returning arg: %s\n", arg.c_str());
+                log(DEBUG, "getFileFlags:  -> Returning arg: %s", arg.c_str());
                 flags.push_back(arg);
             }
         }

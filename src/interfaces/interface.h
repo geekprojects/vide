@@ -17,7 +17,6 @@
  * You should have received a copy of the GNU General Public License
  * along with Vide.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 #ifndef __VIDE_INTERFACE_H_
 #define __VIDE_INTERFACE_H_
 

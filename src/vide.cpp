@@ -30,6 +30,7 @@
 
 using namespace std;
 using namespace Frontier;
+using namespace Geek;
 
 Vide::Vide() : FrontierApp(L"Vide")
 {
@@ -56,7 +57,7 @@ bool Vide::init()
         10);
     if (m_textFont == NULL)
     {
-        printf("Vide::init: Failed to find font: Hack\n");
+        log(ERROR, "init: Failed to find font: Hack");
         return false;
     }
 
@@ -133,7 +134,7 @@ void Vide::hideWelcomeWindow()
 
 bool Vide::openProject(string path)
 {
-    printf("Vide::openProject: path=%s\n", path.c_str());
+    log(DEBUG, "openProject: path=%s", path.c_str());
     unsigned int len = path.length();
     unsigned int projectFileLen = strlen(PROJECT_FILE);
 
@@ -142,7 +143,7 @@ bool Vide::openProject(string path)
     if (res != 0)
     {
         int err = errno;
-        printf("Vide::openProject: Failed to stat path: %s\n", strerror(err));
+        log(ERROR, "openProject: Failed to stat path: %s", strerror(err));
         return false;
     }
 
@@ -152,14 +153,14 @@ bool Vide::openProject(string path)
     {
         if (len > projectFileLen && path.substr(len - projectFileLen) == PROJECT_FILE)
         {
-            printf("Vide::openProject: Found project file\n");
+            log(DEBUG, "openProject: Found project file");
             unsigned int len = path.length();
             path = path.substr(0, (len - projectFileLen));
-            printf("Vide::openProject: path(2)=%s\n", path.c_str());
+            log(DEBUG, "openProject: path(2)=%s", path.c_str());
         }
         else
         {
-            printf("Vide::openProject: Not a vide.project file\n");
+            log(ERROR, "openProject: Not a vide.project file");
             return false;
         }
     }
@@ -168,7 +169,7 @@ bool Vide::openProject(string path)
         res = access((path + "/" + PROJECT_FILE).c_str(), R_OK);
         if (res != 0)
         {
-            printf("Vide::openProject: Specified path doesn't contain a Vide project file. Create a project first!\n");
+            log(ERROR, "openProject: Specified path doesn't contain a Vide project file. Create a project first!");
             return false;
         }
     }

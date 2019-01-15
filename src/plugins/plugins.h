@@ -4,6 +4,8 @@
 #include <vector>
 #include <string>
 
+#include <geek/core-logger.h>
+
 class Vide;
 class VidePlugin;
 
@@ -20,7 +22,7 @@ class VidePluginInit
     virtual const char* getName() { return ""; }
 };
 
-class VidePlugin
+class VidePlugin : public Geek::Logger
 {
  private:
     Vide* m_vide;

@@ -25,7 +25,7 @@
 
 using namespace std;
 
-Tokeniser::Tokeniser()
+Tokeniser::Tokeniser() : Logger("Tokeniser")
 {
 }
 

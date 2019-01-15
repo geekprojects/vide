@@ -24,7 +24,7 @@
 using namespace std;
 using namespace Frontier;
 
-StructureView::StructureView(Vide* vide, bool fileView) : Frame(vide, false)
+StructureView::StructureView(Vide* vide, bool fileView) : Frame(vide, L"StructureView", false)
 {
     m_vide = vide;
     m_fileView = fileView;

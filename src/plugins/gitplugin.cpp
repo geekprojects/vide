@@ -5,6 +5,8 @@
 #include "vide.h"
 #include "ui/videwindow.h"
 
+using namespace Geek;
+
 VIDE_PLUGIN(GitPlugin);
 
 GitPlugin::GitPlugin(Vide* vide) : VidePlugin(vide)
@@ -34,13 +36,13 @@ bool GitPlugin::shutdown()
 
 void GitPlugin::onOpenProject(Project* project)
 {
-    printf("GitPlugin::onOpenProject: Here!\n");
+    log(DEBUG, "onOpenProject: Opening: %s", project->getRootPath().c_str());
 
     git_repository *repo = NULL;
     int error = git_repository_open_ext(&repo, project->getRootPath().c_str(), 0, NULL);
     if (error != 0)
     {
-        printf("GitPlugin::onOpenProject: Error opening repository\n");
+        log(ERROR, "onOpenProject: Error opening repository");
         return;
     }
 
@@ -48,10 +50,10 @@ void GitPlugin::onOpenProject(Project* project)
     git_repository_head(&repoRef, repo);
 
     const char* name = git_reference_shorthand(repoRef);
-    printf("GitPlugin::onOpenProject: head name: %s\n", name);
+    log(DEBUG, "onOpenProject: head name: %s", name);
 
     VideWindow* window = getVide()->getProjectWindow(project);
-    printf("GitPlugin::onOpenProject: VideWindow=%p\n", window);
+    log(DEBUG, "onOpenProject: VideWindow=%p", window);
 
     git_reference_free(repoRef);
 
@@ -63,13 +65,13 @@ void GitPlugin::onOpenProject(Project* project)
 void GitPlugin::onOpenProjectEntry(ProjectEntry* projectEntry)
 {
     int error;
-    printf("GitPlugin::onOpenProjectEntry: Here!\n");
+    log(DEBUG, "onOpenProjectEntry: Opening: %s", projectEntry->getFilePath().c_str());
 
     git_repository *repo = NULL;
     error = git_repository_open_ext(&repo, projectEntry->getProject()->getRootPath().c_str(), 0, NULL);
     if (error != 0)
     {
-        printf("GitPlugin::onOpenProjectEntry: Failed to open repository: %d\n", error);
+        log(ERROR, "onOpenProjectEntry: Failed to open repository: %d", error);
         return;
     }
 
@@ -78,20 +80,19 @@ void GitPlugin::onOpenProjectEntry(ProjectEntry* projectEntry)
     if (error != 0)
     {
         const git_error *e = giterr_last();
-        printf("GitPlugin::onOpenProjectEntry: Failed to open blame: %d\n", error);
-        printf("Error %d/%d: %s\n", error, e->klass, e->message);
+        log(ERROR, "onOpenProjectEntry: Failed to open blame: %d/%d: %s", error, e->klass, e->message);
         return;
     }
-    printf("GitPlugin::onOpenProjectEntry: blame=%p\n", blame);
+    log(DEBUG, "onOpenProjectEntry: blame=%p", blame);
 
     const git_blame_hunk* hunk;
     hunk = git_blame_get_hunk_byline(blame, 1);
-    printf("GitPlugin::onOpenProjectEntry: hunk=%p\n", hunk);
+    log(DEBUG, "onOpenProjectEntry: hunk=%p", hunk);
 
     git_commit* commit;
     git_commit_lookup(&commit, repo, &(hunk->final_commit_id));
 
-    printf("GitPlugin::onOpenProjectEntry: 1: %s\n", git_commit_message(commit));
+    log(DEBUG, "onOpenProjectEntry: 1: %s", git_commit_message(commit));
 
     git_blame_free(blame);
 }

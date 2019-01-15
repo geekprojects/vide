@@ -30,7 +30,7 @@ using namespace Frontier;
 using namespace Geek;
 using namespace Geek::Gfx;
 
-Editor::Editor(Buffer* buffer, FileTypeManager* ftm)
+Editor::Editor(Buffer* buffer, FileTypeManager* ftm) : Logger("Editor")
 {
     m_buffer = buffer;
     m_fileTypeManager = ftm;
@@ -81,7 +81,7 @@ Position Editor::findPrevWord(Position from)
     if (it != line->tokens.begin() && (it - 1) != line->tokens.begin())
     {
         LineToken* curToken = *it;
-        printf("CURRENT TOKEN: %ls\n", curToken->text.c_str());
+        log(DEBUG, "CURRENT TOKEN: %ls", curToken->text.c_str());
 
         if (curToken->column < from.column)
         {
@@ -98,7 +98,7 @@ Position Editor::findPrevWord(Position from)
         {
             LineToken* nextToken = *it;
 
-            printf("PREV TOKEN: %lsn", nextToken->text.c_str());
+            log(DEBUG, "PREV TOKEN: %ls", nextToken->text.c_str());
             return Position(from.line, nextToken->column);
         }
         else
@@ -113,7 +113,7 @@ Position Editor::findPrevWord(Position from)
 
     if (prevLine)
     {
-        printf("START OF LINE\n");
+        log(DEBUG, "START OF LINE");
         if (from.line > 0)
         {
             Line* prevLine = m_buffer->getLine(from.line - 1);
@@ -121,7 +121,7 @@ Position Editor::findPrevWord(Position from)
         }
         else
         {
-            printf("RETURNING START OF FILE\n");
+            log(DEBUG, "RETURNING START OF FILE");
 
             return Position(0, 0);
         }
@@ -146,7 +146,7 @@ Position Editor::findNextWord(Position from)
     if (it != line->tokens.end() && (it + 1) != line->tokens.end())
     {
         LineToken* curToken = *it;
-        printf("CURRENT TOKEN: %ls\n", curToken->text.c_str());
+        log(DEBUG, "CURRENT TOKEN: %ls", curToken->text.c_str());
 
         do
         {
@@ -158,7 +158,7 @@ Position Editor::findNextWord(Position from)
         {
             LineToken* nextToken = *it;
 
-            printf("NEXT TOKEN: %lsn", nextToken->text.c_str());
+            log(DEBUG, "NEXT TOKEN: %ls", nextToken->text.c_str());
             return Position(from.line, nextToken->column);
         }
         else
@@ -173,7 +173,7 @@ Position Editor::findNextWord(Position from)
 
     if (nextLine)
     {
-        printf("END OF LINE\n");
+        log(DEBUG, "END OF LINE");
         if (from.line < m_buffer->getLineCount() - 1)
         {
             Line* nextLine = m_buffer->getLine(from.line + 1);
@@ -185,7 +185,7 @@ Position Editor::findNextWord(Position from)
         }
         else
         {
-            printf("RETURNING END OF FILE\n");
+            log(DEBUG, "RETURNING END OF FILE");
 
             return Position(from.line, line->text.length() - 1);
         }
@@ -305,7 +305,7 @@ void Editor::moveCursorDelta(int dx, int dy, bool allowXOver)
     {
         moveCursorX(m_cursor.column + dx, allowXOver);
     }
-    printf("Editor::moveCursorDelta: m_cursorX=%d, moveCursorY=%d\n", m_cursor.column, m_cursor.line);
+    log(DEBUG, "moveCursorDelta: m_cursorX=%d, moveCursorY=%d", m_cursor.column, m_cursor.line);
 }
 
 void Editor::moveCursorXEnd()
@@ -395,7 +395,7 @@ void Editor::executeEdit(Edit edit)
 void Editor::undoEdits(std::vector<Edit> edits)
 {
     vector<Edit>::reverse_iterator rit;
-    printf("Editor::undoEdits: Undoing %lu edits\n", edits.size());
+    log(DEBUG, "undoEdits: Undoing %lu edits", edits.size());
     for (rit = edits.rbegin(); rit != edits.rend(); rit++)
     {
         Edit edit = *rit;
@@ -412,37 +412,37 @@ void Editor::undoEdit(Edit edit)
     switch (edit.editType)
     {
         case EDIT_INSERT:
-            printf("Editor::undoEdit: EDIT_INSERT: %lu chars\n", edit.text.length());
+            log(DEBUG, "undoEdit: EDIT_INSERT: %lu chars", edit.text.length());
             line->text.erase(edit.position.column, edit.text.length());
             m_buffer->setDirtyLine(line);
             break;
 
         case EDIT_NEW_LINE:
             m_buffer->deleteLine(edit.position.line + 1);
-            printf("Editor::undoEdit: EDIT_NEW_LINE\n");
+            log(DEBUG, "undoEdit: EDIT_NEW_LINE");
             break;
 
         case EDIT_SPLIT_LINE:
         {
-            printf("Editor::undoEdit: EDIT_SPLIT_LINE:\n");
+            log(DEBUG, "undoEdit: EDIT_SPLIT_LINE");
 
             doJoinLines(edit.position.line, line);
         } break;
 
         case EDIT_JOIN_LINES:
-            printf("Editor::undoEdit: EDIT_JOIN_LINES:\n");
+            log(DEBUG, "undoEdit: EDIT_JOIN_LINES");
             doSplitLine(edit.position, line);
             break;
 
         case EDIT_DELETE_CHAR:
-            printf("Editor::undoEdit: EDIT_DELETE_CHAR:\n");
+            log(DEBUG, "undoEdit: EDIT_DELETE_CHAR");
             line->text.insert(edit.position.column, 1, edit.text.at(0));
             m_buffer->setDirtyLine(line);
             break;
 
         case EDIT_DELETE_LINE:
         {
-            printf("Editor::undoEdit: EDIT_DELETE_LINE:\n");
+            log(DEBUG, "undoEdit: EDIT_DELETE_LINE");
 
             Line* newLine = new Line();
             newLine->lineEnding = "\n";
@@ -453,7 +453,7 @@ void Editor::undoEdit(Edit edit)
         } break;
 
         case EDIT_DELETE_TO_END:
-            printf("Editor::undoEdit: EDIT_DELETE_TO_END: %ls\n", edit.text.c_str());
+            log(DEBUG, "undoEdit: EDIT_DELETE_TO_END: %ls", edit.text.c_str());
             line->text += edit.text;
             m_buffer->setDirtyLine(line);
             break;
@@ -501,7 +501,7 @@ vector<Edit> Editor::insert(wchar_t c)
             m_cursor.column = 0;
         }
     }
-    printf("Editor::insert: m_cursorX=%u, textLen=%u\n", m_cursor.column, textLen);
+    log(DEBUG, "insert: m_cursorX=%u, textLen=%u", m_cursor.column, textLen);
 
     vector<Edit> edits;
     edits.push_back(Edit(m_cursor, EDIT_INSERT, c));
@@ -607,7 +607,7 @@ void Editor::copyToBuffer(int count)
         Line* line = m_buffer->getLine(m_cursor.line + i);
         if (line != NULL)
         {
-            printf("Editor::copyToBuffer: Copying: %ls\n", line->text.c_str());
+            log(DEBUG, "copyToBuffer: Copying: %ls", line->text.c_str());
             copyVec.push_back(line->text);
         }
     }

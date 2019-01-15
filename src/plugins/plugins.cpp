@@ -41,6 +41,7 @@ bool VidePluginManager::init(Vide* vide)
         VidePlugin* plugin = init->create(vide);
         if (plugin != NULL)
         {
+            plugin->setLoggerName(string("Plugin[") + init->getName() + "]");
             plugin->setPluginName(init->getName());
 
             bool res;
@@ -80,7 +81,7 @@ VidePlugin* VidePluginManager::findPlugin(string name)
     return NULL;
 }
 
-VidePlugin::VidePlugin(Vide* vide)
+VidePlugin::VidePlugin(Vide* vide) : Logger(L"VidePlugin")
 {
     m_vide = vide;
 }

@@ -14,6 +14,7 @@
 
 using namespace std;
 using namespace Frontier;
+using namespace Geek;
 
 ProjectWindow::ProjectWindow(Vide* vide) : FrontierWindow(vide, L"Vide Project", WINDOW_NORMAL)
 {

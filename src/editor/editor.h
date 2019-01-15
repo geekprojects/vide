@@ -24,6 +24,7 @@
 #include "buffer.h"
 #include "filetypes/filetypemanager.h"
 
+#include <geek/core-logger.h>
 #include <sigc++/sigc++.h>
 
 class Vide;
@@ -66,7 +67,7 @@ struct Edit
     }
 };
 
-class Editor
+class Editor : public Geek::Logger
 {
  private:
     Position m_cursor;

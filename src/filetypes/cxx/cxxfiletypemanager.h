@@ -18,6 +18,8 @@ class CXXTokeniser : public Tokeniser
  protected:
     CXXFileTypeManager* m_ftm;
 
+    void addDiagnostic(LineToken* token, CXDiagnostic diag);
+
  public:
     CXXTokeniser(CXXFileTypeManager* ftm);
     virtual ~CXXTokeniser();
