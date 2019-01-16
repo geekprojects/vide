@@ -42,7 +42,7 @@ class VidePlugin : public Geek::Logger
     Vide* getVide() { return m_vide; }
 };
 
-class VidePluginManager
+class VidePluginManager : public Geek::Logger
 {
  private:
     Vide* m_vide;

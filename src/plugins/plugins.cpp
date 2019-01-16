@@ -2,6 +2,7 @@
 #include "plugins/plugins.h"
 
 using namespace std;
+using namespace Geek;
 
 struct VidePluginInitList
 {
@@ -10,7 +11,7 @@ struct VidePluginInitList
 
 static VidePluginInitList* g_pluginInitList = NULL;
 
-VidePluginManager::VidePluginManager()
+VidePluginManager::VidePluginManager() : Logger("VidePluginManager")
 {
     m_vide = NULL;
 }
@@ -31,13 +32,13 @@ bool VidePluginManager::init(Vide* vide)
 
     if (g_pluginInitList == NULL)
     {
-        printf("VidePluginManager::init: No plugins found\n");
+        log(DEBUG, "init: No plugins found");
         return true;
     }
 
     for (VidePluginInit* init : g_pluginInitList->inits)
     {
-        printf("VidePluginManager::init: Plugin: %s\n", init->getName());
+        log(DEBUG, "init: Plugin: %s", init->getName());
         VidePlugin* plugin = init->create(vide);
         if (plugin != NULL)
         {

@@ -174,7 +174,7 @@ class ProjectIndex
  public:
 };
 
-class Project
+class Project : public Geek::Logger
 {
  private:
     Vide* m_vide;

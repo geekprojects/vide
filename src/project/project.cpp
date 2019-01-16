@@ -36,8 +36,9 @@
 #include "filetypes/filetypemanager.h"
 
 using namespace std;
+using namespace Geek;
 
-Project::Project(Vide* vide, string rootPath)
+Project::Project(Vide* vide, string rootPath) : Logger("Project")
 {
     m_vide = vide;
     m_rootPath = rootPath;
@@ -58,12 +59,12 @@ bool Project::init()
     m_buildTool = m_vide->findBuildTool(this);
     if (m_buildTool != NULL)
     {
-        printf("Project::init: buildTool: %s\n", m_buildTool->getPluginName().c_str());
+        log(DEBUG, "init: buildTool: %s", m_buildTool->getPluginName().c_str());
         m_config["buildTool"]["name"] = m_buildTool->getPluginName();
     }
     else
     {
-        printf("Project::init: Unable to detect build tool\n");
+        log(WARN, "init: Unable to detect build tool");
     }
 
     return true;
@@ -77,7 +78,7 @@ bool Project::load()
     }
     catch (const exception e)
     {
-        printf("Project::load: Failed to load project file: %s\n", e.what());
+        log(ERROR, "load: Failed to load project file: %s", e.what());
         return false;
     }
 
@@ -141,7 +142,7 @@ bool Project::scanDirectory(ProjectDirectory* entry, std::string path)
     DIR* fd;
     dirent* dirent;
 
-    printf("Project::scanDirectory: Scanning %s\n", path.c_str());
+    log(DEBUG, "scanDirectory: Scanning %s", path.c_str());
 
     fd = opendir(path.c_str());
     if (fd == NULL)
