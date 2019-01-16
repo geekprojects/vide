@@ -203,6 +203,7 @@ class ViInterface : public Interface
     bool commandPaste(ViCommand* command);
 
     bool commandJoin(ViCommand* command);
+    bool commandReplace(ViCommand* command);
 
     bool commandUndo(ViCommand* command);
     bool commandRepeat(ViCommand* command);

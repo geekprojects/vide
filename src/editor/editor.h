@@ -39,31 +39,53 @@ enum EditType
     EDIT_DELETE_CHAR,
     EDIT_DELETE_LINE,
     EDIT_DELETE_TO_END,
+    EDIT_REPLACE,
 };
 
 struct Edit
 {
     Position position;
     EditType editType;
-    std::wstring text;
+    std::wstring prevText;
+    std::wstring newText;
 
     Edit() {}
     Edit(Position _pos, EditType _editType)
     {
         position = _pos;
         editType = _editType;
+        prevText = L"";
+        newText = L"";
     }
-    Edit(Position _pos, EditType _editType, wchar_t _chr)
+
+    Edit(Position _pos, EditType _editType, wchar_t _prevChr, wchar_t _newChr)
     {
         position = _pos;
         editType = _editType;
-        text = std::wstring(L"") + _chr;
+        if (_prevChr != 0)
+        {
+            prevText = std::wstring(L"") + _prevChr;
+        }
+        else
+        {
+            prevText = L"";
+        }
+        if (_newChr != 0)
+        {
+            newText = std::wstring(L"") + _newChr;
+        }
+        else
+        {
+            newText = L"";
+        }
     }
-    Edit(Position _pos, EditType _editType, std::wstring _text)
+
+    Edit(Position _pos, EditType _editType, std::wstring _prevText, std::wstring _newText)
     {
         position = _pos;
         editType = _editType;
-        text = _text;
+        prevText = _prevText;
+        newText = _newText;
     }
 };
 
@@ -139,6 +161,7 @@ class Editor : public Geek::Logger
     std::vector<Edit> deleteAtCursor();
     std::vector<Edit> deleteLine();
     std::vector<Edit> deleteToEnd();
+    std::vector<Edit> replaceChar(wchar_t c);
 
     void copyToBuffer(int count);
     std::vector<Edit>  pasteFromBuffer();

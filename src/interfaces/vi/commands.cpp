@@ -72,6 +72,7 @@ ViCommandDefinition g_commands[] =
 
     // Other text manipulation
     {L"Join", KC_J,           KMOD_SHIFT, COMMAND_NONE, &ViInterface::commandJoin},
+    {L"Replace", KC_R,           KMOD_NONE, COMMAND_HAS_PARAM, &ViInterface::commandReplace},
 
 
     // End of the list
@@ -263,6 +264,17 @@ bool ViInterface::commandJoin(ViCommand* command)
     }
 
     command->addEdits(m_editor->joinLines());
+
+    return true;
+}
+
+bool ViInterface::commandReplace(ViCommand* command)
+{
+    printf("ViInterface::commandReplace: param=%s\n", command->params.c_str());
+    if (command->params.length() > 0)
+    {
+        command->addEdits(m_editor->replaceChar(command->params.at(0)));
+    }
 
     return true;
 }

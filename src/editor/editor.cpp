@@ -351,9 +351,9 @@ void Editor::executeEdit(Edit edit)
         case EDIT_INSERT:
         {
             unsigned int i;
-            for (i = 0; i < edit.text.length(); i++)
+            for (i = 0; i < edit.newText.length(); i++)
             {
-                line->text.insert(edit.position.column + i, 1, edit.text.at(i));
+                line->text.insert(edit.position.column + i, 1, edit.newText.at(i));
             }
             m_buffer->setDirtyLine(line);
         } break;
@@ -389,6 +389,11 @@ void Editor::executeEdit(Edit edit)
             line->text.erase(edit.position.column);
             m_buffer->setDirtyLine(line);
             break;
+
+        case EDIT_REPLACE:
+            line->text.replace(edit.position.column, edit.newText.length(), edit.newText);
+            m_buffer->setDirtyLine(line);
+            break;
     }
 }
 
@@ -412,8 +417,8 @@ void Editor::undoEdit(Edit edit)
     switch (edit.editType)
     {
         case EDIT_INSERT:
-            log(DEBUG, "undoEdit: EDIT_INSERT: %lu chars", edit.text.length());
-            line->text.erase(edit.position.column, edit.text.length());
+            log(DEBUG, "undoEdit: EDIT_INSERT: %lu chars", edit.newText.length());
+            line->text.erase(edit.position.column, edit.newText.length());
             m_buffer->setDirtyLine(line);
             break;
 
@@ -436,7 +441,7 @@ void Editor::undoEdit(Edit edit)
 
         case EDIT_DELETE_CHAR:
             log(DEBUG, "undoEdit: EDIT_DELETE_CHAR");
-            line->text.insert(edit.position.column, 1, edit.text.at(0));
+            line->text.insert(edit.position.column, 1, edit.prevText.at(0));
             m_buffer->setDirtyLine(line);
             break;
 
@@ -446,16 +451,20 @@ void Editor::undoEdit(Edit edit)
 
             Line* newLine = new Line();
             newLine->lineEnding = "\n";
-            newLine->text = edit.text;
+            newLine->text = edit.prevText;
             m_buffer->insertLine(edit.position.line, newLine);
 
             m_buffer->setDirtyLine(line);
         } break;
 
         case EDIT_DELETE_TO_END:
-            log(DEBUG, "undoEdit: EDIT_DELETE_TO_END: %ls", edit.text.c_str());
-            line->text += edit.text;
+            log(DEBUG, "undoEdit: EDIT_DELETE_TO_END: %ls", edit.prevText.c_str());
+            line->text += edit.prevText;
             m_buffer->setDirtyLine(line);
+            break;
+
+        case EDIT_REPLACE:
+            line->text.replace(edit.position.column, edit.prevText.length(), edit.prevText);
             break;
     }
 }
@@ -504,7 +513,7 @@ vector<Edit> Editor::insert(wchar_t c)
     log(DEBUG, "insert: m_cursorX=%u, textLen=%u", m_cursor.column, textLen);
 
     vector<Edit> edits;
-    edits.push_back(Edit(m_cursor, EDIT_INSERT, c));
+    edits.push_back(Edit(m_cursor, EDIT_INSERT, 0, c));
 
     executeEdits(edits);
 
@@ -554,7 +563,7 @@ vector<Edit> Editor::deleteAtCursor()
     vector<Edit> edits;
 
     Line* line = m_buffer->getLine(m_cursor.line);
-    edits.push_back(Edit(m_cursor, EDIT_DELETE_CHAR, line->text.at(m_cursor.column)));
+    edits.push_back(Edit(m_cursor, EDIT_DELETE_CHAR, line->text.at(m_cursor.column), 0));
 
     executeEdits(edits);
 
@@ -566,7 +575,7 @@ vector<Edit> Editor::deleteLine()
     vector<Edit> edits;
 
     Line* line = m_buffer->getLine(m_cursor.line);
-    edits.push_back(Edit(m_cursor, EDIT_DELETE_LINE, line->text));
+    edits.push_back(Edit(m_cursor, EDIT_DELETE_LINE, line->text, L""));
 
     unsigned int count = m_buffer->getLineCount();
     if (count == 1)
@@ -590,7 +599,33 @@ vector<Edit> Editor::deleteToEnd()
 
     Line* line = m_buffer->getLine(m_cursor.line);
     wstring text = line->text.substr(m_cursor.column);
-    edits.push_back(Edit(m_cursor, EDIT_DELETE_TO_END, text));
+    edits.push_back(Edit(m_cursor, EDIT_DELETE_TO_END, text, L""));
+
+    executeEdits(edits);
+
+    return edits;
+}
+
+vector<Edit> Editor::replaceChar(wchar_t c)
+{
+    Line* line = m_buffer->getLine(m_cursor.line);
+
+    unsigned int textLen = line->text.length();
+    if (m_cursor.column > textLen)
+    {
+        if (textLen > 0)
+        {
+            m_cursor.column = textLen;
+        }
+        else
+        {
+            m_cursor.column = 0;
+        }
+    }
+    log(DEBUG, "replaceChar: m_cursorX=%u, textLen=%u", m_cursor.column, textLen);
+
+    vector<Edit> edits;
+    edits.push_back(Edit(m_cursor, EDIT_REPLACE, line->text.at(m_cursor.column), c));
 
     executeEdits(edits);
 
