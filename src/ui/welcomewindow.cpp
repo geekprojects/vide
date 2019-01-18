@@ -8,6 +8,7 @@
 
 using namespace std;
 using namespace Frontier;
+using namespace Geek;
 
 WelcomeWindow::WelcomeWindow(Vide* vide) : FrontierWindow(vide, L"Vide", WINDOW_NORMAL)
 {
@@ -34,7 +35,10 @@ bool WelcomeWindow::init()
     rootFrame->add(new Label(this, L"Recent Projects"));
 
     List* list = new List(this);
-    list->addItem(new TextListItem(this, L"/Users/ian/projects/vide/testproject"));
+    TextListItem* item = new TextListItem(this, L"/Users/ian/projects/vide/testproject");
+    item->setPrivateData(strdup("/Users/ian/projects/vide/testproject"));
+    item->doubleClickSignal().connect(sigc::mem_fun(*this, &WelcomeWindow::selectProject));
+    list->addItem(item);
 
     Scroller* scroller = new Scroller(this);
     scroller->setChild(list);
@@ -66,5 +70,14 @@ void WelcomeWindow::chooseProject()
     }
 }
 
+void WelcomeWindow::selectProject(ListItem* item)
+{
+    log(DEBUG, "selectProject: item=%p -> %s", item, item->getPrivateData());
 
+    bool res = m_vide->openProject((char*)item->getPrivateData());
+    if (res)
+    {
+        hide();
+    }
+}
 

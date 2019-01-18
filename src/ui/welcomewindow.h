@@ -3,6 +3,7 @@
 
 #include <frontier/frontier.h>
 #include <frontier/widgets/label.h>
+#include <frontier/widgets/list.h>
 
 #include "vide.h"
 
@@ -17,6 +18,7 @@ class WelcomeWindow : public Frontier::FrontierWindow
 
     void createProject();
     void chooseProject();
+    void selectProject(Frontier::ListItem* item);
 
  public:
     WelcomeWindow(Vide* vide);
