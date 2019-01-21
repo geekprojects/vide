@@ -4,14 +4,14 @@
 using namespace std;
 using namespace Frontier;
 
-void ViInterface::keyVisual(Frontier::InputMessage* inputMessage)
+void ViInterface::keyVisual(Frontier::KeyEvent* keyEvent)
 {
-    if (!inputMessage->event.key.direction)
+    if (!keyEvent->direction)
     {
         return;
     }
 
-    switch (inputMessage->event.key.key)
+    switch (keyEvent->key)
     {
         case KC_UP:
             m_editor->moveCursorDelta(0, -1);

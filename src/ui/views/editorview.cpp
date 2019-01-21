@@ -310,47 +310,48 @@ void EditorView::drawCursor(Surface* surface, int x, int y, int w, int h)
     }
 }
 
-Widget* EditorView::handleMessage(Message* msg)
+Widget* EditorView::handleEvent(Event* event)
 {
-    if (msg->messageType == FRONTIER_MSG_INPUT)
+    switch (event->eventType)
     {
-        InputMessage* inputMessage = (InputMessage*)msg;
-        switch (inputMessage->inputMessageType)
+        case FRONTIER_EVENT_KEY:
         {
-            case FRONTIER_MSG_INPUT_KEY:
+            KeyEvent* keyEvent = (KeyEvent*)event;
+
+            wchar_t c = L'?';
+            if (iswprint(keyEvent->chr))
             {
-                wchar_t c = L'?';
-                if (iswprint(inputMessage->event.key.chr))
-                {
-                    c = inputMessage->event.key.chr;
-                }
+                c = keyEvent->chr;
+            }
 
-                log(DEBUG, "handleMessage: Key press: 0x%x (%d) -> %lc, modifiers=0x%x",
-                    inputMessage->event.key.key,
-                    inputMessage->event.key.key,
-                    c,
-                    inputMessage->event.key.modifiers);
+            log(DEBUG, "handleMessage: Key press: 0x%x (%d) -> %lc, modifiers=0x%x",
+                keyEvent->key,
+                keyEvent->key,
+                c,
+                keyEvent->modifiers);
 
-                m_interface->key(inputMessage);
-                updateStatus();
+            m_interface->key(keyEvent);
+            updateStatus();
 
-                if (m_editor->isDirty())
-                {
-                    setDirty(DIRTY_CONTENT);
-                }
-
-                return this;
-            } break;
-
-            case FRONTIER_MSG_INPUT_MOUSE_BUTTON:
-            case FRONTIER_MSG_INPUT_MOUSE_MOTION:
+            if (m_editor->isDirty())
             {
-                int x = inputMessage->event.button.x;
-                int y = inputMessage->event.button.y;
+                setDirty(DIRTY_CONTENT);
+            }
+
+            return this;
+        } break;
+
+        case FRONTIER_EVENT_MOUSE_BUTTON:
+        case FRONTIER_EVENT_MOUSE_MOTION:
+        {
+            MouseEvent* mouseEvent = (MouseEvent*)event;
+
+                int x = mouseEvent->x;
+                int y = mouseEvent->y;
 
                 if (m_scrollBar->intersects(x, y))
                 {
-                    return m_scrollBar->handleMessage(msg);
+                    return m_scrollBar->handleEvent(event);
                 }
 
                 Vector2D thisPos = getAbsolutePosition();
@@ -373,9 +374,10 @@ Widget* EditorView::handleMessage(Message* msg)
                     mousePos.line = scrollPos + (y / charHeight);
                     mousePos.column = x / charWidth;
  
-                    if (inputMessage->inputMessageType == FRONTIER_MSG_INPUT_MOUSE_BUTTON)
+                    if (event->eventType == FRONTIER_EVENT_MOUSE_BUTTON)
                     {
-                        if (inputMessage->event.button.direction)
+                        MouseButtonEvent* mouseButtonEvent = (MouseButtonEvent*)event;
+                        if (mouseButtonEvent->direction)
                         {
                             m_selecting = true;
                             m_editor->setSelectStart(mousePos);
@@ -390,7 +392,7 @@ Widget* EditorView::handleMessage(Message* msg)
                         setDirty(DIRTY_CONTENT);
                         return this;
                     }
-                    else if (inputMessage->inputMessageType == FRONTIER_MSG_INPUT_MOUSE_MOTION)
+                    else if (event->eventType == FRONTIER_EVENT_MOUSE_MOTION)
                     {
                         if (m_selecting)
                         {
@@ -407,8 +409,8 @@ Widget* EditorView::handleMessage(Message* msg)
                         {
                             if (!token->messages.empty())
                             {
-                                int x = inputMessage->event.button.x;
-                                int y = inputMessage->event.button.y;
+                                int x = mouseEvent->x;
+                                int y = mouseEvent->y;
                                 Geek::Vector2D screenPos = videWindow->getScreenPosition(Geek::Vector2D(x + 1, y + 1));
                                 videWindow->getEditorTipWindow()->setToken(token, screenPos);
 
@@ -424,10 +426,11 @@ Widget* EditorView::handleMessage(Message* msg)
                 return this;
             } break;
 
-            case FRONTIER_MSG_INPUT_MOUSE_WHEEL:
+            case FRONTIER_EVENT_MOUSE_SCROLL:
             {
+                MouseScrollEvent* mouseScrollEvent = (MouseScrollEvent*)event;
                 int scrollPos = m_scrollBar->getPos();
-                scrollPos -= inputMessage->event.wheel.scrollY;
+                scrollPos -= mouseScrollEvent->scrollY;
                 m_scrollBar->setPos(scrollPos);
 
                 setDirty(DIRTY_CONTENT);
@@ -439,11 +442,6 @@ Widget* EditorView::handleMessage(Message* msg)
                 //log(WARN, "handleMessage: Unhandled input message type: %d", inputMessage->inputMessageType);
                 break;
         }
-    }
-    else
-    {
-        log(WARN, "handleMessage: Unhandled message type: %d", msg->messageType);
-    }
 
     return NULL;
 }

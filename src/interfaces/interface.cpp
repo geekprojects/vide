@@ -30,7 +30,7 @@ Interface::~Interface()
 {
 }
 
-void Interface::key(Frontier::InputMessage* inputMessage)
+void Interface::key(Frontier::KeyEvent* keyEvent)
 {
 }
 

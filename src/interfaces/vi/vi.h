@@ -153,10 +153,10 @@ class ViInterface : public Interface
     // This stores the extended command
     std::wstring m_exCommand;
 
-    void keyNormal(Frontier::InputMessage* inputMessage);
-    void keyInsert(Frontier::InputMessage* inputMessage);
-    void keyCommand(Frontier::InputMessage* inputMessage);
-    void keyVisual(Frontier::InputMessage* inputMessage);
+    void keyNormal(Frontier::KeyEvent* keyEvent);
+    void keyInsert(Frontier::KeyEvent* keyEvent);
+    void keyCommand(Frontier::KeyEvent* keyEvent);
+    void keyVisual(Frontier::KeyEvent* keyEvent);
 
     void insertChar(wchar_t c);
 
@@ -169,7 +169,7 @@ class ViInterface : public Interface
     ViInterface(Editor* editor);
     virtual ~ViInterface();
 
-    virtual void key(Frontier::InputMessage* inputMessage);
+    virtual void key(Frontier::KeyEvent* keyEvent);
 
     virtual CursorType getCursorType();
     virtual std::wstring getStatus();

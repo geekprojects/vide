@@ -35,24 +35,24 @@ ViInterface::~ViInterface()
 {
 }
 
-void ViInterface::key(Frontier::InputMessage* inputMessage)
+void ViInterface::key(Frontier::KeyEvent* keyEvent)
 {
     switch (m_mode)
     {
         case MODE_NORMAL:
-            keyNormal(inputMessage);
+            keyNormal(keyEvent);
             break;
 
         case MODE_INSERT:
-            keyInsert(inputMessage);
+            keyInsert(keyEvent);
             break;
 
         case MODE_EX_COMMAND:
-            keyCommand(inputMessage);
+            keyCommand(keyEvent);
             break;
 
         case MODE_VISUAL:
-            keyVisual(inputMessage);
+            keyVisual(keyEvent);
             break;
 
         default:
@@ -60,14 +60,14 @@ void ViInterface::key(Frontier::InputMessage* inputMessage)
     }
 }
 
-void ViInterface::keyNormal(Frontier::InputMessage* inputMessage)
+void ViInterface::keyNormal(Frontier::KeyEvent* keyEvent)
 {
-    if (!inputMessage->event.key.direction)
+    if (!keyEvent->direction)
     {
         return;
     }
 
-    char chr = inputMessage->event.key.chr;
+    char chr = keyEvent->chr;
     if (m_state == STATE_START || m_state == STATE_COUNT)
     {
         if (m_state == STATE_START)
@@ -102,8 +102,8 @@ void ViInterface::keyNormal(Frontier::InputMessage* inputMessage)
         for (i = 0; g_commands[i].key != 0 && g_commands[i].func != 0; i++)
         {
             ViCommandDefinition* def = &(g_commands[i]);
-            if (def->key == inputMessage->event.key.key &&
-                (def->modifiers == KMOD_ANY || def->modifiers == inputMessage->event.key.modifiers))
+            if (def->key == keyEvent->key &&
+                (def->modifiers == KMOD_ANY || def->modifiers == keyEvent->modifiers))
             {
                 commandDefinition = def;
             }
@@ -184,17 +184,17 @@ bool ViInterface::runCommand(ViCommand* command)
     return true;
 }
 
-void ViInterface::keyInsert(Frontier::InputMessage* inputMessage)
+void ViInterface::keyInsert(Frontier::KeyEvent* keyEvent)
 {
-    wchar_t c = inputMessage->event.key.chr;
+    wchar_t c = keyEvent->chr;
 
-    if (!inputMessage->event.key.direction)
+    if (!keyEvent->direction)
     {
         return;
     }
 
 
-    switch (inputMessage->event.key.key)
+    switch (keyEvent->key)
     {
         case KC_ESCAPE:
             if (m_command->command->completeFunc != NULL)
@@ -273,33 +273,33 @@ void ViInterface::insertChar(wchar_t c)
     }
 }
 
-void ViInterface::keyCommand(Frontier::InputMessage* inputMessage)
+void ViInterface::keyCommand(Frontier::KeyEvent* keyEvent)
 {
-    if (!inputMessage->event.key.direction)
+    if (!keyEvent->direction)
     {
         return;
     }
 
-    if (inputMessage->event.key.key == KC_ESCAPE)
+    if (keyEvent->key == KC_ESCAPE)
     {
         setMode(MODE_NORMAL);
     }
-    else if (inputMessage->event.key.key == KC_RETURN)
+    else if (keyEvent->key == KC_RETURN)
     {
         printf("ViInterface::keyCommand: COMMAND: %ls\n", m_exCommand.c_str());
         runExCommand(m_exCommand);
         setMode(MODE_NORMAL);
     }
-    else if (inputMessage->event.key.key == KC_BACKSPACE)
+    else if (keyEvent->key == KC_BACKSPACE)
     {
         if (m_exCommand.length() > 0)
         {
             m_exCommand = m_exCommand.substr(0, m_exCommand.length() - 1);
         }
     }
-    else if (iswprint(inputMessage->event.key.chr))
+    else if (iswprint(keyEvent->chr))
     {
-        m_exCommand += inputMessage->event.key.chr;
+        m_exCommand += keyEvent->chr;
     }
 }
 

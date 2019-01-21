@@ -20,7 +20,7 @@
 #ifndef __VIDE_INTERFACE_H_
 #define __VIDE_INTERFACE_H_
 
-#include <frontier/messages.h>
+#include <frontier/events.h>
 #include "ui/views/editorview.h"
 
 class Editor;
@@ -34,7 +34,7 @@ class Interface
     Interface(Editor* editor);
     virtual ~Interface();
 
-    virtual void key(Frontier::InputMessage* inputMessage);
+    virtual void key(Frontier::KeyEvent* keyEvent);
 
     virtual CursorType getCursorType();
     virtual std::wstring getStatus();
