@@ -67,6 +67,10 @@ PKG_CHECK_MODULES(yamlcpp, yaml-cpp >= 0.6)
 LIBS="$LIBS $yamlcpp_LIBS"
 CPPFLAGS="$CPPFLAGS $yamlcpp_CFLAGS"
 
+PKG_CHECK_MODULES(libpcre32, libpcre32 >= 8.0)
+LIBS="$LIBS $libpcre32_LIBS"
+CPPFLAGS="$CPPFLAGS $libpcr32_CFLAGS"
+
 CPPFLAGS="-g $CPPFLAGS -Wall -Werror"
 
 #CPPFLAGS="-O0 -g $CPPFLAGS -Wall -Werror -O0  -fsanitize=address -fno-omit-frame-pointer -fsanitize-address-use-after-scope "
