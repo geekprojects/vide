@@ -22,6 +22,7 @@
 #include "editor.h"
 #include "vide.h"
 #include "interfaces/vi/vi.h"
+#include "re.h"
 
 #include <wctype.h>
 
@@ -332,7 +333,119 @@ void Editor::moveCursorPage(int dir)
 #endif
 }
 
-void Editor::executeEdits(std::vector<Edit> edits)
+void Editor::searchNext(wstring pattern)
+{
+    RegularExpression re;
+    bool res;
+
+    printf("Editor::searchNext: Position: line=%u, col=%u\n", m_cursor.line, m_cursor.column);
+
+    res = re.compile(pattern);
+    if (!res)
+    {
+        printf("Editor::searchNext: Invalid pattern!\n");
+        return;
+    }
+
+    unsigned int lineNum = m_cursor.line;
+    bool found = false;
+    while (true)
+    {
+        printf("Editor::searchNext: lineNum=%u\n", lineNum);
+
+        Line* line = m_buffer->getLine(lineNum);
+
+        vector<Match> matches = re.match(line->text);
+        for (Match match : matches)
+        {
+            printf("Editor::searchNext: Match: column=%d\n", match.start);
+            if (lineNum != m_cursor.line || match.start > (int)m_cursor.column)
+            {
+                printf("Editor::searchNext: Found at: line=%d, col=%d\n", lineNum, match.start);
+                m_cursor.line = lineNum;
+                m_cursor.column = match.start;
+
+                setDirty();
+                found = true;
+                break;
+            }
+        }
+        if (found)
+        {
+            break;
+        }
+
+        lineNum++;
+        if (lineNum >= m_buffer->getLineCount())
+        {
+            lineNum = 0;
+        }
+
+        if (lineNum == m_cursor.line)
+        {
+            break;
+        }
+    }
+}
+
+void Editor::searchPrev(wstring pattern)
+{
+    RegularExpression re;
+    bool res;
+
+    printf("Editor::searchPrev: Position: line=%u, col=%u\n", m_cursor.line, m_cursor.column);
+
+    res = re.compile(pattern);
+    if (!res)
+    {
+        printf("Editor::searchPrev: Invalid pattern!\n");
+        return;
+    }
+
+    unsigned int lineNum = m_cursor.line;
+    bool found = false;
+    while (true)
+    {
+        Line* line = m_buffer->getLine(lineNum);
+
+        vector<Match> matches = re.match(line->text);
+        int column = 0;
+        for (Match match : matches)
+        {
+            printf("Editor::searchPrev: Match: column=%d\n", match.start);
+            if (lineNum != m_cursor.line || match.start < (int)m_cursor.column)
+            {
+                column = match.start;
+                printf("Editor::searchPrev: Found at: line=%d, col=%d\n", lineNum, match.start);
+                found = true;
+                break;
+            }
+        }
+
+        if (found)
+        {
+            m_cursor.line = lineNum;
+            m_cursor.column = column;
+
+            setDirty();
+            break;
+        }
+
+        lineNum--;
+        if (lineNum < 0)
+        {
+            lineNum = m_buffer->getLineCount() - 1;
+        }
+
+        if (lineNum == m_cursor.line)
+        {
+            break;
+        }
+    }
+}
+
+
+void Editor::executeEdits(vector<Edit> edits)
 {
     for (Edit edit : edits)
     {
@@ -397,7 +510,7 @@ void Editor::executeEdit(Edit edit)
     }
 }
 
-void Editor::undoEdits(std::vector<Edit> edits)
+void Editor::undoEdits(vector<Edit> edits)
 {
     vector<Edit>::reverse_iterator rit;
     log(DEBUG, "undoEdits: Undoing %lu edits", edits.size());

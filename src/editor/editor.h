@@ -149,6 +149,9 @@ class Editor : public Geek::Logger
     void moveCursorNextToken();
     void moveCursorPage(int dir);
 
+    void searchNext(std::wstring pattern);
+    void searchPrev(std::wstring pattern);
+
     void executeEdits(std::vector<Edit> edits);
     void executeEdit(Edit edit);
     void undoEdits(std::vector<Edit> edits);

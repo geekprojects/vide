@@ -33,6 +33,8 @@ ViCommandDefinition g_commands[] =
     {L"Repeat",     KC_PERIOD, KMOD_ANY, COMMAND_NO_REPEAT, &ViInterface::commandRepeat},
     {L"Ex Command", KC_COLON, KMOD_ANY, COMMAND_NO_REPEAT, &ViInterface::commandEx},
     {L"Visual",     KC_V, KMOD_NONE, COMMAND_NO_REPEAT, &ViInterface::commandVisual},
+    {L"Search",     KC_SLASH, KMOD_NONE, COMMAND_NO_REPEAT, &ViInterface::commandSearch},
+    {L"SearchBack", KC_QUESTION, KMOD_ANY, COMMAND_NO_REPEAT, &ViInterface::commandSearchBack},
 
     // Insert commands
     {L"Insert", KC_I, KMOD_NONE,  COMMAND_INSERT, &ViInterface::commandNop, &ViInterface::commandMoveLeft},
@@ -73,6 +75,8 @@ ViCommandDefinition g_commands[] =
     // Other text manipulation
     {L"Join", KC_J,           KMOD_SHIFT, COMMAND_NONE, &ViInterface::commandJoin},
     {L"Replace", KC_R,           KMOD_NONE, COMMAND_HAS_PARAM, &ViInterface::commandReplace},
+
+    {L"SearchNext", KC_N, KMOD_NONE, COMMAND_NONE, &ViInterface::commandSearchNext},
 
 
     // End of the list
@@ -221,11 +225,11 @@ bool ViInterface::commandDeleteChar(ViCommand* command)
 
 bool ViInterface::commandDelete(ViCommand* command)
 {
-    if (command->params == "d")
+    if (command->params == L"d")
     {
         command->addEdits(m_editor->deleteLine());
     }
-    else if (command->params == "w")
+    else if (command->params == L"w")
     {
         printf("DELETE WORD\n");
         printf("ViInterface::commandDelete: DELETE WORD\n");
@@ -270,7 +274,7 @@ bool ViInterface::commandJoin(ViCommand* command)
 
 bool ViInterface::commandReplace(ViCommand* command)
 {
-    printf("ViInterface::commandReplace: param=%s\n", command->params.c_str());
+    printf("ViInterface::commandReplace: param=%ls\n", command->params.c_str());
     if (command->params.length() > 0)
     {
         command->addEdits(m_editor->replaceChar(command->params.at(0)));

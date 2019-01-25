@@ -31,6 +31,7 @@ enum ViMode
     MODE_INSERT,
     MODE_EX_COMMAND, // Extended command mode
     MODE_VISUAL,
+    MODE_SEARCH,
 };
 
 enum ViCommandType
@@ -61,6 +62,8 @@ enum ViCommandDefinitionFlags
     COMMAND_SPECIAL_COUNT = 0x8,
 };
 
+#define RANGE_ALL -1
+
 class ViInterface;
 struct ViCommand;
 
@@ -90,7 +93,7 @@ struct ViCommand
     char chr; // HACK
     int count;
 
-    std::string params;
+    std::wstring params;
     std::wstring edit;
 
     Position position;
@@ -104,7 +107,7 @@ struct ViCommand
         command = NULL;
         exCommand = NULL;
         count = 0;
-        params = "";
+        params = L"";
         edit = L"";
         isCopy = false;
     }
@@ -153,10 +156,16 @@ class ViInterface : public Interface
     // This stores the extended command
     std::wstring m_exCommand;
 
+    // Search
+    std::wstring m_prevSearch;
+    std::wstring m_searchString;
+    bool m_searchDirection;
+
     void keyNormal(Frontier::KeyEvent* keyEvent);
     void keyInsert(Frontier::KeyEvent* keyEvent);
     void keyCommand(Frontier::KeyEvent* keyEvent);
     void keyVisual(Frontier::KeyEvent* keyEvent);
+    void keySearch(Frontier::KeyEvent* keyEvent);
 
     void insertChar(wchar_t c);
 
@@ -209,8 +218,12 @@ class ViInterface : public Interface
     bool commandRepeat(ViCommand* command);
     bool commandEx(ViCommand* command);
     bool commandVisual(ViCommand* command);
+    bool commandSearch(ViCommand* command);
+    bool commandSearchBack(ViCommand* command);
+    bool commandSearchNext(ViCommand* command);
 
     bool exCommandWrite(ViCommand* command);
+    bool exCommandSubstitute(ViCommand* command);
 };
 
 extern ViCommandDefinition g_commands[];

@@ -29,6 +29,9 @@ using namespace Frontier;
 ViInterface::ViInterface(Editor* editor) : Interface(editor)
 {
     setMode(MODE_NORMAL);
+
+    m_prevSearch = L"";
+    m_searchString = L"";
 }
 
 ViInterface::~ViInterface()
@@ -53,6 +56,10 @@ void ViInterface::key(Frontier::KeyEvent* keyEvent)
 
         case MODE_VISUAL:
             keyVisual(keyEvent);
+            break;
+
+        case MODE_SEARCH:
+            keySearch(keyEvent);
             break;
 
         default:
@@ -84,6 +91,18 @@ void ViInterface::keyNormal(Frontier::KeyEvent* keyEvent)
             m_state = STATE_COUNT;
             return;
         }
+#if 0
+        else if (chr == '%')
+        {
+            if (m_command->count != 0)
+            {
+                printf("ViInterface::keyNormal: count is not 0!\n");
+            }
+            m_command->count = RANGE_ALL;
+            m_state = STATE_COMMAND;
+            return;
+        }
+#endif
         else
         {
 
@@ -327,12 +346,30 @@ void ViInterface::runExCommand(wstring command)
         return;
     }
 
+    if (command.at(0) == '%')
+    {
+        printf("ViInterface::runExCommand: Range: ALL\n");
+        command = command.substr(1);
+    }
+    printf("ViInterface::runExCommand: command=%ls\n", command.c_str());
+
     wstring name = command;
-    size_t pos = command.find(' ');
+    size_t pos = wstring::npos;
+    for (i = 0; i < command.length(); i++)
+    {
+        if (!iswalpha(command.at(i)))
+        {
+            pos = i;
+            break;
+        }
+    }
     if (pos != wstring::npos)
     {
         name = command.substr(0, pos);
+command = command.substr(pos);
     }
+    printf("ViInterface::runExCommand: name=%ls, command=%ls\n", name.c_str(), command.c_str());
+m_command->params = command;
 
     ViExCommandDefinition* commandDefinition = NULL;
     for (i = 0; g_exCommands[i].name != L"" && g_exCommands[i].func != NULL; i++)
@@ -399,6 +436,8 @@ wstring ViInterface::getStatus()
             return L"Command: " + m_exCommand;
         case MODE_VISUAL:
             return L"Visual";
+        case MODE_SEARCH:
+            return L"Search: " + m_searchString;
     }
 }
 
