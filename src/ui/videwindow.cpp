@@ -24,6 +24,7 @@
 
 #include <frontier/widgets/iconbutton.h>
 #include <frontier/widgets/resizeableframe.h>
+#include <frontier/widgets/terminal.h>
 
 using namespace std;
 using namespace Frontier;
@@ -54,10 +55,14 @@ bool VideWindow::init()
     toolbar->add(new IconButton(this, FRONTIER_ICON_SYNC));
     rootFrame->add(toolbar);
 
-    ResizeableFrame* mainFrame = new ResizeableFrame(this, true);
-    rootFrame->add(mainFrame);
+    ResizeableFrame* bottomFrame = new ResizeableFrame(this, false);
+    //Frame* bottomFrame = new Frame(this, false);
+    rootFrame->add(bottomFrame);
 
-    m_leftTabs = new Tabs(this);
+    ResizeableFrame* mainFrame = new ResizeableFrame(this, true);
+    bottomFrame->add(mainFrame);
+
+    m_leftTabs = new Tabs(this, true, TAB_LEFT);
     m_projectView = new ProjectView(m_vide, m_project);
     m_leftTabs->addTab(L"Files", m_projectView);
 
@@ -71,7 +76,7 @@ bool VideWindow::init()
     m_editorTabs->changeTabSignal().connect(sigc::mem_fun(*this, &VideWindow::onEditorTabChange));
     m_editorTabs->closeTabSignal().connect(sigc::mem_fun(*this, &VideWindow::onCloseTab));
 
-    m_rightTabs = new Tabs(this);
+    m_rightTabs = new Tabs(this, true, TAB_RIGHT);
     m_fileStructureView = new StructureView(m_vide, true);
     m_rightTabs->addTab(L"Structure", m_fileStructureView);
     mainFrame->addWithSize(m_rightTabs, 25);
@@ -80,6 +85,10 @@ bool VideWindow::init()
     statusFrame->add(m_interfaceStatus);
     statusFrame->add(m_editorStatus = new Label(this, L"", ALIGN_RIGHT));
     rootFrame->add(statusFrame);
+
+    Tabs* bottomTabs = new Tabs(this, true, TAB_BOTTOM);
+    bottomTabs->addTab(L"Terminal", new Terminal(this));
+    bottomFrame->add(bottomTabs);
 
     setContent(rootFrame);
 
