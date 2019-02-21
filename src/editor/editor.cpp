@@ -676,9 +676,20 @@ vector<Edit> Editor::deleteAtCursor()
     vector<Edit> edits;
 
     Line* line = m_buffer->getLine(m_cursor.line);
+
+    if (m_cursor.column >= line->text.length())
+    {
+        return edits;
+    }
+
     edits.push_back(Edit(m_cursor, EDIT_DELETE_CHAR, line->text.at(m_cursor.column), 0));
 
     executeEdits(edits);
+
+    if (m_cursor.column >= line->text.length() && m_cursor.column > 0)
+    {
+        m_cursor.column--;
+    }
 
     return edits;
 }
