@@ -6,6 +6,15 @@
 
 #include <clang-c/Index.h>
 
+static Position cxlocation2position(CXSourceLocation loc)
+{
+    unsigned int line;
+    unsigned int column;
+    clang_getExpansionLocation(loc, NULL, &line, &column, NULL);
+
+    return Position(line - 1, column - 1);
+}
+
 class CXXFileTypeManager;
 
 struct CXXFileTypeManagerData : FileTypeManagerData
