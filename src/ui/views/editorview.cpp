@@ -330,6 +330,25 @@ Widget* EditorView::handleEvent(Event* event)
                 c,
                 keyEvent->modifiers);
 
+            if (keyEvent->key == KC_TAB && !!(keyEvent->modifiers & KMOD_CONTROL))
+            {
+                Tabs* tabs = (Tabs*)findParent(typeid(Tabs));
+                if (tabs != NULL)
+                {
+                    if (!!(keyEvent->modifiers & KMOD_SHIFT))
+                    {
+                        log(DEBUG, "handleMessage: Prev tab!!");
+                        tabs->prevTab();
+                    }
+                    else
+                    {
+                        log(DEBUG, "handleMessage: Next tab!!");
+                        tabs->nextTab();
+                    }
+                }
+                return this;
+            }
+
             m_interface->key(keyEvent);
             updateStatus();
 
