@@ -5,6 +5,8 @@
 #include "plugins/plugins.h"
 #include "vide.h"
 
+#include <frontier/icon.h>
+
 class Project;
 class ProjectFile;
 class VidePlugin;
@@ -17,6 +19,7 @@ class FileTypeManager : public VidePlugin
 {
  protected:
     Tokeniser* m_tokeniser;
+
 
  public:
     FileTypeManager(Vide* vide);
@@ -32,6 +35,8 @@ class FileTypeManager : public VidePlugin
 
     virtual bool tokenise(Buffer* buffer);
     virtual bool tokenise(Buffer* buffer, Line* line);
+
+    virtual Frontier::Icon* getIcon();
 };
 
 class TextFileTypeManager : public FileTypeManager
@@ -43,6 +48,8 @@ class TextFileTypeManager : public FileTypeManager
     virtual ~TextFileTypeManager();
 
     virtual FileHandlerPriority canHandle(ProjectFile* file);
+
+    virtual Frontier::Icon* getIcon();
 };
 
 #endif

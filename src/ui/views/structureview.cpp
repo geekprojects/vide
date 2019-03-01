@@ -132,7 +132,7 @@ void StructureView::addDefinition(Frontier::TreeListItem* parent, ProjectDefinit
         icon = typeToIcon(fileSource.type);
     }
 
-    TreeListItem* item = new TreeListItem(m_vide, icon, name);
+    TreeListItem* item = new TreeListItem(m_vide, m_app->getTheme()->getIcon(icon), name);
     if (parent == NULL)
     {
         m_structureList->addItem(item);
@@ -158,7 +158,7 @@ void StructureView::addDefinition(Frontier::TreeListItem* parent, ProjectDefinit
             char linestr[32];
             snprintf(linestr, 32, "%u", source.position.line);
             TextListItem* sourceItem = new TextListItem(m_vide,
-                typeToIcon(source.type), Utils::string2wstring(source.entry->getName() + ":" + string(linestr) ));
+                m_app->getTheme()->getIcon(typeToIcon(source.type)), Utils::string2wstring(source.entry->getName() + ":" + string(linestr) ));
             item->addItem(sourceItem);
 
             ProjectDefinitionSource* src = new ProjectDefinitionSource();

@@ -42,7 +42,7 @@ bool ProjectWindow::init()
     rootDirFrame->setMargin(0);
     rootDirFrame->setPadding(0);
     rootDirFrame->add(m_projectDirInput = new TextInput(this));
-    rootDirFrame->add(chooseDirButton = new IconButton(this, FRONTIER_ICON_FOLDER));
+    rootDirFrame->add(chooseDirButton = new IconButton(this, getApp()->getTheme()->getIcon(FRONTIER_ICON_FOLDER)));
     grid->put(1, 1, rootDirFrame);
     chooseDirButton->clickSignal().connect(sigc::mem_fun(*this, &ProjectWindow::chooseProjectDir));
 

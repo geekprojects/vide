@@ -6,7 +6,9 @@
 #include "project/project.h"
 
 using namespace std;
+using namespace Frontier;
 using namespace Geek;
+using namespace Geek::Gfx;
 
 CXXTokeniser::CXXTokeniser(CXXFileTypeManager* ftm)
 {
@@ -313,6 +315,9 @@ CXXFileTypeManager::CXXFileTypeManager(Vide* vide) : FileTypeManager(vide)
     m_tokeniser = new CXXTokeniser(this);
 
     m_index = clang_createIndex(0, 0);
+
+    m_iconSurface = Surface::loadPNG("data/icons/cpp_256x256.png");
+    m_icon = new SurfaceIcon(getVide()->getTheme(), m_iconSurface);
 }
 
 CXXFileTypeManager::~CXXFileTypeManager()
@@ -607,5 +612,10 @@ CXTranslationUnit CXXFileTypeManager::parse(ProjectFile* file, CXUnsavedFile* un
         unsavedFile, unsavedFileCount,
         CXTranslationUnit_DetailedPreprocessingRecord | CXTranslationUnit_KeepGoing);
     return unit;
+}
+
+Icon* CXXFileTypeManager::getIcon()
+{
+    return m_icon;
 }
  

@@ -29,8 +29,9 @@
 using namespace std;
 using namespace Frontier;
 using namespace Geek;
+using namespace Geek::Gfx;
 
-VideWindow::VideWindow(Vide* vide, Project* project) : FrontierWindow(vide, L"Vide", WINDOW_NORMAL)
+VideWindow::VideWindow(Vide* vide, Project* project) : FrontierWindow(vide, L"Vide Main", WINDOW_NORMAL)
 {
     m_vide = vide;
     m_project = project;
@@ -48,11 +49,11 @@ bool VideWindow::init()
 
     Frame* toolbar = new Frame(this, true);
     toolbar->setPadding(0);
-    IconButton* openButton = new IconButton(this, FRONTIER_ICON_FOLDER_OPEN);
+    IconButton* openButton = new IconButton(this, getApp()->getTheme()->getIcon(FRONTIER_ICON_FOLDER_OPEN));
     openButton->clickSignal().connect(sigc::mem_fun(*this, &VideWindow::onOpenFile));
     toolbar->add(openButton);
-    toolbar->add(new IconButton(this, FRONTIER_ICON_SAVE));
-    toolbar->add(new IconButton(this, FRONTIER_ICON_SYNC));
+    toolbar->add(new IconButton(this, getApp()->getTheme()->getIcon(FRONTIER_ICON_SAVE)));
+    toolbar->add(new IconButton(this, getApp()->getTheme()->getIcon(FRONTIER_ICON_SYNC)));
     rootFrame->add(toolbar);
 
     ResizeableFrame* bottomFrame = new ResizeableFrame(this, false);
@@ -60,7 +61,7 @@ bool VideWindow::init()
     rootFrame->add(bottomFrame);
 
     ResizeableFrame* mainFrame = new ResizeableFrame(this, true);
-    bottomFrame->add(mainFrame);
+    bottomFrame->addWithSize(mainFrame, 75);
 
     m_leftTabs = new Tabs(this, true, TAB_LEFT);
     m_projectView = new ProjectView(m_vide, m_project);
@@ -88,7 +89,7 @@ bool VideWindow::init()
 
     Tabs* bottomTabs = new Tabs(this, true, TAB_BOTTOM);
     bottomTabs->addTab(L"Terminal", new Terminal(this));
-    bottomFrame->add(bottomTabs);
+    bottomFrame->addWithSize(bottomTabs, 25);
 
     setContent(rootFrame);
 
@@ -96,6 +97,29 @@ bool VideWindow::init()
     m_structureView->update();
 
     m_editorTipWindow = new EditorTipWindow(getApp());
+
+    Menu* menu = new Menu();
+    MenuItem* fileMenu = new MenuItem(L"Project");
+    fileMenu->add(new MenuItem(L"New..."));
+    fileMenu->add(new MenuItem(L"Open..."));
+    fileMenu->add(new MenuItem(L"Close"));
+    fileMenu->add(new MenuSeparator());
+    fileMenu->add(new MenuItem(L"Settings"));
+    menu->add(fileMenu);
+
+    MenuItem* editMenu = new MenuItem(L"Edit");
+    editMenu->add(new MenuItem(L"Cut", L'x', 0));
+    editMenu->add(new MenuItem(L"Copy", L'c', 0));
+    editMenu->add(new MenuItem(L"Paste", L'v', 0));
+    menu->add(editMenu);
+
+    MenuItem* buildMenu = new MenuItem(L"Build");
+    buildMenu->add(new MenuItem(L"Build"));
+    buildMenu->add(new MenuItem(L"Run"));
+    buildMenu->add(new MenuItem(L"Clean"));
+    menu->add(buildMenu);
+
+    setMenu(menu);
 
     return true;
 }
@@ -161,7 +185,8 @@ Editor* VideWindow::openEntry(ProjectEntry* entry)
         editor->setBuffer(buffer);
 
         editorView = new EditorView(m_vide, editor);
-        m_editorTabs->addTab(Frontier::Utils::string2wstring(entry->getName()), editorView, true);
+        Icon* icon = entry->getFileTypeManager()->getIcon();
+        m_editorTabs->addTab(Frontier::Utils::string2wstring(entry->getName()), icon, editorView, true);
 
         entry->setEditor(editor);
         //editor->incRefCount(); // The entry keeps a reference

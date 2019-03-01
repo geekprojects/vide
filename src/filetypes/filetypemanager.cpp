@@ -4,6 +4,7 @@
 #include "vide.h"
 
 using namespace std;
+using namespace Frontier;
 
 FileTypeManager::FileTypeManager(Vide* vide) : VidePlugin(vide)
 {
@@ -50,6 +51,11 @@ bool FileTypeManager::tokenise(Buffer* buffer, Line* line)
     return m_tokeniser->tokenise(buffer, line);
 }
 
+Icon* FileTypeManager::getIcon()
+{
+    return getVide()->getTheme()->getIcon(FRONTIER_ICON_FILE);
+}
+
 VIDE_PLUGIN(TextFileTypeManager);
 
 TextFileTypeManager::TextFileTypeManager(Vide* vide) : FileTypeManager(vide)
@@ -66,6 +72,11 @@ FileHandlerPriority TextFileTypeManager::canHandle(ProjectFile* file)
 {
     // We'll take anything!
     return PRIORITY_LOW;
+}
+
+Icon* TextFileTypeManager::getIcon()
+{
+    return getVide()->getTheme()->getIcon(FRONTIER_ICON_FILE_ALT);
 }
 
 
