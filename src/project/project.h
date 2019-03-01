@@ -93,6 +93,9 @@ class ProjectEntry
     std::string m_name;
     Editor* m_editor;
 
+    bool m_updated;
+    bool m_indexed;
+
     FileTypeManager* m_fileTypeManager;
     FileTypeManagerData* m_fileTypeManagerData;
 
@@ -116,6 +119,11 @@ class ProjectEntry
 
     void setEditor(Editor* editor) { m_editor = editor; }
     Editor* getEditor() { return m_editor; }
+
+    void setUpdated(bool updated) { m_updated = updated; }
+    bool setUpdated() { return m_updated; }
+    void setIndexed(bool indexed) { m_indexed = indexed; }
+    bool setIndexed() { return m_indexed; }
 
     void setFileTypeManager(FileTypeManager* ftm) { m_fileTypeManager = ftm; }
     FileTypeManager* getFileTypeManager() { return m_fileTypeManager; }
