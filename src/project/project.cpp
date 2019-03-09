@@ -23,6 +23,9 @@
 #include "config.h"
 #include "vide.h"
 
+#include <geek/core-file.h>
+#include <geek/core-string.h>
+
 #include <dirent.h>
 #include <unistd.h>
 #include <sys/types.h>
@@ -44,6 +47,8 @@ Project::Project(Vide* vide, string rootPath) : Logger("Project")
     m_rootPath = rootPath;
 
     m_root = NULL;
+
+    m_index = new ProjectIndex(this);
 }
 
 Project::~Project()
@@ -67,6 +72,8 @@ bool Project::init()
         log(WARN, "init: Unable to detect build tool");
     }
 
+    m_index->init();
+
     return true;
 }
 
@@ -74,6 +81,7 @@ bool Project::load()
 {
     try
     {
+log(DEBUG, "Loading config: %s", getConfigPath().c_str());
         m_config = YAML::LoadFile(getConfigPath().c_str());
     }
     catch (const exception e)
@@ -87,6 +95,8 @@ bool Project::load()
         string buildToolName = m_config["buildTool"]["name"].as<std::string>();
         m_buildTool = (BuildTool*)m_vide->getPluginManager()->findPlugin(buildToolName);
     }
+
+    m_index->init();
 
     return true;
 }
@@ -106,7 +116,9 @@ bool Project::save()
 
 string Project::getConfigPath()
 {
-    return m_rootPath + "/vide.project";
+    string videDir = getVidePath();
+    Geek::Core::File::mkdirs(videDir); 
+    return videDir + "/project.yml";
 }
 
 void process_events(const vector<fsw::event>& events, void *context)
@@ -120,6 +132,7 @@ void process_events(const vector<fsw::event>& events, void *context)
 bool Project::scan()
 {
     m_root = new ProjectDirectory(this, NULL, "");
+    m_index->addEntry(m_root);
 
     scanDirectory(m_root, m_rootPath);
 
@@ -184,12 +197,14 @@ bool Project::scanDirectory(ProjectDirectory* entry, std::string path)
         if (S_ISDIR(stat.st_mode))
         {
             ProjectDirectory* child = new ProjectDirectory(this, entry, name);
+            m_index->addEntry(child);
             entry->addChild(child);
             scanDirectory(child, childPath);
         }
         else if (S_ISREG(stat.st_mode))
         {
             ProjectFile* child = new ProjectFile(this, entry, name);
+            m_index->addEntry(child);
 
             FileTypeManager* ftm = m_vide->findFileTypeManager(child);
             if (ftm != NULL)
@@ -207,7 +222,7 @@ bool Project::scanDirectory(ProjectDirectory* entry, std::string path)
 bool Project::index()
 {
     indexDirectory(m_root);
-
+/*
     // Resolve all parents
     map<std::string, ProjectDefinition*>::iterator it;
     for (it = m_index.begin(); it != m_index.end(); it++)
@@ -218,6 +233,7 @@ bool Project::index()
             def->parent = findDefinition(def->parentName);
         }
     }
+*/
 
     return true;
 }
@@ -241,23 +257,43 @@ bool Project::indexDirectory(ProjectDirectory* dir)
     return true;
 }
 
+ProjectEntry* Project::getEntry(string path)
+{
+    vector<string> pathParts = Geek::Core::splitString(path, '/');
+
+    ProjectEntry* pos = m_root;
+    while (pos != NULL && !pathParts.empty())
+    {
+        string part = pathParts[0];
+        pathParts.erase(pathParts.begin());
+
+        if (part == ".")
+        {
+            continue;
+        }
+
+        pos = pos->getChild(part);
+    }
+
+    return pos;
+}
+
+
 ProjectDefinition* Project::findDefinition(std::string name)
 {
-    map<string, ProjectDefinition*>::iterator it = m_index.find(name);
-    if (it != m_index.end())
-    {
-        return it->second;
-    }
+    return m_index->findDefinition(name);
+
     return NULL;
 }
 
 void Project::addDefinition(ProjectDefinition* def)
 {
-    m_index.insert(make_pair(def->name, def));
+    m_index->addDefinition(def);
 }
 
 void Project::dumpStructure()
 {
+/*
     map<string, ProjectDefinition*>::iterator it;
     for (it = m_index.begin(); it != m_index.end(); it++)
     {
@@ -267,6 +303,7 @@ void Project::dumpStructure()
             def->dump(1);
         }
     }
+*/
 }
 
 ProjectDirectory::ProjectDirectory(Project* project, ProjectEntry* parent, std::string name)

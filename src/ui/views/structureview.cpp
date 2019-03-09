@@ -47,6 +47,7 @@ void StructureView::update()
 {
     m_structureList->clearItems();
 
+/*
     map<string, ProjectDefinition*> index;
     if (!m_fileView)
     {
@@ -71,6 +72,7 @@ void StructureView::update()
             addDefinition(NULL, def);
         }
     }
+*/
 }
 
 void StructureView::setProjectFile(ProjectFile* projectFile)

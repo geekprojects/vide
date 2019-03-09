@@ -310,7 +310,7 @@ CXTranslationUnit CXXFileTypeManager::parse(ProjectFile* file, CXUnsavedFile* un
 
     CXTranslationUnit unit = clang_parseTranslationUnit(
         getIndex(),
-        file->getFilePath().c_str(), argv, argc,
+        file->getAbsolutePath().c_str(), argv, argc,
         unsavedFile, unsavedFileCount,
         CXTranslationUnit_DetailedPreprocessingRecord | CXTranslationUnit_KeepGoing);
     return unit;

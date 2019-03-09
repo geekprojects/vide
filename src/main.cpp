@@ -32,6 +32,7 @@ int main(int argc, char** argv)
     if (argc == 3 && !strcmp(argv[1], "project"))
     {
         Project* project = new Project(&vide, argv[2]);
+        project->load();
         project->scan();
         project->index();
         project->dumpStructure();

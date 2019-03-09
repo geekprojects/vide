@@ -27,6 +27,8 @@
 
 #include <wchar.h>
 
+#include <geek/core-database.h>
+
 #include <yaml-cpp/yaml.h>
 #include <sigc++/sigc++.h>
 
@@ -43,6 +45,7 @@ struct FileTypeManagerData;
 
 enum ProjectDefinitionType
 {
+    DEF_UNKNOWN,
     DEF_NAMESPACE,
     DEF_CLASS,
     DEF_CLASS_TEMPLATE,
@@ -58,13 +61,21 @@ enum ProjectDefinitionType
 
 struct ProjectDefinitionSource
 {
+    int64_t id;
+
     ProjectEntry* entry;
     Position position;
     ProjectDefinitionType type;
+
+    ProjectDefinitionSource()
+    {
+        id = 0;
+    }
 };
 
 struct ProjectDefinition
 {
+    int64_t id;
     std::vector<ProjectDefinitionSource> sources;
     std::string name;
     std::string parentName;
@@ -72,6 +83,11 @@ struct ProjectDefinition
     std::vector<ProjectDefinition*> children;
 
     ProjectEntry* entry;
+
+    ProjectDefinition()
+    {
+        id = 0;
+    }
 
     void dump(int level);
 };
@@ -87,6 +103,7 @@ enum ProjectEntryType
 class ProjectEntry
 {
  private:
+    int64_t m_id;
     Project* m_project;
     ProjectEntryType m_type;
     ProjectEntry* m_parent;
@@ -106,14 +123,20 @@ class ProjectEntry
     ProjectEntry(Project* project, ProjectEntryType type, ProjectEntry* parent, std::string name);
     virtual ~ProjectEntry();
 
+    void setId(int64_t id) { m_id = id; }
+    int64_t getId() { return m_id; }
+
     Project* getProject() { return m_project; }
     ProjectEntryType getType() { return m_type; }
     std::string getName() { return m_name; }
     std::string getFilePath();
     std::string getFileDir();
+    std::string getAbsolutePath();
 
     void addChild(ProjectEntry* entry);
     std::vector<ProjectEntry*>& getChildren() { return m_children; }
+    ProjectEntry* getChild(std::string name);
+    ProjectEntry* getParent() { return m_parent; }
 
     virtual Buffer* open();
 
@@ -178,8 +201,18 @@ class ProjectIndexEntry
 class ProjectIndex
 {
  private:
+    Project* m_project;
+    Geek::Core::Database* m_db;
 
  public:
+    ProjectIndex(Project* project);
+    ~ProjectIndex();
+
+    bool init();
+
+    void addEntry(ProjectEntry* entry);
+    ProjectDefinition* findDefinition(std::string name);
+    void addDefinition(ProjectDefinition* def);
 };
 
 class Project : public Geek::Logger
@@ -192,9 +225,9 @@ class Project : public Geek::Logger
 
     ProjectDirectory* m_root;
 
-    std::map<std::string, ProjectDefinition*> m_index;
-
     BuildTool* m_buildTool;
+
+    ProjectIndex* m_index;
 
     sigc::signal<void, ProjectEntry*> m_openEntrySignal;
 
@@ -208,7 +241,6 @@ class Project : public Geek::Logger
     bool init();
     bool load();
     bool save();
-    std::string getConfigPath();
 
     YAML::Node& getConfig() { return m_config; }
 
@@ -216,11 +248,14 @@ class Project : public Geek::Logger
     bool index();
 
     std::string getRootPath() { return m_rootPath; }
+    std::string getVidePath() { return getRootPath() + "/.vide"; }
+    std::string getConfigPath();
+
     ProjectDirectory* getRoot() { return m_root; }
+    ProjectEntry* getEntry(std::string path);
 
     ProjectDefinition* findDefinition(std::string name);
     void addDefinition(ProjectDefinition* def);
-    std::map<std::string, ProjectDefinition*>& getIndex() { return m_index; }
 
     BuildTool* getBuildTool() { return m_buildTool; }
 

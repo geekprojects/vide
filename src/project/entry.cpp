@@ -6,6 +6,7 @@ using namespace Geek;
 
 ProjectEntry::ProjectEntry(Project* project, ProjectEntryType type, ProjectEntry* parent, std::string name)
 {
+    m_id = 0;
     m_project = project;
     m_type = type;
     m_parent = parent;
@@ -26,6 +27,18 @@ ProjectEntry::~ProjectEntry()
 void ProjectEntry::addChild(ProjectEntry* entry)
 {
     m_children.push_back(entry);
+}
+
+ProjectEntry* ProjectEntry::getChild(string name)
+{
+    for (ProjectEntry* child : m_children)
+    {
+        if (child->getName() == name)
+        {
+            return child;
+        }
+    }
+    return NULL;
 }
 
 Buffer* ProjectEntry::open()
@@ -59,11 +72,11 @@ string ProjectEntry::getFilePath()
     }
     else
     {
-        path = m_project->getRootPath();
+        //path = m_project->getRootPath();
     }
 
     unsigned int size = path.length();
-    if (path.substr(size -1, 1) != "/")
+    if (path.length() == 0 || path.substr(size -1, 1) != "/")
     {
         path += "/";
     }
@@ -82,6 +95,11 @@ string ProjectEntry::getFileDir()
     {
         return m_project->getRootPath();
     }
+}
+
+string ProjectEntry::getAbsolutePath()
+{
+    return m_project->getRootPath() + getFilePath();
 }
 
 void ProjectEntry::addDefinition(ProjectDefinition* def)

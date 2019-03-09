@@ -26,7 +26,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#define PROJECT_FILE "vide.project"
+#define PROJECT_FILE ".vide"
 
 using namespace std;
 using namespace Frontier;
@@ -50,6 +50,8 @@ bool Vide::init()
         return false;
     }
 
+    m_textFont = getTheme()->getMonospaceFont(true);
+/*
     m_textFont = getFontManager()->openFont(
         "Hack",
         "Regular",
@@ -60,7 +62,7 @@ bool Vide::init()
         log(ERROR, "init: Failed to find font: Hack");
         return false;
     }
-
+*/
     m_welcomeWindow = new WelcomeWindow(this);
 
     m_pluginManager = new VidePluginManager();
