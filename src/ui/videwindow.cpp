@@ -65,10 +65,10 @@ bool VideWindow::init()
 
     m_leftTabs = new Tabs(this, true, TAB_LEFT);
     m_projectView = new ProjectView(m_vide, m_project);
-    m_leftTabs->addTab(L"Files", m_projectView);
+    m_leftTabs->addTab(L"Files", getApp()->getTheme()->getIcon(FRONTIER_ICON_FOLDER_OPEN), m_projectView);
 
     m_structureView = new StructureView(m_vide, false);
-    m_leftTabs->addTab(L"Structure", m_structureView);
+    m_leftTabs->addTab(L"Structure", getApp()->getTheme()->getIcon(FRONTIER_ICON_SITEMAP), m_structureView);
  
     mainFrame->addWithSize(m_leftTabs, 25);
 
@@ -79,7 +79,7 @@ bool VideWindow::init()
 
     m_rightTabs = new Tabs(this, true, TAB_RIGHT);
     m_fileStructureView = new StructureView(m_vide, true);
-    m_rightTabs->addTab(L"Structure", m_fileStructureView);
+    m_rightTabs->addTab(L"Structure", getApp()->getTheme()->getIcon(FRONTIER_ICON_SITEMAP), m_fileStructureView);
     mainFrame->addWithSize(m_rightTabs, 25);
 
     Frame* statusFrame = new Frame(this, true);
@@ -88,7 +88,9 @@ bool VideWindow::init()
     rootFrame->add(statusFrame);
 
     Tabs* bottomTabs = new Tabs(this, true, TAB_BOTTOM);
-    bottomTabs->addTab(L"Terminal", new Terminal(this));
+    Terminal* terminal;
+    bottomTabs->addTab(L"Terminal", getApp()->getTheme()->getIcon(FRONTIER_ICON_TERMINAL), terminal = new Terminal(this));
+    terminal->run("make");
     bottomFrame->addWithSize(bottomTabs, 25);
 
     setContent(rootFrame);
