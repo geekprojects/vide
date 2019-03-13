@@ -2,6 +2,7 @@
 #include "project/project.h"
 
 using namespace std;
+using namespace Geek;
 using namespace Geek::Core;
 
 static const char* ProjectDefinitionTypeString(ProjectDefinitionType type)
@@ -86,7 +87,7 @@ static ProjectDefinitionType string2ProjectDefinitionType(string type)
     return DEF_UNKNOWN;
 }
 
-ProjectIndex::ProjectIndex(Project* project)
+ProjectIndex::ProjectIndex(Project* project) : Logger("ProjectIndex")
 {
     m_project = project;
     m_db = NULL;
@@ -109,6 +110,7 @@ bool ProjectIndex::init()
     entries.columns.insert(Column("path"));
     entries.columns.insert(Column("name"));
     entries.columns.insert(Column("type"));
+    entries.columns.insert(Column("hash"));
     entries.columns.insert(Column("updated"));
     tables.push_back(entries);
 
@@ -131,6 +133,11 @@ bool ProjectIndex::init()
 
     m_db->checkSchema(tables);
 
+    m_db->execute("CREATE INDEX IF NOT EXISTS vide_entries_parent_idx ON vide_entries (parent_id)");
+    m_db->execute("CREATE UNIQUE INDEX IF NOT EXISTS vide_definitions_name_idx ON vide_definitions (name)");
+    m_db->execute("CREATE INDEX IF NOT EXISTS vide_sources_def_idx ON vide_sources (definition_id)");
+    m_db->execute("CREATE INDEX IF NOT EXISTS vide_sources_entry_idx ON vide_sources (entry_id)");
+
     return true;
 }
 
@@ -142,26 +149,27 @@ void ProjectIndex::addEntry(ProjectEntry* entry)
         return;
     }
 
-    string sql = "SELECT id, type, updated FROM vide_entries WHERE path = ?";
+    string sql = "SELECT id, hash FROM vide_entries WHERE path = ?";
     PreparedStatement* ps = m_db->prepareStatement(sql);
     ps->bindString(1, entry->getFilePath());
     ps->executeQuery();
     if (ps->step())
     {
         entry->setId(ps->getInt(0));
+        entry->setHash(ps->getString(1));
     }
     else
     {
-int64_t parentId = 0;
+        int64_t parentId = 0;
 
-        printf("ProjectIndex::addEntry: parent=%p\n", entry->getParent());
+        log(DEBUG, "addEntry: parent=%p", entry->getParent());
         if (entry->getParent() != NULL)
         {
-            printf("ProjectIndex::addEntry: parent=%s, id=%lld\n", entry->getParent()->getName().c_str(), entry->getParent()->getId());
+            log(DEBUG, "addEntry: parent=%s, id=%lld", entry->getParent()->getName().c_str(), entry->getParent()->getId());
             parentId = entry->getParent()->getId();
             if (parentId == 0)
             {
-                printf("ProjectIndex::addEntry:  -> LOOKING UP PARENT ENTITY\n");
+                log(WARN, "addEntry:  -> LOOKING UP PARENT ENTITY");
             }
         }
 
@@ -196,6 +204,35 @@ int64_t parentId = 0;
     delete ps;
 }
 
+void ProjectIndex::updateEntry(ProjectEntry* entry)
+{
+    if (entry->getId() == 0)
+    {
+        // Not indexed?
+        return;
+    }
+     
+    string sql = "UPDATE vide_entries SET hash=? WHERE id=?";
+
+    PreparedStatement* ps = m_db->prepareStatement(sql);
+    ps->bindString(1, entry->getHash());
+    ps->bindInt64(2, entry->getId());
+    ps->execute();
+
+    delete ps;
+}
+
+void ProjectIndex::removeSources(ProjectEntry* entry)
+{
+    string sql = "DELETE FROM vide_sources WHERE entry_id = ?";
+
+    PreparedStatement* ps = m_db->prepareStatement(sql);
+    ps->bindInt64(1, entry->getId());
+    ps->execute();
+
+    delete ps;
+}
+
 ProjectDefinition* ProjectIndex::findDefinition(std::string name)
 {
     string sql = "SELECT id, name, parent FROM vide_definitions WHERE name = ?";
@@ -206,32 +243,7 @@ ProjectDefinition* ProjectIndex::findDefinition(std::string name)
     ProjectDefinition* def = NULL;
     if (ps->step())
     {
-        def = new ProjectDefinition();
-        def->id = ps->getInt(0);
-        def->name = ps->getString(1);
-        def->parentName = ps->getString(2);
-
-        string sourcesSql = "SELECT s.id, s.entry_id, s.type, s.line, s.col, e.path FROM vide_sources s JOIN vide_entries e on e.id = s.entry_id WHERE definition_id=?";
-        PreparedStatement* sourcesPs = m_db->prepareStatement(sourcesSql);
-        sourcesPs->bindInt64(1, def->id);
-        sourcesPs->executeQuery();
-        while (sourcesPs->step())
-        {
-            ProjectDefinitionSource source;
-            source.id = sourcesPs->getInt(0);
-            source.type = string2ProjectDefinitionType(sourcesPs->getString(2));
-            int64_t line = sourcesPs->getInt64(3);
-            int64_t col = sourcesPs->getInt64(4);
-            source.position = Position(line, col);
-
-            string path = sourcesPs->getString(5);
-            source.entry = m_project->getEntry(path);
-
-            printf("ProjectIndex::findDefinition: source: id=%lld -> path=%s, entry=%p\n", source.id, path.c_str(), source.entry);
-
-def->sources.push_back(source);
-        }
-        delete sourcesPs;
+        def = createDefinition(ps);
     }
 
     delete ps;
@@ -241,12 +253,9 @@ def->sources.push_back(source);
 
 void ProjectIndex::addDefinition(ProjectDefinition* def)
 {
-    printf("ProjectIndex::addDefinition: Here!\n");
     m_db->startTransaction();
     if (def->id == 0)
     {
-        printf("ProjectIndex::addDefinition: Saving...\n");
-
         string sql = "INSERT INTO vide_definitions (id, name, parent) VALUES (null, ?, ?)";
 
         vector<string> args;
@@ -255,7 +264,7 @@ void ProjectIndex::addDefinition(ProjectDefinition* def)
         m_db->executeQuery(sql, args);
         def->id = m_db->getLastInsertId();
 
-        printf("ProjectIndex::addDefinition: id=%lld\n", def->id);
+        log(DEBUG, "addDefinition: id=%lld", def->id);
     }
 
     // Save entries
@@ -276,5 +285,77 @@ void ProjectIndex::addDefinition(ProjectDefinition* def)
         }
     }
     m_db->endTransaction();
+}
+
+vector<ProjectDefinition*> ProjectIndex::getEntryDefinitions(ProjectEntry* entry)
+{
+    vector<ProjectDefinition*> results;
+    string sql = "SELECT d.id, d.name, d.parent FROM vide_definitions d WHERE EXISTS (SELECT 1 FROM vide_sources s WHERE s.definition_id = d.id AND s.entry_id=?)";
+
+    PreparedStatement* ps = m_db->prepareStatement(sql);
+    ps->bindInt64(1, entry->getId());
+    ps->executeQuery();
+    while (ps->step())
+    {
+        ProjectDefinition* def = createDefinition(ps);
+
+        log(DEBUG, "getEntryDefinitions: def=%s", def->name.c_str());
+
+        results.push_back(def);
+    }
+    return results;
+}
+
+vector<ProjectDefinition*> ProjectIndex::getRootDefinitions()
+{
+    vector<ProjectDefinition*> results;
+    string sql = "SELECT d.id, d.name, d.parent FROM vide_definitions d WHERE parent IS NULL OR parent = ''";
+
+    PreparedStatement* ps = m_db->prepareStatement(sql);
+    ps->executeQuery();
+    while (ps->step())
+    {
+        ProjectDefinition* def = createDefinition(ps);
+
+        log(DEBUG, "getRootDefinitions: def=%s", def->name.c_str());
+
+        results.push_back(def);
+    }
+    return results;
+
+}
+
+ProjectDefinition* ProjectIndex::createDefinition(Geek::Core::PreparedStatement* ps)
+{
+    ProjectDefinition* def = new ProjectDefinition();
+    def->id = ps->getInt(0);
+    def->name = ps->getString(1);
+    def->parentName = ps->getString(2);
+
+    string sourcesSql = "SELECT s.id, s.entry_id, s.type, s.line, s.col, e.path FROM vide_sources s JOIN vide_entries e on e.id = s.entry_id WHERE definition_id=?";
+    PreparedStatement* sourcesPs = m_db->prepareStatement(sourcesSql);
+    sourcesPs->bindInt64(1, def->id);
+    sourcesPs->executeQuery();
+    while (sourcesPs->step())
+    {
+        ProjectDefinitionSource source;
+        source.id = sourcesPs->getInt(0);
+        source.type = string2ProjectDefinitionType(sourcesPs->getString(2));
+        int64_t line = sourcesPs->getInt64(3);
+        int64_t col = sourcesPs->getInt64(4);
+        source.position = Position(line, col);
+
+        string path = sourcesPs->getString(5);
+        ProjectEntry* entry = m_project->getEntry(path);
+        if (entry != NULL)
+        {
+            source.entry = m_project->getEntry(path);
+
+            log(DEBUG, "findDefinition: source: id=%lld -> path=%s, entry=%p", source.id, path.c_str(), source.entry);
+
+            def->sources.push_back(source);
+        }
+    }
+    return def;
 }
 

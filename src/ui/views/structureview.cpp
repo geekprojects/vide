@@ -23,6 +23,7 @@
 
 using namespace std;
 using namespace Frontier;
+using namespace Geek;
 
 StructureView::StructureView(Vide* vide, bool fileView) : Frame(vide, L"StructureView", false)
 {
@@ -47,12 +48,12 @@ void StructureView::update()
 {
     m_structureList->clearItems();
 
-/*
-    map<string, ProjectDefinition*> index;
+    vector<ProjectDefinition*> defs;
+    VideWindow* videWindow = (VideWindow*)getWindow();
+    Project* project = videWindow->getProject();
     if (!m_fileView)
     {
-        VideWindow* videWindow = (VideWindow*)getWindow();
-        index = videWindow->getProject()->getIndex();
+        defs = project->getIndex()->getRootDefinitions();
     }
     else
     {
@@ -60,19 +61,14 @@ void StructureView::update()
         {
             return;
         }
-        index = m_projectFile->getIndex();
+        defs = project->getIndex()->getEntryDefinitions(m_projectFile);
     }
 
-    map<string, ProjectDefinition*>::iterator it;
-    for (it = index.begin(); it != index.end(); it++)
+    for (ProjectDefinition* def : defs)
     {
-        ProjectDefinition* def = it->second;
-        if (def->parent == NULL)
-        {
-            addDefinition(NULL, def);
-        }
+        log(DEBUG, "update: def: %s", def->name.c_str());
+        addDefinition(NULL, def);
     }
-*/
 }
 
 void StructureView::setProjectFile(ProjectFile* projectFile)
@@ -160,7 +156,8 @@ void StructureView::addDefinition(Frontier::TreeListItem* parent, ProjectDefinit
             char linestr[32];
             snprintf(linestr, 32, "%u", source.position.line);
             TextListItem* sourceItem = new TextListItem(m_vide,
-                m_app->getTheme()->getIcon(typeToIcon(source.type)), Utils::string2wstring(source.entry->getName() + ":" + string(linestr) ));
+                m_app->getTheme()->getIcon(typeToIcon(source.type)),
+                Utils::string2wstring(source.entry->getName() + ":" + string(linestr) ));
             item->addItem(sourceItem);
 
             ProjectDefinitionSource* src = new ProjectDefinitionSource();
@@ -181,5 +178,4 @@ void StructureView::onItemClicked(Frontier::ListItem* item)
     ProjectDefinitionSource* source = (ProjectDefinitionSource*)item->getPrivateData();
     ((VideWindow*)getWindow())->openEntry(source->entry, source->position);
 }
-
 

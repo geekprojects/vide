@@ -1,8 +1,11 @@
 
 #include "project/project.h"
 
+#include <geek/core-sha.h>
+
 using namespace std;
 using namespace Geek;
+using namespace Geek::Core;
 
 ProjectEntry::ProjectEntry(Project* project, ProjectEntryType type, ProjectEntry* parent, std::string name)
 {
@@ -13,8 +16,8 @@ ProjectEntry::ProjectEntry(Project* project, ProjectEntryType type, ProjectEntry
     m_name = name;
     m_editor = NULL;
 
-    m_updated = false;
     m_indexed = false;
+    m_hash = "";
 
     m_fileTypeManager = NULL;
     m_fileTypeManagerData = NULL;
@@ -44,6 +47,11 @@ ProjectEntry* ProjectEntry::getChild(string name)
 Buffer* ProjectEntry::open()
 {
     return NULL;
+}
+
+string ProjectEntry::calculateHash()
+{
+    return SHA::sha256(getFilePath());
 }
 
 void ProjectEntry::dump(int level)
@@ -104,16 +112,18 @@ string ProjectEntry::getAbsolutePath()
 
 void ProjectEntry::addDefinition(ProjectDefinition* def)
 {
-    m_index.insert(make_pair(def->name, def));
+    //m_index.insert(make_pair(def->name, def));
 }
 
 void ProjectEntry::dumpDefinitions()
 {
+/*
     map<string, ProjectDefinition*>::iterator it;
 
     for (it = m_index.begin(); it != m_index.end(); it++)
     {
         printf("ProjectEntry::dumpDefinitions: %s: %s\n", m_name.c_str(), it->second->name.c_str());
     }
+*/
 }
 

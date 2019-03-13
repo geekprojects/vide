@@ -91,6 +91,7 @@ bool VideWindow::init()
     Terminal* terminal;
     bottomTabs->addTab(L"Terminal", getApp()->getTheme()->getIcon(FRONTIER_ICON_TERMINAL), terminal = new Terminal(this));
     terminal->run("make");
+    bottomTabs->addTab(L"Search", getApp()->getTheme()->getIcon(FRONTIER_ICON_SEARCH), new Label(this, L"Search"));
     bottomFrame->addWithSize(bottomTabs, 25);
 
     setContent(rootFrame);

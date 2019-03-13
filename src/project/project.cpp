@@ -47,6 +47,7 @@ Project::Project(Vide* vide, string rootPath) : Logger("Project")
     m_rootPath = rootPath;
 
     m_root = NULL;
+    m_buildTool = NULL;
 
     m_index = new ProjectIndex(this);
 }
@@ -245,7 +246,7 @@ bool Project::indexDirectory(ProjectDirectory* dir)
         switch (entry->getType())
         {
             case ENTRY_FILE:
-                entry->getFileTypeManager()->index((ProjectFile*)entry);
+                indexFile((ProjectFile*)entry);
                 break;
             case ENTRY_DIR:
                 indexDirectory((ProjectDirectory*)entry);
@@ -256,6 +257,25 @@ bool Project::indexDirectory(ProjectDirectory* dir)
     }
     return true;
 }
+
+bool Project::indexFile(ProjectFile* file)
+{
+    string hash = file->calculateHash();
+
+    if (hash != file->getHash())
+    {
+    log(DEBUG, "indexFile: File modified: %s", file->getFilePath().c_str());
+        file->setHash(hash);
+
+        m_index->removeSources(file);
+        m_index->updateEntry(file);
+
+        file->getFileTypeManager()->index(file);
+    }
+
+    return true;
+}
+
 
 ProjectEntry* Project::getEntry(string path)
 {

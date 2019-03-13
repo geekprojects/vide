@@ -110,14 +110,13 @@ class ProjectEntry
     std::string m_name;
     Editor* m_editor;
 
-    bool m_updated;
     bool m_indexed;
+    std::string m_hash;
 
     FileTypeManager* m_fileTypeManager;
     FileTypeManagerData* m_fileTypeManagerData;
 
     std::vector<ProjectEntry*> m_children;
-    std::map<std::string, ProjectDefinition*> m_index;
 
  public:
     ProjectEntry(Project* project, ProjectEntryType type, ProjectEntry* parent, std::string name);
@@ -140,13 +139,15 @@ class ProjectEntry
 
     virtual Buffer* open();
 
+    virtual std::string calculateHash();
+
     void setEditor(Editor* editor) { m_editor = editor; }
     Editor* getEditor() { return m_editor; }
 
-    void setUpdated(bool updated) { m_updated = updated; }
-    bool setUpdated() { return m_updated; }
     void setIndexed(bool indexed) { m_indexed = indexed; }
     bool setIndexed() { return m_indexed; }
+    void setHash(std::string hash) { m_hash = hash; }
+    std::string getHash() { return m_hash; }
 
     void setFileTypeManager(FileTypeManager* ftm) { m_fileTypeManager = ftm; }
     FileTypeManager* getFileTypeManager() { return m_fileTypeManager; }
@@ -155,7 +156,6 @@ class ProjectEntry
 
     void addDefinition(ProjectDefinition* def);
     void dumpDefinitions();
-    std::map<std::string, ProjectDefinition*>& getIndex() { return m_index; }
 
     void dump(int level);
 };
@@ -170,6 +170,8 @@ class ProjectFile : public ProjectEntry
     virtual ~ProjectFile();
 
     virtual Buffer* open();
+
+    virtual std::string calculateHash();
 };
 
 class ProjectDirectory : public ProjectEntry
@@ -198,11 +200,13 @@ class ProjectIndexEntry
     virtual ~ProjectIndexEntry();
 };
 
-class ProjectIndex
+class ProjectIndex : public Geek::Logger
 {
  private:
     Project* m_project;
     Geek::Core::Database* m_db;
+
+    ProjectDefinition* createDefinition(Geek::Core::PreparedStatement* ps);
 
  public:
     ProjectIndex(Project* project);
@@ -211,8 +215,14 @@ class ProjectIndex
     bool init();
 
     void addEntry(ProjectEntry* entry);
+    void updateEntry(ProjectEntry* entry);
+
+    void removeSources(ProjectEntry* entry);
+
     ProjectDefinition* findDefinition(std::string name);
     void addDefinition(ProjectDefinition* def);
+    std::vector<ProjectDefinition*> getEntryDefinitions(ProjectEntry* entry);
+    std::vector<ProjectDefinition*> getRootDefinitions();
 };
 
 class Project : public Geek::Logger
@@ -233,6 +243,7 @@ class Project : public Geek::Logger
 
     bool scanDirectory(ProjectDirectory* entry, std::string path);
     bool indexDirectory(ProjectDirectory* dir);
+    bool indexFile(ProjectFile* file);
 
  public:
     Project(Vide* vide, std::string rootPath);
@@ -254,6 +265,7 @@ class Project : public Geek::Logger
     ProjectDirectory* getRoot() { return m_root; }
     ProjectEntry* getEntry(std::string path);
 
+    ProjectIndex* getIndex() { return m_index; }
     ProjectDefinition* findDefinition(std::string name);
     void addDefinition(ProjectDefinition* def);
 

@@ -28,6 +28,7 @@
 #include <frontier/widgets/frame.h>
 #include <frontier/widgets/scroller.h>
 #include <frontier/widgets/list.h>
+#include <frontier/icon.h>
 
 class Vide;
 class Project;
