@@ -10,7 +10,7 @@ using namespace std;
 using namespace Frontier;
 using namespace Geek;
 
-WelcomeWindow::WelcomeWindow(Vide* vide) : FrontierWindow(vide, L"Vide", WINDOW_NORMAL)
+WelcomeWindow::WelcomeWindow(Vide* vide) : FrontierWindow(vide, L"Welcome to Vide", WINDOW_NORMAL)
 {
     m_vide = vide;
 }
