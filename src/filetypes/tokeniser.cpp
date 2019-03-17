@@ -62,42 +62,35 @@ bool Tokeniser::tokenise(Buffer* buffer, Line* line)
     return true;
 }
 
-SimpleTokeniser::SimpleTokeniser()
+vector<LineToken*> Tokeniser::splitText(TokenType type, wstring text)
 {
-}
-
-SimpleTokeniser::~SimpleTokeniser()
-{
-}
-
-bool SimpleTokeniser::tokenise(Buffer* buffer, Line* line)
-{
-    line->clearTokens();
+    vector<LineToken*> tokens;
 
     LineToken* token = NULL;
     size_t pos;
     int t = 0;
 
-    for (pos = 0; pos < line->text.length(); pos++)
+    for (pos = 0; pos < text.length(); pos++)
     {
 
-        wchar_t c = line->text.at(pos);
+        wchar_t c = text.at(pos);
         if (iswspace(c))
         {
             token = new LineToken();
-            line->tokens.push_back(token);
+            tokens.push_back(token);
             token->column = pos;
             token->isSpace = true;
+            token->type = type;
 
-            while (pos < line->text.length())
+            while (pos < text.length())
             {
                 token->text += c;
-                if (pos + 1 >= line->text.length())
+                if (pos + 1 >= text.length())
                 {
                     break;
                 }
 
-                c = line->text.at(pos + 1);
+                c = text.at(pos + 1);
                 if (!iswspace(c))
                 {
                     break;
@@ -113,9 +106,9 @@ bool SimpleTokeniser::tokenise(Buffer* buffer, Line* line)
             if (token == NULL)
             {
                 token = new LineToken();
-                token->type = TOKEN_TEXT;
+                token->type = type;
                 token->column = pos;
-                line->tokens.push_back(token);
+                tokens.push_back(token);
                 t++;
             }
 
@@ -123,14 +116,31 @@ bool SimpleTokeniser::tokenise(Buffer* buffer, Line* line)
         }
     }
 
-    if (line->tokens.empty())
+    if (tokens.empty())
     {
         // No tokens for this line. Add an empty one
         token = new LineToken();
         token->isSpace = true;
         token->type = TOKEN_TEXT;
-        line->tokens.push_back(token);
+        tokens.push_back(token);
     }
+
+    return tokens;
+}
+
+SimpleTokeniser::SimpleTokeniser()
+{
+}
+
+SimpleTokeniser::~SimpleTokeniser()
+{
+}
+
+bool SimpleTokeniser::tokenise(Buffer* buffer, Line* line)
+{
+    line->clearTokens();
+
+    line->tokens = splitText(TOKEN_TEXT, line->text);
 
     line->dirty = false;
 

@@ -25,6 +25,7 @@
 
 class Buffer;
 struct Line;
+struct LineToken;
 
 enum TokenType
 {
@@ -45,6 +46,7 @@ enum TokenType
 class Tokeniser : public Geek::Logger
 {
  protected:
+    std::vector<LineToken*> splitText(TokenType type, std::wstring text);
 
  public:
     Tokeniser();
