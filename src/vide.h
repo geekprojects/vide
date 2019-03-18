@@ -56,6 +56,7 @@ class Vide : public Frontier::FrontierApp
 
     std::vector<VideWindow*> m_videWindows;
     FontHandle* m_textFont;
+    FontHandle* m_textIconFont;
 
     std::vector<std::wstring> m_buffer;
 
@@ -75,6 +76,7 @@ class Vide : public Frontier::FrontierApp
     VidePluginManager* getPluginManager() { return m_pluginManager; }
 
     FontHandle* getTextFont() { return m_textFont; }
+    FontHandle* getTextIconFont() { return m_textIconFont; }
 
     void setBuffer(std::vector<std::wstring> buffer) { m_buffer = buffer; }
     std::vector<std::wstring> getBuffer() { return m_buffer; }

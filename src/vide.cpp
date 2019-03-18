@@ -50,8 +50,6 @@ bool Vide::init()
         return false;
     }
 
-    m_textFont = getTheme()->getMonospaceFont(true);
-/*
     m_textFont = getFontManager()->openFont(
         "Hack",
         "Regular",
@@ -62,7 +60,17 @@ bool Vide::init()
         log(ERROR, "init: Failed to find font: Hack");
         return false;
     }
-*/
+
+    m_textIconFont = getFontManager()->openFont(
+        "Font Awesome 5 Free",
+        "Solid",
+        10);
+    if (m_textIconFont == NULL)
+    {
+        log(ERROR, "init: Failed to find font: Font Awesome");
+        return false;
+    }
+
     m_welcomeWindow = new WelcomeWindow(this);
 
     m_pluginManager = new VidePluginManager();
