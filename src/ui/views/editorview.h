@@ -37,24 +37,54 @@ enum CursorType
     CURSOR_BAR,
 };
 
+struct EditorCharacter
+{
+    Position position;
+    LineToken* token;
+};
+
+class EditorCharacterMap
+{
+ private:
+    int m_lines;
+    int m_columns;
+    EditorCharacter* m_map;
+
+    EditorCharacter* get(int line, int column);
+
+ public:
+    EditorCharacterMap();
+    ~EditorCharacterMap();
+
+    void reset(int lines, int columns);
+    void setToken(int line, int column, int width, LineToken* token, Position bufferPos);
+    LineToken* getToken(int line, int column);
+    Position getPosition(int line, int column);
+};
+
 class EditorView : public Frontier::Widget, public View
 {
  private:
     Vide* m_vide;
     Editor* m_editor;
     Interface* m_interface;
+    EditorCharacterMap* m_characterMap;
 
     int m_marginX;
+    Frontier::Size m_charSize;
 
     bool m_selecting;
 
     Frontier::ScrollBar* m_scrollBar;
 
     std::map<TokenType, uint32_t> m_colours;
+    uint32_t m_defaultColour;
 
     unsigned int getViewLines();
 
-    void drawCursor(Geek::Gfx::Surface* surface, int x, int y, int w, int h);
+    void drawCursor(Geek::Gfx::Surface* surface, int x, int y);
+
+    //int getTokenWidth(LineToken* token);
 
  public:
     EditorView(Vide* window, Editor* editor);

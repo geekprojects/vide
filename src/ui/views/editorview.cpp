@@ -36,6 +36,7 @@ EditorView::EditorView(Vide* vide, Editor* editor) : Widget(vide, L"EditorView")
     m_vide = vide;
     m_editor = editor;
     m_editor->cursorMovedSignal().connect(sigc::mem_fun(*this, &EditorView::cursorMoved));
+    m_characterMap = new EditorCharacterMap();
 
     m_scrollBar = new ScrollBar(vide);
     m_scrollBar->incRefCount();
@@ -45,6 +46,11 @@ EditorView::EditorView(Vide* vide, Editor* editor) : Widget(vide, L"EditorView")
     m_interface = new ViInterface(editor);
 
     m_marginX = 40;
+
+    FontManager* fm = m_app->getFontManager();
+    FontHandle* textFont = ((Vide*)m_app)->getTextFont();
+    m_charSize.width = fm->width(textFont, L"M");
+    m_charSize.height = textFont->getPixelHeight(72);
 
     m_selecting = false;
 
@@ -60,6 +66,14 @@ EditorView::EditorView(Vide* vide, Editor* editor) : Widget(vide, L"EditorView")
     m_colours.insert(make_pair(TOKEN_LITERAL, 0xAE81FF));
     m_colours.insert(make_pair(TOKEN_STRING, 0xE6DB74));
 
+    m_defaultColour = 0xffffff;
+    map<TokenType, uint32_t>::iterator it;
+    it = m_colours.find(TOKEN_TEXT);
+    if (it != m_colours.end())
+    {
+        m_defaultColour = it->second;
+    }
+
     updateStatus();
 }
 
@@ -70,8 +84,7 @@ EditorView::~EditorView()
 
 void EditorView::calculateSize()
 {
-    //m_minSize.set(50, 50);
-    m_minSize.set(300, 300);
+    m_minSize.set(m_marginX + (40 * m_charSize.width), m_charSize.height * 3);
     m_maxSize.set(WIDGET_SIZE_UNLIMITED, WIDGET_SIZE_UNLIMITED);
 
     m_scrollBar->calculateSize();
@@ -88,74 +101,61 @@ bool EditorView::draw(Surface* surface)
     Buffer* buffer = m_editor->getBuffer();
     if (buffer->isDirty())
     {
-        uint64_t start = m_app->getTimestamp();
         m_editor->getFileTypeManager()->tokenise(buffer);
-        uint64_t end = m_app->getTimestamp();
-        uint64_t diff = end - start;
-        log(DEBUG, "draw: tokenise time=%llu", diff);
     }
 
     m_editor->clearDirty();
 
     Position cursor = m_editor->getCursorPosition();
 
-    uint64_t start = m_app->getTimestamp();
+    surface->clear(0x002b2b2b);
 
     FontManager* fm = m_app->getFontManager();
-
-    surface->clear(0x002b2b2b);
-    //surface->clear(0x272822);
-
     FontHandle* textFont = ((Vide*)m_app)->getTextFont();
+    FontHandle* textIconFont = ((Vide*)m_app)->getTextIconFont();
+    uint32_t iconColour = 0x004b4b4b;
 
-    int charWidth = fm->width(textFont, L"M");
-    int charHeight = textFont->getPixelHeight(72);
-    unsigned int viewLines = m_setSize.height / charHeight;
+    unsigned int viewLines = m_setSize.height / m_charSize.height;
+    unsigned int viewColumns = m_setSize.width / m_charSize.width;
+    m_characterMap->reset(viewLines, viewColumns);
 
-    // Make sure that we are scrolled to wherever the cursor is
     unsigned int scrollPos = m_scrollBar->getPos();
-
-    // Set the default colour to the TEXT colour
-    uint32_t defaultColour = 0xffffff;
-    map<TokenType, uint32_t>::iterator it;
-    it = m_colours.find(TOKEN_TEXT);
-    if (it != m_colours.end())
-    {
-        defaultColour = it->second;
-    }
 
     int drawX = 0;
     int drawY = 0;
-
-    Position selectStart = m_editor->getSelectStart();
-    Position selectEnd = m_editor->getSelectEnd();
-    if (selectStart > selectEnd)
-    {
-        Position tmp = selectEnd;
-        selectEnd = selectStart;
-        selectStart = tmp;
-    }
+    unsigned int drawLine = 0;
+    unsigned int drawColumn = 0;
+    unsigned int startX = m_marginX;
 
     bool hasSel = m_editor->hasSelection();
-
-
-    vector<Line*> lines = buffer->getLines();
-
-    //surface->drawRectFilled(0, 0, 9, 12, 0x0000ff00);
-    unsigned int ypos = 0;
-    for (ypos = 0; ypos < viewLines; ypos++)
+    Position selectStart;
+    Position selectEnd;
+    if (hasSel)
     {
-        Position drawPos(scrollPos + ypos, 0);
+        selectStart = m_editor->getSelectStart();
+        selectEnd = m_editor->getSelectEnd();
+        if (selectStart > selectEnd)
+        {
+            Position tmp = selectEnd;
+            selectEnd = selectStart;
+            selectStart = tmp;
+        }
+    }
 
-        if (drawPos.line >= lines.size())
+    unsigned int ypos = 0;
+    vector<Line*> lines = buffer->getLines();
+    for (ypos = 0; drawLine < viewLines; ypos++, drawLine++)
+    {
+        Position bufferPos(scrollPos + ypos, 0);
+
+        if (bufferPos.line >= lines.size())
         {
             break;
         }
 
         // Draw margin
         wchar_t marginbuffer[1024];
-        swprintf(marginbuffer, 1024, L"%4d", drawPos.line + 1);
-
+        swprintf(marginbuffer, 1024, L"%4d", bufferPos.line + 1);
         fm->write(textFont,
             surface,
             0,
@@ -165,84 +165,44 @@ bool EditorView::draw(Surface* surface)
             true,
             NULL);
  
-        drawX = m_marginX;
+        drawX = startX;
         unsigned int xpos = 0;
+        drawColumn = 0;
 
-        Line* line = lines.at(drawPos.line);
+        Line* line = lines.at(bufferPos.line);
 
-        if (drawPos.line == cursor.line && cursor.column > line->text.length())
+        // Check the cursor column is valid
+        if (bufferPos.line == cursor.line && cursor.column > line->text.length())
         {
             cursor.column = line->text.length();
         }
 
-        if (line->tokens.empty())
-        {
-            surface->drawRectFilled(drawX, drawY, charWidth, charHeight, 0x00BBBBBB);
-        }
+        m_characterMap->setToken(drawLine, 0, viewColumns, NULL, bufferPos);
 
+        // Draw a line of tokens
         vector<LineToken*>::iterator tokenIt;
         for (tokenIt = line->tokens.begin(); tokenIt != line->tokens.end(); tokenIt++)
         {
             LineToken* token = *tokenIt;
 
-            unsigned int startX = drawX;
             unsigned int tokenLen = token->text.length();
 
-            if (drawPos.line == cursor.line && (tokenIt + 1) == line->tokens.end() && drawPos.column >= xpos + tokenLen)
+            if (bufferPos.line == cursor.line &&
+                (tokenIt + 1) == line->tokens.end() &&
+                bufferPos.column >= xpos + tokenLen)
             {
-                //cursorX = xpos + fragLen;
                 tokenLen++;
             }
 
-            unsigned int tokenPos;
-            for (tokenPos = 0; tokenPos < tokenLen; xpos++, tokenPos++, drawPos.column++)
+            uint32_t colour = m_defaultColour;
+            map<TokenType, uint32_t>::iterator it;
+            it = m_colours.find(token->type);
+            if (it != m_colours.end())
             {
-                if (drawX + charWidth > (m_setSize.width - m_scrollBar->getWidth()))
-                {
-                    break;
-                }
-
-                if (hasSel && drawPos >= selectStart && drawPos < selectEnd)
-                {
-                    // Highlight the selected region
-                    surface->drawRectFilled(drawX, drawY, charWidth, charHeight, 0x00214283);
-                }
-
-                if (xpos == cursor.column && drawPos.line == cursor.line)
-                {
-                    drawCursor(surface, drawX, drawY, charWidth, charHeight);
-                }
-
-                if (tokenPos < token->text.length())
-                {
-                    wstring str = L"";
-                    str += token->text.at(tokenPos);
-
-                    uint32_t colour;
-                    map<TokenType, uint32_t>::iterator it;
-                    it = m_colours.find(token->type);
-                    if (it != m_colours.end())
-                    {
-                        colour = it->second;
-                    }
-                    else
-                    {
-                        colour = defaultColour;
-                    }
-
-                    fm->write(textFont,
-                        surface,
-                        drawX + 1,
-                        drawY,
-                        str,
-                        colour,
-                        true,
-                        NULL);
-                }
-
-                drawX += charWidth;
+                colour = it->second;
             }
 
+            uint32_t messageCol = 0;
             if (!token->messages.empty())
             {
                 int maxType = 0;
@@ -253,7 +213,6 @@ bool EditorView::draw(Surface* surface)
                         maxType = message.type;
                     }
                 }
-                uint32_t messageCol = 0;
                 switch (maxType)
                 {
                     case ::MESSAGE_INFO:
@@ -266,20 +225,88 @@ bool EditorView::draw(Surface* surface)
                         messageCol = 0xffff0000;
                         break;
                 }
-                surface->drawLine(startX, drawY + charHeight - 1, drawX, drawY + charHeight - 1, messageCol);
+            }
+
+            // Draw the current token
+            unsigned int tokenPos;
+            for (tokenPos = 0; tokenPos < tokenLen && drawLine < viewLines; xpos++, tokenPos++, bufferPos.column++)
+            {
+                if (drawX + m_charSize.width > (m_setSize.width - m_scrollBar->getWidth()))
+                {
+                    drawX = m_marginX;
+                    drawY += m_charSize.height;
+                    drawLine++;
+                    drawColumn = 0;
+                    if (drawLine >= viewLines)
+                    {
+                        break;
+                    }
+                }
+
+                if (hasSel && bufferPos >= selectStart && bufferPos < selectEnd)
+                {
+                    // Highlight the selected region
+                    surface->drawRectFilled(drawX, drawY, m_charSize.width, m_charSize.height, 0x00214283);
+                }
+
+                if (xpos == cursor.column && bufferPos.line == cursor.line)
+                {
+                    drawCursor(surface, drawX, drawY);
+                }
+
+                int numChars = 1;
+                if (tokenPos < token->text.length())
+                {
+                    wchar_t c = token->text.at(tokenPos);
+                    wstring str = wstring(&c, 1);
+                    if (c == '\t')
+                    {
+                        wstring text = L"";
+                        text += FRONTIER_ICON_ARROW_RIGHT;
+
+                        fm->write(textIconFont,
+                            surface,
+                            drawX,
+                            drawY,
+                            text,
+                            iconColour,
+                            true,
+                            NULL);
+
+                        numChars = 8;
+                    }
+
+                    fm->write(textFont,
+                        surface,
+                        drawX + 1,
+                        drawY,
+                        str,
+                        colour,
+                        true,
+                        NULL);
+                    m_characterMap->setToken(drawLine, drawColumn, numChars, token, bufferPos);
+                    if (messageCol != 0)
+                    {
+                        surface->drawLine(
+                            drawX, drawY + m_charSize.height - 1, 
+                            drawX + (m_charSize.width * numChars), drawY + m_charSize.height - 1, 
+                            messageCol);
+                    }
+
+                    drawX += (m_charSize.width * numChars);
+                    drawColumn += numChars;
+                }
             }
         }
-            if (xpos == cursor.column && drawPos.line == cursor.line)
-            {
-                drawCursor(surface, drawX, drawY, charWidth, charHeight);
-            }
 
-        drawY += charHeight;
+        if (xpos == cursor.column && bufferPos.line == cursor.line)
+        {
+            // The cursor is just beyond the last character
+            drawCursor(surface, drawX, drawY);
+        }
+
+        drawY += m_charSize.height;
     }
-
-    uint64_t end = m_app->getTimestamp();
-    uint64_t diff = end - start;
-    log(DEBUG, "draw: time=%llu", diff);
 
     surface->drawLine(m_marginX - 1, 0, m_marginX - 1, m_setSize.height - 1, 0xffBBBBBB);
 
@@ -288,13 +315,36 @@ bool EditorView::draw(Surface* surface)
         m_scrollBar->set(0, buffer->getLineCount(), viewLines);
     }
 
-    SurfaceViewPort scrollbarVP(surface, m_scrollBar->getX(), m_scrollBar->getY(), m_scrollBar->getWidth(), m_scrollBar->getHeight());
+    SurfaceViewPort scrollbarVP(
+        surface,
+        m_scrollBar->getX(), m_scrollBar->getY(),
+        m_scrollBar->getWidth(), m_scrollBar->getHeight());
     m_scrollBar->draw(&scrollbarVP);
 
     return true;
 }
 
-void EditorView::drawCursor(Surface* surface, int x, int y, int w, int h)
+/*
+int EditorView::getTokenWidth(LineToken* token)
+{
+    int width = 0;
+    unsigned int i;
+    for (i = 0; i < token->text.length(); i++)
+    {
+        if (token->text.at(i) == '\t')
+        {
+            width += 8;
+        }
+        else
+        {
+            width++;
+        }
+    }
+    return width * m_charSize.width;
+}
+*/
+
+void EditorView::drawCursor(Surface* surface, int x, int y)
 {
     CursorType cursorType = m_interface->getCursorType();
 
@@ -302,10 +352,10 @@ void EditorView::drawCursor(Surface* surface, int x, int y, int w, int h)
     switch (cursorType)
     {
         case CURSOR_BLOCK:
-            surface->drawRectFilled(x, y, w, h, 0x00BBBBBB);
+            surface->drawRectFilled(x, y, m_charSize.width, m_charSize.height, 0x00BBBBBB);
             break;
         case CURSOR_BAR:
-            surface->drawRectFilled(x, y, 1, h, 0x00BBBBBB);
+            surface->drawRectFilled(x, y, 1, m_charSize.height, 0x00BBBBBB);
             break;
     }
 }
@@ -381,18 +431,9 @@ Widget* EditorView::handleEvent(Event* event)
                 {
                     x -= m_marginX;
 
-                    FontManager* fm = m_app->getFontManager();
-                    FontHandle* textFont = ((Vide*)m_app)->getTextFont();
+                    LineToken* selectedToken = m_characterMap->getToken(y / m_charSize.height, x / m_charSize.width);
+                    Position mousePos = m_characterMap->getPosition(y / m_charSize.height, x / m_charSize.width);
 
-                    int charWidth = fm->width(textFont, L"M");
-                    int charHeight = textFont->getPixelHeight(72);
-
-                    int scrollPos = m_scrollBar->getPos();
-
-                    Position mousePos;
-                    mousePos.line = scrollPos + (y / charHeight);
-                    mousePos.column = x / charWidth;
- 
                     if (event->eventType == FRONTIER_EVENT_MOUSE_BUTTON)
                     {
                         MouseButtonEvent* mouseButtonEvent = (MouseButtonEvent*)event;
@@ -422,21 +463,14 @@ Widget* EditorView::handleEvent(Event* event)
                         }
 
                         VideWindow* videWindow = (VideWindow*)getWindow();
-                        LineToken* token = m_editor->getBuffer()->getToken(mousePos);
-                        bool showTip = false;
-                        if (token != NULL)
+                        if (selectedToken != NULL && !selectedToken->messages.empty())
                         {
-                            if (!token->messages.empty())
-                            {
-                                int x = mouseEvent->x;
-                                int y = mouseEvent->y;
-                                Geek::Vector2D screenPos = videWindow->getScreenPosition(Geek::Vector2D(x + 1, y + 1));
-                                videWindow->getEditorTipWindow()->setToken(token, screenPos);
-
-                                showTip = true;
-                            }
+                            int x = mouseEvent->x;
+                            int y = mouseEvent->y;
+                            Geek::Vector2D screenPos = videWindow->getScreenPosition(Geek::Vector2D(x + 1, y + 1));
+                            videWindow->getEditorTipWindow()->setToken(selectedToken, screenPos);
                         }
-                        if (!showTip)
+                        else
                         {
                             videWindow->getEditorTipWindow()->hide();
                         }
@@ -458,7 +492,6 @@ Widget* EditorView::handleEvent(Event* event)
             } break;
 
             default:
-                //log(WARN, "handleMessage: Unhandled input message type: %d", inputMessage->inputMessageType);
                 break;
         }
 
@@ -505,7 +538,12 @@ void EditorView::updateStatus()
 
         videWindow->setInterfaceStatus(m_interface->getStatus());
         wchar_t editorStatus[1024];
-        swprintf(editorStatus, 1024, L"Line: %d, Col: %d", m_editor->getCursorPosition().line + 1, m_editor->getCursorPosition().column + 1);
+        swprintf(
+            editorStatus,
+            1024,
+            L"Line: %d, Col: %d",
+            m_editor->getCursorPosition().line + 1,
+            m_editor->getCursorPosition().column + 1);
         videWindow->setEditorStatus(wstring(editorStatus));
     }
 }
@@ -515,5 +553,87 @@ unsigned int EditorView::getViewLines()
     FontHandle* textFont = ((Vide*)m_app)->getTextFont();
     int charHeight = textFont->getPixelHeight(72);
     return m_setSize.height / charHeight;
+}
+
+EditorCharacterMap::EditorCharacterMap()
+{
+    m_lines = 0;
+    m_columns = 0;
+    m_map = NULL;
+}
+
+EditorCharacterMap::~EditorCharacterMap()
+{
+    if (m_map != NULL)
+    {
+        delete[] m_map;
+    }
+}
+
+EditorCharacter* EditorCharacterMap::get(int line, int column)
+{
+if (line >= m_lines || column >= m_columns)
+{
+printf("ERROR: EditorCharacterMap::get: Position is outside of map: %d, %d > %d, %d\n", line, column, m_lines, m_columns);
+return NULL;
+}
+    return &(m_map[(line * m_columns) + column]);
+}
+
+void EditorCharacterMap::reset(int lines, int columns)
+{
+    if (m_map != NULL && (lines != m_lines || columns != m_columns))
+    {
+        delete[] m_map;
+        m_map = NULL;
+    }
+
+    m_lines = lines;
+    m_columns = columns;
+
+    if (m_map == NULL)
+    {
+        m_map = new EditorCharacter[m_lines * m_columns];
+    }
+    memset(m_map, 0, sizeof(EditorCharacter) * m_lines * m_columns);
+}
+
+void EditorCharacterMap::setToken(int line, int column, int width, LineToken* token, Position bufferPos)
+{
+    int i;
+    for (i = 0; i < width; i++)
+    {
+        EditorCharacter* ec = get(line, column + i);
+if (ec == NULL)
+{
+printf("ERROR: Failed to set token: line=%d, column=%d\n", line, column);
+}
+        ec->position = bufferPos;
+        ec->token = token;
+    }
+}
+
+LineToken* EditorCharacterMap::getToken(int line, int column)
+{
+    return get(line, column)->token;
+}
+
+Position EditorCharacterMap::getPosition(int line, int column)
+{
+    EditorCharacter* ec = get(line, column);
+    if (ec->token != NULL)
+    {
+        return ec->position;
+    }
+
+    for (; column >= 0; column--)
+    {
+        ec = get(line, column);
+        if (ec->token != NULL)
+        {
+            return ec->position;
+        }
+    }
+    return Position(ec->position.line, 0);
 }
 
