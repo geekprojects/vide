@@ -142,11 +142,11 @@ bool CXXTokeniser::tokenise(Buffer* buffer)
             lineToken->text = text;
             lineToken->column = start.column;
 
-#if 0
+#if 1
             char msg[1024];
             snprintf(msg, 1024, "token=%u, cursor=%u", kind, cursorKind);
             TokenMessage message;
-            message.type = MESSAGE_INFO;
+            message.type = ::MESSAGE_INFO;
             message.text = string(msg);
             lineToken->messages.push_back(message);
 #endif
@@ -170,6 +170,10 @@ bool CXXTokeniser::tokenise(Buffer* buffer)
 
                 case CXCursor_PreprocessingDirective:
                     lineToken->type = TOKEN_PREPROCESSOR;
+                    break;
+
+                case 70: // Invalid -> Comment or unreachable (#if 0 etc)
+                    lineToken->type = TOKEN_COMMENT;
                     break;
 
                 default:
@@ -196,7 +200,19 @@ bool CXXTokeniser::tokenise(Buffer* buffer)
                     break;
             }
 
-            line->tokens.push_back(lineToken);
+            if (lineToken->text.find(L' ') != string::npos || lineToken->text.find(L'\t') != string::npos)
+            {
+                vector<LineToken*> splitTokens = splitText(lineToken->type, lineToken->text);
+                for (LineToken* token : splitTokens)
+                {
+                    line->tokens.push_back(token);
+                }
+                delete lineToken;
+            }
+            else
+            {
+                line->tokens.push_back(lineToken);
+            }
         }
 
         clang_disposeTokens(unit, cxTokens, cxTokenCount);
