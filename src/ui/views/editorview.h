@@ -84,8 +84,6 @@ class EditorView : public Frontier::Widget, public View
 
     void drawCursor(Geek::Gfx::Surface* surface, int x, int y);
 
-    //int getTokenWidth(LineToken* token);
-
  public:
     EditorView(Vide* window, Editor* editor);
     virtual ~EditorView();

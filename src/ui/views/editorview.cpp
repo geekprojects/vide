@@ -26,6 +26,8 @@
 
 #include <wctype.h>
 
+#define ALIGN(V, SIZE) ((((V) + (SIZE) - 1) / (SIZE)) * (SIZE))
+
 using namespace std;
 using namespace Frontier;
 using namespace Geek;
@@ -202,6 +204,7 @@ bool EditorView::draw(Surface* surface)
                 colour = it->second;
             }
 
+            bool hasMessage = false;
             uint32_t messageCol = 0;
             if (!token->messages.empty())
             {
@@ -225,6 +228,7 @@ bool EditorView::draw(Surface* surface)
                         messageCol = 0xffff0000;
                         break;
                 }
+                hasMessage = true;
             }
 
             // Draw the current token
@@ -264,16 +268,20 @@ bool EditorView::draw(Surface* surface)
                         wstring text = L"";
                         text += FRONTIER_ICON_ARROW_RIGHT;
 
-                        fm->write(textIconFont,
-                            surface,
-                            drawX,
-                            drawY,
-                            text,
-                            iconColour,
-                            true,
-                            NULL);
+                        int alignedX = ALIGN(xpos + 1, 8);
+                        numChars = alignedX - xpos;
 
-                        numChars = 8;
+                        if (numChars > 1)
+                        {
+                            fm->write(textIconFont,
+                                surface,
+                                drawX,
+                                drawY,
+                                text,
+                                iconColour,
+                                true,
+                                NULL);
+                        }
                     }
 
                     fm->write(textFont,
@@ -285,7 +293,7 @@ bool EditorView::draw(Surface* surface)
                         true,
                         NULL);
                     m_characterMap->setToken(drawLine, drawColumn, numChars, token, bufferPos);
-                    if (messageCol != 0)
+                    if (hasMessage)
                     {
                         surface->drawLine(
                             drawX, drawY + m_charSize.height - 1, 
@@ -323,26 +331,6 @@ bool EditorView::draw(Surface* surface)
 
     return true;
 }
-
-/*
-int EditorView::getTokenWidth(LineToken* token)
-{
-    int width = 0;
-    unsigned int i;
-    for (i = 0; i < token->text.length(); i++)
-    {
-        if (token->text.at(i) == '\t')
-        {
-            width += 8;
-        }
-        else
-        {
-            width++;
-        }
-    }
-    return width * m_charSize.width;
-}
-*/
 
 void EditorView::drawCursor(Surface* surface, int x, int y)
 {
