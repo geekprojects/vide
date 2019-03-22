@@ -28,11 +28,13 @@
 #include "ui/views/editorview.h"
 #include "ui/views/projectview.h"
 #include "ui/views/structureview.h"
+#include "ui/views/tasksview.h"
 #include "ui/editortipwindow.h"
 
 class Vide;
 class ProjectEntry;
 class ProjectView;
+class TasksView;
 
 class VideWindow : public Frontier::FrontierWindow
 {
@@ -46,9 +48,11 @@ class VideWindow : public Frontier::FrontierWindow
     FontHandle* m_textFont;
     Frontier::Label* m_editorStatus;
     Frontier::Label* m_interfaceStatus;
+
     ProjectView* m_projectView;
     StructureView* m_structureView;
     StructureView* m_fileStructureView;
+    TasksView* m_tasksView;
 
     EditorTipWindow* m_editorTipWindow;
 

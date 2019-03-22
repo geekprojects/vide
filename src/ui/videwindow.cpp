@@ -92,6 +92,7 @@ bool VideWindow::init()
     bottomTabs->addTab(L"Terminal", getApp()->getTheme()->getIcon(FRONTIER_ICON_TERMINAL), terminal = new Terminal(this));
     terminal->run("make");
     bottomTabs->addTab(L"Search", getApp()->getTheme()->getIcon(FRONTIER_ICON_SEARCH), new Label(this, L"Search"));
+    bottomTabs->addTab(L"Tasks", getApp()->getTheme()->getIcon(FRONTIER_ICON_SEARCH), m_tasksView = new TasksView(m_vide));
     bottomFrame->addWithSize(bottomTabs, 25);
 
     setContent(rootFrame);
