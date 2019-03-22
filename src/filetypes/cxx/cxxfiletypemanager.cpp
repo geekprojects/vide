@@ -4,6 +4,7 @@
 #include "cxxfiletypemanager.h"
 #include "editor/buffer.h"
 #include "project/project.h"
+#include "utils.h"
 
 using namespace std;
 using namespace Frontier;
@@ -262,44 +263,64 @@ CXChildVisitResult CXXFileTypeManager::structureVisitor(CXCursor cursor, CXCurso
 
 CXTranslationUnit CXXFileTypeManager::parse(ProjectFile* file, CXUnsavedFile* unsavedFile)
 {
-    BuildTool* buildTool = file->getProject()->getBuildTool();
-    vector<string> args;
-    if (buildTool != NULL)
+    vector<string> buildArgs;
+    if (!file->hasBuildArgs())
     {
-        args = buildTool->getFileFlags(file);
+        BuildTool* buildTool = file->getProject()->getBuildTool();
+
+        buildArgs.push_back("-x");
+        buildArgs.push_back("c++");
+        buildArgs.push_back("-Wall");
+        buildArgs.push_back("-I/usr/include");
+        buildArgs.push_back("-I/usr/local/include");
+#ifdef __APPLE__
+        buildArgs.push_back("-I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include");
+        buildArgs.push_back("-I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include/c++/v1");
+#endif
+
+        if (buildTool != NULL)
+        {
+            vector<string> buildToolArgs = buildTool->getFileFlags(file);
+            for (string arg : buildToolArgs)
+            {
+                if (arg.length() > 2 && arg.at(0) == '-' && arg.at(1) == 'I')
+                {
+                    // Make any relative include paths absolute
+                    string includePath = arg.substr(2);
+                    log(DEBUG, "parse: original includePath: %s", includePath.c_str());
+                    includePath = ::Utils::mkpath(file->getProject()->getRootPath() + file->getFileDir(), includePath);
+                    log(DEBUG, "parse: absolute includePath: %s", includePath.c_str());
+                    arg = "-I" + includePath;
+                }
+                buildArgs.push_back(arg);
+            }
+        }
+        file->setBuildArgs(buildArgs);
+    }
+    else
+    {
+        buildArgs = file->getBuildArgs();
     }
 
-    int argc = 5;
-#ifdef __APPLE__
-    argc += 2;
-#endif
-    argc += args.size();
+    int argc = buildArgs.size();
+
     log(DEBUG, "parse: argc=%d", argc);
 
-    const char* argv[argc];
-    argv[0] = "-x";
-    argv[1] = "c++";
-    argv[2] = "-Wall";
-    argv[3] = "-I/usr/include";
-    argv[4] = "-I/usr/local/include";
-#ifdef __APPLE__
-    argv[5] = "-I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include";
-    argv[6] = "-I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include/c++/v1";
-#endif
+    char* argv[argc + 1];
 
-    unsigned int i = 5;
-#ifdef __APPLE__
-    i += 2;
-#endif
-
-    for (string arg : args)
+    int i = 0;
+    for (string arg : buildArgs)
     {
         argv[i++] = strdup(arg.c_str());
     }
+    argv[i++] = NULL;
 
-    for (const char* arg : argv)
+    for (char* arg : argv)
     {
-        log(DEBUG, "parse: arg: %s", arg);
+        if (arg != NULL)
+        {
+            log(DEBUG, "parse: arg: %s", arg);
+        }
     }
 
     int unsavedFileCount = 0;
@@ -313,6 +334,17 @@ CXTranslationUnit CXXFileTypeManager::parse(ProjectFile* file, CXUnsavedFile* un
         file->getAbsolutePath().c_str(), argv, argc,
         unsavedFile, unsavedFileCount,
         CXTranslationUnit_DetailedPreprocessingRecord | CXTranslationUnit_KeepGoing);
+
+    for (char* arg : argv)
+    {
+        if (arg != NULL)
+        {
+            free(arg);
+        }
+    }
+
+
+
     return unit;
 }
 

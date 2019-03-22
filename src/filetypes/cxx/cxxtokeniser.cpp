@@ -142,7 +142,7 @@ bool CXXTokeniser::tokenise(Buffer* buffer)
             lineToken->text = text;
             lineToken->column = start.column;
 
-#if 1
+#if 0
             char msg[1024];
             snprintf(msg, 1024, "token=%u, cursor=%u", kind, cursorKind);
             TokenMessage message;
@@ -237,6 +237,20 @@ bool CXXTokeniser::tokenise(Buffer* buffer)
         log(DEBUG, "%s", clang_getCString(str));
         clang_disposeString(str);
 
+        unsigned int fixes = clang_getDiagnosticNumFixIts(diag);
+        unsigned int f;
+        for (f = 0; f < fixes; f++)
+        {
+            CXSourceRange range;
+            CXString fixStr;
+            fixStr = clang_getDiagnosticFixIt(diag, f, &range);
+            CXSourceLocation diagStart = clang_getRangeStart(range);
+            CXSourceLocation diagEnd = clang_getRangeEnd(range);
+            Position start = cxlocation2position(diagStart);
+            Position end = cxlocation2position(diagEnd);
+            log(DEBUG, " FIX: -> %u: %u: %u,%u -> %u,%u: %s", i, f, start.line, start.column, end.line, end.column, clang_getCString(fixStr));
+        }
+
         // Attach diagnostic messages to tokens
         unsigned int num;
         num = clang_getDiagnosticNumRanges(diag);
@@ -280,6 +294,7 @@ bool CXXTokeniser::tokenise(Buffer* buffer)
                     pos.column += token->text.length();
                 }
             }
+
         }
         else
         {
