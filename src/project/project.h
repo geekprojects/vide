@@ -28,6 +28,7 @@
 #include <wchar.h>
 
 #include <geek/core-database.h>
+#include <geek/core-thread.h>
 
 #include <yaml-cpp/yaml.h>
 #include <sigc++/sigc++.h>
@@ -165,6 +166,9 @@ class ProjectFile : public ProjectEntry
  private:
     Buffer* m_buffer;
 
+    bool m_hasBuildArgs;
+    std::vector<std::string> m_buildArgs;
+
  public:
     ProjectFile(Project* project, ProjectEntry* parent, std::string name);
     virtual ~ProjectFile();
@@ -172,6 +176,10 @@ class ProjectFile : public ProjectEntry
     virtual Buffer* open();
 
     virtual std::string calculateHash();
+
+    void setBuildArgs(std::vector<std::string> args);
+    std::vector<std::string> getBuildArgs() { return m_buildArgs; }
+    bool hasBuildArgs() { return m_hasBuildArgs; }
 };
 
 class ProjectDirectory : public ProjectEntry
@@ -205,6 +213,7 @@ class ProjectIndex : public Geek::Logger
  private:
     Project* m_project;
     Geek::Core::Database* m_db;
+    Geek::Mutex* m_dbMutex;
 
     ProjectDefinition* createDefinition(Geek::Core::PreparedStatement* ps);
 
@@ -258,6 +267,7 @@ class Project : public Geek::Logger
     bool scan();
     bool index();
 
+    Vide* getVide() { return m_vide; }
     std::string getRootPath() { return m_rootPath; }
     std::string getVidePath() { return getRootPath() + "/.vide"; }
     std::string getConfigPath();
@@ -274,6 +284,18 @@ class Project : public Geek::Logger
     sigc::signal<void, ProjectEntry*> openEntrySignal() { return m_openEntrySignal; }
 
     void dumpStructure();
+};
+
+class FileIndexTask : public Geek::Core::Task
+{
+ private:
+    ProjectFile* m_file;
+
+ public:
+    FileIndexTask(ProjectFile* file);
+    virtual ~FileIndexTask();
+
+    virtual void run();
 };
 
 #endif

@@ -10,6 +10,7 @@ ProjectFile::ProjectFile(Project* project, ProjectEntry* parent, std::string nam
     : ProjectEntry(project, ENTRY_FILE, parent, name)
 {
     m_buffer = NULL;
+    m_hasBuildArgs = false;
 }
 
 ProjectFile::~ProjectFile()
@@ -40,5 +41,11 @@ Buffer* ProjectFile::open()
 string ProjectFile::calculateHash()
 {
     return SHA::sha256File(getProject()->getRootPath() + getFilePath());
+}
+
+void ProjectFile::setBuildArgs(std::vector<string> args)
+{
+    m_hasBuildArgs = true;
+    m_buildArgs = args;
 }
 

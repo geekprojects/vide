@@ -22,6 +22,7 @@
 #include "project/project.h"
 #include "config.h"
 #include "vide.h"
+#include "utils.h"
 
 #include <geek/core-file.h>
 #include <geek/core-string.h>
@@ -44,7 +45,11 @@ using namespace Geek;
 Project::Project(Vide* vide, string rootPath) : Logger("Project")
 {
     m_vide = vide;
-    m_rootPath = rootPath;
+
+    char* rp = realpath(rootPath.c_str(), NULL);
+    m_rootPath = string(rp);
+    free(rp);
+    log(DEBUG, "Project: m_rootPath=%s -> %s", rootPath.c_str(), m_rootPath.c_str());
 
     m_root = NULL;
     m_buildTool = NULL;
@@ -82,7 +87,7 @@ bool Project::load()
 {
     try
     {
-log(DEBUG, "Loading config: %s", getConfigPath().c_str());
+        log(DEBUG, "Loading config: %s", getConfigPath().c_str());
         m_config = YAML::LoadFile(getConfigPath().c_str());
     }
     catch (const exception e)
@@ -264,13 +269,14 @@ bool Project::indexFile(ProjectFile* file)
 
     if (hash != file->getHash())
     {
-    log(DEBUG, "indexFile: File modified: %s", file->getFilePath().c_str());
+        log(DEBUG, "indexFile: File modified: %s", file->getFilePath().c_str());
         file->setHash(hash);
 
         m_index->removeSources(file);
         m_index->updateEntry(file);
 
-        file->getFileTypeManager()->index(file);
+        m_vide->getTaskExecutor()->addTask(new FileIndexTask(file));
+        //file->getFileTypeManager()->index(file);
     }
 
     return true;
@@ -357,4 +363,23 @@ void ProjectDefinition::dump(int level)
         child->dump(level + 1);
     }
 }
+
+FileIndexTask::FileIndexTask(ProjectFile* file) : Task()
+{
+    m_file = file;
+    string title = string("Indexing file: ") + file->getName();
+    setTitle(::Utils::string2wstring(title));
+}
+
+FileIndexTask::~FileIndexTask()
+{
+    m_file->getProject()->getVide()->taskComplete();
+}
+
+void FileIndexTask::run()
+{
+    m_file->getProject()->getVide()->taskComplete();
+    m_file->getFileTypeManager()->index(m_file);
+}
+
 

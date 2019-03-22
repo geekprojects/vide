@@ -91,6 +91,7 @@ ProjectIndex::ProjectIndex(Project* project) : Logger("ProjectIndex")
 {
     m_project = project;
     m_db = NULL;
+    m_dbMutex = Thread::createMutex();
 }
 
 ProjectIndex::~ProjectIndex()
@@ -99,6 +100,7 @@ ProjectIndex::~ProjectIndex()
 
 bool ProjectIndex::init()
 {
+    m_dbMutex->lock();
     m_db = new Database(m_project->getVidePath() + "/index.db");
 
     vector<Table> tables;
@@ -138,6 +140,8 @@ bool ProjectIndex::init()
     m_db->execute("CREATE INDEX IF NOT EXISTS vide_sources_def_idx ON vide_sources (definition_id)");
     m_db->execute("CREATE INDEX IF NOT EXISTS vide_sources_entry_idx ON vide_sources (entry_id)");
 
+    m_dbMutex->unlock();
+
     return true;
 }
 
@@ -149,6 +153,7 @@ void ProjectIndex::addEntry(ProjectEntry* entry)
         return;
     }
 
+    m_dbMutex->lock();
     string sql = "SELECT id, hash FROM vide_entries WHERE path = ?";
     PreparedStatement* ps = m_db->prepareStatement(sql);
     ps->bindString(1, entry->getFilePath());
@@ -202,6 +207,8 @@ void ProjectIndex::addEntry(ProjectEntry* entry)
         delete insertPs;
     }
     delete ps;
+
+    m_dbMutex->unlock();
 }
 
 void ProjectIndex::updateEntry(ProjectEntry* entry)
@@ -214,28 +221,36 @@ void ProjectIndex::updateEntry(ProjectEntry* entry)
      
     string sql = "UPDATE vide_entries SET hash=? WHERE id=?";
 
+    m_dbMutex->lock();
+
     PreparedStatement* ps = m_db->prepareStatement(sql);
     ps->bindString(1, entry->getHash());
     ps->bindInt64(2, entry->getId());
     ps->execute();
-
     delete ps;
+
+    m_dbMutex->unlock();
 }
 
 void ProjectIndex::removeSources(ProjectEntry* entry)
 {
     string sql = "DELETE FROM vide_sources WHERE entry_id = ?";
 
+    m_dbMutex->lock();
     PreparedStatement* ps = m_db->prepareStatement(sql);
     ps->bindInt64(1, entry->getId());
     ps->execute();
 
     delete ps;
+
+    m_dbMutex->unlock();
 }
 
 ProjectDefinition* ProjectIndex::findDefinition(std::string name)
 {
     string sql = "SELECT id, name, parent FROM vide_definitions WHERE name = ?";
+
+    m_dbMutex->lock();
 
     PreparedStatement* ps = m_db->prepareStatement(sql);
     ps->bindString(1, name);
@@ -248,11 +263,15 @@ ProjectDefinition* ProjectIndex::findDefinition(std::string name)
 
     delete ps;
 
+    m_dbMutex->unlock();
+
     return def;
 }
 
 void ProjectIndex::addDefinition(ProjectDefinition* def)
 {
+    m_dbMutex->lock();
+
     m_db->startTransaction();
     if (def->id == 0)
     {
@@ -285,12 +304,16 @@ void ProjectIndex::addDefinition(ProjectDefinition* def)
         }
     }
     m_db->endTransaction();
+
+    m_dbMutex->unlock();
 }
 
 vector<ProjectDefinition*> ProjectIndex::getEntryDefinitions(ProjectEntry* entry)
 {
     vector<ProjectDefinition*> results;
     string sql = "SELECT d.id, d.name, d.parent FROM vide_definitions d WHERE EXISTS (SELECT 1 FROM vide_sources s WHERE s.definition_id = d.id AND s.entry_id=?)";
+
+    m_dbMutex->lock();
 
     PreparedStatement* ps = m_db->prepareStatement(sql);
     ps->bindInt64(1, entry->getId());
@@ -303,6 +326,9 @@ vector<ProjectDefinition*> ProjectIndex::getEntryDefinitions(ProjectEntry* entry
 
         results.push_back(def);
     }
+
+    m_dbMutex->unlock();
+
     return results;
 }
 
@@ -310,6 +336,8 @@ vector<ProjectDefinition*> ProjectIndex::getRootDefinitions()
 {
     vector<ProjectDefinition*> results;
     string sql = "SELECT d.id, d.name, d.parent FROM vide_definitions d WHERE parent IS NULL OR parent = ''";
+
+    m_dbMutex->lock();
 
     PreparedStatement* ps = m_db->prepareStatement(sql);
     ps->executeQuery();
@@ -321,10 +349,13 @@ vector<ProjectDefinition*> ProjectIndex::getRootDefinitions()
 
         results.push_back(def);
     }
-    return results;
 
+    m_dbMutex->unlock();
+
+    return results;
 }
 
+// The m_dbMutex must already be locked!
 ProjectDefinition* ProjectIndex::createDefinition(Geek::Core::PreparedStatement* ps)
 {
     ProjectDefinition* def = new ProjectDefinition();
@@ -351,11 +382,14 @@ ProjectDefinition* ProjectIndex::createDefinition(Geek::Core::PreparedStatement*
         {
             source.entry = m_project->getEntry(path);
 
+#if 0
             log(DEBUG, "findDefinition: source: id=%lld -> path=%s, entry=%p", source.id, path.c_str(), source.entry);
+#endif
 
             def->sources.push_back(source);
         }
     }
+
     return def;
 }
 
