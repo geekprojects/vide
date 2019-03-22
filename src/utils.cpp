@@ -23,7 +23,10 @@
 #include <unistd.h>
 #include <wchar.h>
 
+#include <geek/core-string.h>
+
 using namespace std;
+using namespace Geek::Core;
 
 string Utils::wstring2string(wstring str)
 {
@@ -107,6 +110,50 @@ string Utils::exec(string dir, string cmd)
 
     chdir(cwd);
     free(cwd);
+
+    return result;
+}
+
+string Utils::mkpath(string baseDir, string relativePath)
+{
+    printf("Utils::mkpath: baseDir=%s, relativePath=%s\n", baseDir.c_str(), relativePath.c_str());
+    if (relativePath.length() == 0)
+    {
+        return "";
+    }
+    if (relativePath.at(0) == '/')
+    {
+        // Relative is actually absolute
+        return relativePath;
+    }
+
+    vector<string> baseParts = splitString(baseDir, '/');
+    vector<string> relParts = splitString(relativePath, '/');
+
+    for (string part : relParts)
+    {
+        if (part == ".")
+        {
+            continue;
+        }
+        else if (part == "..")
+        {
+            if (!baseParts.empty())
+            {
+                baseParts.pop_back();
+            }
+        }
+        else
+        {
+            baseParts.push_back(part);
+        }
+    }
+
+    string result = "";
+    for (string part: baseParts)
+    {
+        result += "/" + part;
+    }
 
     return result;
 }

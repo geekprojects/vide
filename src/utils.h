@@ -34,6 +34,8 @@ class Utils
     static bool fileIsExecutable(std::string path);
 
     static std::string exec(std::string dir, std::string cmd);
+
+    static std::string mkpath(std::string baseDir, std::string relativePath);
 };
 
 #endif
