@@ -24,6 +24,8 @@
 #include <frontier/frontier.h>
 #include <frontier/widgets.h>
 
+#include <geek/core-tasks.h>
+
 enum FileHandlerPriority
 {
     PRIORITY_UNSUPPORTED =  -1,
@@ -49,6 +51,7 @@ class Vide : public Frontier::FrontierApp
  private:
     WelcomeWindow* m_welcomeWindow;
 
+    Geek::Core::TaskExecutor* m_taskExecutor;
     VidePluginManager* m_pluginManager;
 
     std::vector<FileTypeManager*> m_fileTypeManagers;
@@ -61,6 +64,7 @@ class Vide : public Frontier::FrontierApp
     std::vector<std::wstring> m_buffer;
 
     sigc::signal<void, Project*> m_openProjectSignal;
+    sigc::signal<void> m_taskCompleteSignal;
 
  public:
     Vide();
@@ -73,6 +77,7 @@ class Vide : public Frontier::FrontierApp
     void registerBuildTool(BuildTool* bt);
     BuildTool* findBuildTool(Project* project);
 
+    Geek::Core::TaskExecutor* getTaskExecutor() { return m_taskExecutor; }
     VidePluginManager* getPluginManager() { return m_pluginManager; }
 
     FontHandle* getTextFont() { return m_textFont; }
@@ -89,6 +94,9 @@ class Vide : public Frontier::FrontierApp
 
     // Hooks for plugins
     sigc::signal<void, Project*> openProjectSignal() { return m_openProjectSignal; }
+    sigc::signal<void> taskCompleteSignal() { return m_taskCompleteSignal; }
+
+    void taskComplete();
 };
 
 #endif

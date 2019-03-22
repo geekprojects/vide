@@ -31,6 +31,7 @@
 using namespace std;
 using namespace Frontier;
 using namespace Geek;
+using namespace Geek::Core;
 
 Vide::Vide() : FrontierApp(L"Vide")
 {
@@ -54,7 +55,7 @@ bool Vide::init()
         "Hack",
         "Regular",
         //36);
-        10);
+        9);
     if (m_textFont == NULL)
     {
         log(ERROR, "init: Failed to find font: Hack");
@@ -64,7 +65,7 @@ bool Vide::init()
     m_textIconFont = getFontManager()->openFont(
         "Font Awesome 5 Free",
         "Solid",
-        10);
+        9);
     if (m_textIconFont == NULL)
     {
         log(ERROR, "init: Failed to find font: Font Awesome");
@@ -72,6 +73,8 @@ bool Vide::init()
     }
 
     m_welcomeWindow = new WelcomeWindow(this);
+
+    m_taskExecutor = new TaskExecutor();
 
     m_pluginManager = new VidePluginManager();
     m_pluginManager->init(this);
@@ -216,6 +219,11 @@ VideWindow* Vide::getProjectWindow(Project* project)
         }
     }
     return NULL;
+}
+
+void Vide::taskComplete()
+{
+    m_taskCompleteSignal.emit();
 }
 
 
