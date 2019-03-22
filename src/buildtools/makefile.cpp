@@ -39,7 +39,8 @@ vector<string> MakefileBuildTool::getFileFlags(ProjectFile* file)
 {
     vector<string> flags;
 
-    if (!Utils::fileIsReadable(file->getFileDir() + "/Makefile"))
+    string dir = file->getProject()->getRootPath() + file->getFileDir();
+    if (!Utils::fileIsReadable(dir + "/Makefile"))
     {
         return flags;
     }
@@ -53,7 +54,7 @@ vector<string> MakefileBuildTool::getFileFlags(ProjectFile* file)
     }
     log(DEBUG, "getFileFlags: %s -> %s", name.c_str(), obj.c_str());
 
-    std::string makeDB = Utils::exec(file->getFileDir(), "make -n -W " + name + " " + obj);
+    std::string makeDB = Utils::exec(dir, "make -n -W " + name + " " + obj);
     log(DEBUG, "getFileFlags: makeDB:\n%s", makeDB.c_str());
 
     vector<string> result = Geek::Core::splitString(makeDB, ' ');
