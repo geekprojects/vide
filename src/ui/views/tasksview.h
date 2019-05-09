@@ -23,7 +23,7 @@ class TasksView : public Frontier::Frame, public View
 
     virtual void init();
 
-    void update();
+    void update(Geek::Core::Task* task);
 };
 
 #endif

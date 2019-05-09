@@ -1,9 +1,11 @@
 
 #include <string.h>
+#include <sys/time.h>
 
 #include "cxxfiletypemanager.h"
 #include "editor/buffer.h"
 #include "project/project.h"
+#include "utils.h"
 
 using namespace std;
 using namespace Frontier;
@@ -48,8 +50,11 @@ void CXXTokeniser::addDiagnostic(LineToken* token, CXDiagnostic diag)
 
 bool CXXTokeniser::tokenise(Buffer* buffer)
 {
+    uint64_t start = ::Utils::getTimestamp();
     uint32_t length;
     char* membuffer = buffer->writeToMem(length);
+
+    uint64_t parsedBufferTS = buffer->getTimestamp();
 
     CXUnsavedFile file[1];
     file[0].Filename = strdup(buffer->getFilename().c_str());
@@ -62,6 +67,20 @@ bool CXXTokeniser::tokenise(Buffer* buffer)
         return false;
     }
     CXFile cxfile = clang_getFile(unit, buffer->getFilename().c_str());
+
+    uint64_t parsedDiff = ::Utils::getTimestamp() - start;
+    log(DEBUG, "tokenise: parsedDiff=%llums", parsedDiff);
+
+    buffer->lock();
+    uint64_t currentBufferTS = buffer->getTimestamp();
+    log(DEBUG, "tokenise: parsedBufferTS=%llu, currentBufferTS=%llu", parsedBufferTS, currentBufferTS);
+
+    if (parsedBufferTS != currentBufferTS)
+    {
+        log(DEBUG, "tokenise: Buffer has updated since parsing. Aborting");
+        buffer->unlock();
+        return true;
+    }
 
     unsigned int l = 0;
     for (Line* line : buffer->getLines())
@@ -120,7 +139,7 @@ bool CXXTokeniser::tokenise(Buffer* buffer)
             {
                 // There was white space!
                 LineToken* lineToken = new LineToken();
-                lineToken->column = lastEnd;
+                //lineToken->column = lastEnd;
                 lineToken->isSpace = true;
                 unsigned int wlen = (start.column - lastEnd);
                 lineToken->text = line->text.substr(lastEnd, wlen);
@@ -140,7 +159,7 @@ bool CXXTokeniser::tokenise(Buffer* buffer)
 
             LineToken* lineToken = new LineToken();
             lineToken->text = text;
-            lineToken->column = start.column;
+            //lineToken->column = start.column;
 
 #if 0
             char msg[1024];
@@ -281,17 +300,17 @@ bool CXXTokeniser::tokenise(Buffer* buffer)
                 Position pos = start;
                 while (pos.column <= end.column)
                 {
-                    LineToken* token = buffer->getToken(pos);
-                    if (token == NULL)
+                    TokenAt at = buffer->getToken(pos);
+                    if (at.token == NULL)
                     {
                         break;
                     }
 #if 0
                     log(DEBUG, " -> %u: %ls", i, token->text.c_str());
 #endif
-                    addDiagnostic(token, diag);
+                    addDiagnostic(at.token, diag);
 
-                    pos.column += token->text.length();
+                    pos.column += at.token->text.length();
                 }
             }
 
@@ -302,24 +321,29 @@ bool CXXTokeniser::tokenise(Buffer* buffer)
 #if 0
             log(DEBUG, " -> %u: %u,%u", i, pos.line, pos.column);
 #endif
-            LineToken* token = buffer->getToken(pos);
-            if (token != NULL)
+            TokenAt at = buffer->getToken(pos);
+            if (at.token != NULL)
             {
 #if 0
                 log(DEBUG, " -> %u: %ls", i, token->text.c_str());
 #endif
-                addDiagnostic(token, diag);
+                addDiagnostic(at.token, diag);
             }
         }
     }
 
     m_ftm->indexStructure(unit, buffer->getProjectFile());
 
-    clang_disposeTranslationUnit(unit);
+    //clang_disposeTranslationUnit(unit);
 
     delete[] membuffer;
 
     buffer->clearDirty();
+    buffer->unlock();
+
+    uint64_t end = ::Utils::getTimestamp();
+    uint64_t diff = end - start;
+    log(DEBUG, "tokenise: diff=%llums", diff);
 
     return true;
 }

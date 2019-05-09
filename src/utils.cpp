@@ -22,6 +22,7 @@
 
 #include <unistd.h>
 #include <wchar.h>
+#include <sys/time.h>
 
 #include <geek/core-string.h>
 
@@ -156,5 +157,16 @@ string Utils::mkpath(string baseDir, string relativePath)
     }
 
     return result;
+}
+
+uint64_t Utils::getTimestamp()
+{
+    timeval tv;
+    gettimeofday(&tv, NULL);
+    uint64_t millis;
+    millis = tv.tv_sec * 1000l;
+    millis += tv.tv_usec / 1000l;
+
+    return millis;
 }
 

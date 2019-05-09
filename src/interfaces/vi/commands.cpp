@@ -178,21 +178,21 @@ bool ViInterface::commandMoveNextWordEnd(ViCommand* command)
 {
     Position cursor = m_editor->getCursorPosition();
     Position pos = cursor;
-    LineToken* token = m_editor->getBuffer()->getToken(cursor);
-    printf("ViInterface::commandMoveNextWordEnd: e: token=%p\n", token);
+    TokenAt at = m_editor->getBuffer()->getToken(cursor);
+    printf("ViInterface::commandMoveNextWordEnd: e: token=%p\n", at.token);
 
-    if (token == NULL || token->isSpace || cursor.column == (token->column + token->text.length() - 1) )
+    if (at.token == NULL || at.token->isSpace || cursor.column == (at.tokenColumn + at.token->text.length() - 1) )
     {
         printf("ViInterface::commandMoveNextWordEnd: e: Looking for next word...\n");
         pos = m_editor->findNextWord();
         printf("ViInterface::commandMoveNextWordEnd: e: pos: line=%u, col=%u\n", pos.line, pos.column);
-        token = m_editor->getBuffer()->getToken(pos);
+        at = m_editor->getBuffer()->getToken(pos);
     }
 
-    printf("ViInterface::commandMoveNextWordEnd: e: token(2)=%p\n", token);
-    if (token != NULL)
+    printf("ViInterface::commandMoveNextWordEnd: e: token(2)=%p\n", at.token);
+    if (at.token != NULL)
     {
-        pos.column = token->column + token->text.length() - 1;
+        pos.column = at.tokenColumn + at.token->text.length() - 1;
         m_editor->moveCursor(pos);
     }
     return true;

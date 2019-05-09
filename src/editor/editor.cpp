@@ -26,10 +26,13 @@
 
 #include <wctype.h>
 
+#include <geek/core-tasks.h>
+
 using namespace std;
 using namespace Frontier;
 using namespace Geek;
 using namespace Geek::Gfx;
+using namespace Geek::Core;
 
 Editor::Editor(Buffer* buffer, FileTypeManager* ftm) : Logger("Editor")
 {
@@ -53,7 +56,7 @@ void Editor::setBuffer(Buffer* buffer)
 {
     m_buffer = buffer;
 
-    m_fileTypeManager->tokenise(m_buffer);
+    //m_fileTypeManager->tokenise(m_buffer);
 
 #if 0
     m_interface->updateStatus();
@@ -75,32 +78,33 @@ Position Editor::findPrevWord(Position from)
         from.column = line->text.length() - 1;
     }
 
-    vector<LineToken*>::iterator it;
-    it = line->tokenAt(from.column, false);
+    TokenAt at;
+    at = line->tokenAt(from.column, false);
 
     bool prevLine = false;
-    if (it != line->tokens.begin() && (it - 1) != line->tokens.begin())
+    if (at.it != line->tokens.begin() && (at.it - 1) != line->tokens.begin())
     {
-        LineToken* curToken = *it;
+        LineToken* curToken = *(at.it);
         log(DEBUG, "CURRENT TOKEN: %ls", curToken->text.c_str());
 
-        if (curToken->column < from.column)
+        if (at.tokenColumn < from.column)
         {
-            return Position(from.line, curToken->column);
+            return Position(from.line, at.tokenColumn);
         }
 
         do
         {
-            it--;
+at.tokenColumn -= (*(at.it))->text.length();
+            at.it--;
         }
-        while (it != line->tokens.begin() && (*it)->isSpace);
+        while (at.it != line->tokens.begin() && (*(at.it))->isSpace);
 
-        if (it != line->tokens.begin())
+        if (at.it != line->tokens.begin())
         {
-            LineToken* nextToken = *it;
+            LineToken* nextToken = *(at.it);
 
             log(DEBUG, "PREV TOKEN: %ls", nextToken->text.c_str());
-            return Position(from.line, nextToken->column);
+            return Position(from.line, at.tokenColumn);
         }
         else
         {
@@ -140,27 +144,28 @@ Position Editor::findNextWord(Position from)
 {
     Line* line = m_buffer->getLine(from.line);
 
-    vector<LineToken*>::iterator it;
-    it = line->tokenAt(from.column, false);
+    TokenAt at;
+    at = line->tokenAt(from.column, false);
 
     bool nextLine = false;
-    if (it != line->tokens.end() && (it + 1) != line->tokens.end())
+    if (at.it != line->tokens.end() && (at.it + 1) != line->tokens.end())
     {
-        LineToken* curToken = *it;
+        LineToken* curToken = *(at.it);
         log(DEBUG, "CURRENT TOKEN: %ls", curToken->text.c_str());
 
         do
         {
-            it++;
+at.tokenColumn += (*(at.it))->text.length();
+            at.it++;
         }
-        while (it != line->tokens.end() && (*it)->isSpace);
+        while (at.it != line->tokens.end() && (*(at.it))->isSpace);
 
-        if (it != line->tokens.end())
+        if (at.it != line->tokens.end())
         {
-            LineToken* nextToken = *it;
+            LineToken* nextToken = *at.it;
 
             log(DEBUG, "NEXT TOKEN: %ls", nextToken->text.c_str());
-            return Position(from.line, nextToken->column);
+            return Position(from.line, at.tokenColumn);
         }
         else
         {
@@ -452,12 +457,21 @@ void Editor::executeEdits(vector<Edit> edits)
         executeEdit(edit);
     }
 
+    m_editedSignal.emit();
     setDirty();
 }
 
 void Editor::executeEdit(Edit edit)
 {
     Line* line = m_buffer->getLine(edit.position.line);
+
+    TokenAt at = m_buffer->getToken(edit.position);
+    unsigned int tokenPos = 0;
+    if (at.token != NULL)
+    {
+        tokenPos = edit.position.column - at.tokenColumn;
+        log(DEBUG, "executeEdit: column=%u, tokenColumn=%u", edit.position.column, tokenPos);
+    }
 
     switch (edit.editType)
     {
@@ -467,6 +481,10 @@ void Editor::executeEdit(Edit edit)
             for (i = 0; i < edit.newText.length(); i++)
             {
                 line->text.insert(edit.position.column + i, 1, edit.newText.at(i));
+                if (at.token != NULL)
+                {
+                    at.token->text.insert(tokenPos, 1, edit.newText.at(i));
+                }
             }
             m_buffer->setDirtyLine(line);
         } break;
@@ -491,6 +509,10 @@ void Editor::executeEdit(Edit edit)
 
         case EDIT_DELETE_CHAR:
             line->text.erase(edit.position.column, 1);
+                if (at.token != NULL)
+                {
+                    at.token->text.erase(tokenPos, 1);
+                }
             m_buffer->setDirtyLine(line);
             break;
 
@@ -508,6 +530,7 @@ void Editor::executeEdit(Edit edit)
             m_buffer->setDirtyLine(line);
             break;
     }
+
 }
 
 void Editor::undoEdits(vector<Edit> edits)
@@ -520,6 +543,7 @@ void Editor::undoEdits(vector<Edit> edits)
         undoEdit(edit);
     }
 
+    m_editedSignal.emit();
     setDirty();
 }
 

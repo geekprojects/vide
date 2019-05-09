@@ -373,13 +373,10 @@ FileIndexTask::FileIndexTask(ProjectFile* file) : Task()
 
 FileIndexTask::~FileIndexTask()
 {
-    m_file->getProject()->getVide()->taskComplete();
 }
 
 void FileIndexTask::run()
 {
-    m_file->getProject()->getVide()->taskComplete();
     m_file->getFileTypeManager()->index(m_file);
 }
-
 

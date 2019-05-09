@@ -22,26 +22,33 @@
 #include "buffer.h"
 
 #include "utf8.h"
+#include "utils.h"
 
 #include <string.h>
 
 using namespace std;
+using namespace Geek;
 
 Buffer::Buffer(string filename)
 {
     m_filename = filename;
     m_dirty = true;
+
+    m_mutex = Thread::createMutex();
 }
 
 Buffer::~Buffer()
 {
 }
 
-LineToken* Buffer::getToken(Position pos)
+TokenAt Buffer::getToken(Position pos)
 {
+    TokenAt at;
     if (pos.line >= m_lines.size())
     {
-        return NULL;
+        at.token = NULL;
+        at.tokenColumn = 0;
+        return at;
     }
 
     Line* line = m_lines.at(pos.line);
@@ -49,13 +56,7 @@ LineToken* Buffer::getToken(Position pos)
     {
         pos.column = line->text.length() - 1;
     }
-    vector<LineToken*>::iterator it = line->tokenAt(pos.column, false);
-
-    if (it != line->tokens.end())
-    {
-        return *it;
-    }
-    return NULL;
+    return line->tokenAt(pos.column, false);
 }
 
 void Buffer::insertLine(int asLine, Line* line)
@@ -87,6 +88,7 @@ void Buffer::setDirtyLine(Line* line)
 {
     line->dirty = true;
     m_dirty = true;
+    m_timestamp = Utils::getTimestamp();
 }
 
 void Buffer::clearDirty()
@@ -285,35 +287,52 @@ Buffer* Buffer::loadFile(const char* filename)
     return buffer;
 }
 
-vector<LineToken*>::iterator Line::tokenAt(unsigned int column, bool ignoreSpace)
+void Buffer::lock()
 {
+    m_mutex->lock();
+}
+
+void Buffer::unlock()
+{
+    m_mutex->unlock();
+}
+
+TokenAt Line::tokenAt(unsigned int column, bool ignoreSpace)
+{
+    TokenAt at;
+    at.token = NULL;
+    at.tokenColumn = 0;
+    at.it = tokens.begin();
+
     if (column == 0)
     {
-        return tokens.begin();
+        at.token = *(at.it);
+        return at;
     }
 
-    vector<LineToken*>::iterator it;
 #if 0
     printf("Line::tokenAt: column=%u, ignoreSpace=%d\n", column, ignoreSpace);
 #endif
-    for (it = tokens.begin(); it != tokens.end(); it++)
+    LineToken* token = NULL;
+    for (at.it = tokens.begin(); at.it != tokens.end(); at.it++, at.tokenColumn += token->text.length())
     {
-        LineToken* token = *it;
+        token = *(at.it);
 #if 0
         printf("Line::tokenAt: token=%ls, column=%d, isSpace=%d\n", token->text.c_str(), token->column, token->isSpace);
 #endif
-        if (token->column + token->text.length() > column)
+        if (at.tokenColumn + token->text.length() > column)
         {
 #if 0
         printf("Line::tokenAt: Found! isSpace=%d\n", token->isSpace);
 #endif
             if (!ignoreSpace || !token->isSpace)
             {
-                return it;
+                at.token = token;
+                return at;
             }
         }
     }
-    return tokens.end();
+    return at;
 }
 
 void Line::clearTokens()

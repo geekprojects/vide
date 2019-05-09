@@ -25,6 +25,11 @@
 #include <string>
 #include <wchar.h>
 
+#include <sigc++/sigc++.h>
+
+#include <frontier/utils.h>
+#include <geek/core-thread.h>
+
 #include "filetypes/tokeniser.h"
 
 class ProjectFile;
@@ -113,12 +118,20 @@ struct TokenMessage
 
 struct LineToken
 {
-    unsigned int column;
+    //unsigned int column;
     std::wstring text;
     TokenType type;
     bool isSpace;
+    Frontier::Rect drawRect;
 
     std::vector<TokenMessage> messages;
+};
+
+struct TokenAt
+{
+    unsigned int tokenColumn;
+    LineToken* token;
+    std::vector<LineToken*>::iterator it;
 };
 
 struct Line
@@ -142,7 +155,7 @@ struct Line
         clearTokens();
     }
 
-    std::vector<LineToken*>::iterator tokenAt(unsigned int column, bool ignoreSpace);
+    TokenAt tokenAt(unsigned int column, bool ignoreSpace);
 
     void clearTokens();
 };
@@ -154,6 +167,11 @@ class Buffer
     ProjectFile* m_projectFile;
     std::vector<Line*> m_lines;
     bool m_dirty;
+
+    uint64_t m_timestamp;
+    Geek::Mutex* m_mutex;
+
+    sigc::signal<void> m_tokeniseCompleteSignal;
 
  public:
     Buffer(std::string filename);
@@ -186,7 +204,7 @@ class Buffer
             return NULL;
         }
     }
-    LineToken* getToken(Position position);
+    TokenAt getToken(Position position);
 
     void insertLine(int asLine, Line* line);
     void deleteLine(int line);
@@ -194,8 +212,14 @@ class Buffer
     void setDirtyLine(Line* line);
     void clearDirty();
 
+    uint64_t getTimestamp() { return m_timestamp; }
+    void lock();
+    void unlock();
+
     bool save();
     char* writeToMem(uint32_t& size);
+
+    sigc::signal<void> tokeniseCompleteSignal() { return m_tokeniseCompleteSignal; }
 
     void dump();
 

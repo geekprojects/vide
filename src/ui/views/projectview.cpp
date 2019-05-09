@@ -37,6 +37,10 @@ ProjectView::ProjectView(Vide* vide, Project* project) : Frame(vide, L"ProjectVi
     m_vide = vide;
     m_project = project;
     m_margin = 0;
+
+    m_projectList = new List(m_vide);
+    m_scroller = new Scroller(m_vide, m_projectList);
+    add(m_scroller);
 }
 
 ProjectView::~ProjectView()
@@ -45,12 +49,11 @@ ProjectView::~ProjectView()
 
 void ProjectView::init()
 {
-    m_projectList = new List(m_vide);
-    m_scroller = new Scroller(m_vide, m_projectList);
-    add(m_scroller);
 }
 
 void ProjectView::update()
+{
+if (m_projectList != NULL)
 {
     TreeListItem* rootItem = new TreeListItem(m_vide, L"Project");
     rootItem->setOpen(true);
@@ -58,6 +61,7 @@ void ProjectView::update()
 
     ProjectDirectory* root = m_project->getRoot();
     addDirectory(rootItem, root);
+}
 }
 
 void ProjectView::addDirectory(TreeListItem* parent, ProjectDirectory* dir)

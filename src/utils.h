@@ -36,6 +36,8 @@ class Utils
     static std::string exec(std::string dir, std::string cmd);
 
     static std::string mkpath(std::string baseDir, std::string relativePath);
+
+    static uint64_t getTimestamp();
 };
 
 #endif

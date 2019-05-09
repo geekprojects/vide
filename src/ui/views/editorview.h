@@ -70,6 +70,9 @@ class EditorView : public Frontier::Widget, public View
     Interface* m_interface;
     EditorCharacterMap* m_characterMap;
 
+    Geek::Core::Timer* m_indexTimer;
+    uint64_t m_tokeniseTime;
+
     int m_marginX;
     Frontier::Size m_charSize;
 
@@ -84,6 +87,13 @@ class EditorView : public Frontier::Widget, public View
 
     void drawCursor(Geek::Gfx::Surface* surface, int x, int y);
 
+    void onCursorMoved();
+    void onScrollbarChanged(int pos);
+    void onMouseLeave();
+    void onEdit();
+    void indexTimer(Geek::Core::Timer*);
+    void tokeniseComplete(Geek::Core::Task* task);
+
  public:
     EditorView(Vide* window, Editor* editor);
     virtual ~EditorView();
@@ -96,10 +106,6 @@ class EditorView : public Frontier::Widget, public View
     virtual bool draw(Geek::Gfx::Surface* surface);
 
     virtual Widget* handleEvent(Frontier::Event* event);
-
-    void cursorMoved();
-    void onScrollbarChanged(int pos);
-    void onMouseLeave();
 
     void updateStatus();
 

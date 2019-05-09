@@ -25,6 +25,7 @@
 #include <frontier/widgets.h>
 
 #include <geek/core-tasks.h>
+#include <geek/core-timers.h>
 
 enum FileHandlerPriority
 {
@@ -52,6 +53,7 @@ class Vide : public Frontier::FrontierApp
     WelcomeWindow* m_welcomeWindow;
 
     Geek::Core::TaskExecutor* m_taskExecutor;
+    Geek::Core::TimerManager* m_timerManager;
     VidePluginManager* m_pluginManager;
 
     std::vector<FileTypeManager*> m_fileTypeManagers;
@@ -64,7 +66,6 @@ class Vide : public Frontier::FrontierApp
     std::vector<std::wstring> m_buffer;
 
     sigc::signal<void, Project*> m_openProjectSignal;
-    sigc::signal<void> m_taskCompleteSignal;
 
  public:
     Vide();
@@ -78,6 +79,7 @@ class Vide : public Frontier::FrontierApp
     BuildTool* findBuildTool(Project* project);
 
     Geek::Core::TaskExecutor* getTaskExecutor() { return m_taskExecutor; }
+    Geek::Core::TimerManager* getTimerManager() { return m_timerManager; }
     VidePluginManager* getPluginManager() { return m_pluginManager; }
 
     FontHandle* getTextFont() { return m_textFont; }
@@ -94,7 +96,6 @@ class Vide : public Frontier::FrontierApp
 
     // Hooks for plugins
     sigc::signal<void, Project*> openProjectSignal() { return m_openProjectSignal; }
-    sigc::signal<void> taskCompleteSignal() { return m_taskCompleteSignal; }
 
     void taskComplete();
 };

@@ -31,6 +31,10 @@ StructureView::StructureView(Vide* vide, bool fileView) : Frame(vide, L"Structur
     m_fileView = fileView;
 
     m_margin = 0;
+
+    m_structureList = new List(m_vide);
+    m_scroller = new Scroller(m_vide, m_structureList);
+    add(m_scroller);
 }
 
 StructureView::~StructureView()
@@ -39,9 +43,6 @@ StructureView::~StructureView()
 
 void StructureView::init()
 {
-    m_structureList = new List(m_vide);
-    m_scroller = new Scroller(m_vide, m_structureList);
-    add(m_scroller);
 }
 
 void StructureView::update()

@@ -103,9 +103,13 @@ class Editor : public Geek::Logger
     FileTypeManager* m_fileTypeManager;
 
     sigc::signal<void> m_cursorMovedSignal;
+    sigc::signal<void> m_editedSignal;
+
+    void executeEdit(Edit edit);
 
     void doJoinLines(unsigned int line, Line* line1);
     void doSplitLine(Position pos, Line* line);
+
 
  public:
     Editor(Buffer* buffer, FileTypeManager* ftm);
@@ -153,7 +157,6 @@ class Editor : public Geek::Logger
     void searchPrev(std::wstring pattern);
 
     void executeEdits(std::vector<Edit> edits);
-    void executeEdit(Edit edit);
     void undoEdits(std::vector<Edit> edits);
     void undoEdit(Edit edit);
 
@@ -170,6 +173,7 @@ class Editor : public Geek::Logger
     std::vector<Edit>  pasteFromBuffer();
 
     sigc::signal<void> cursorMovedSignal() { return m_cursorMovedSignal; }
+    sigc::signal<void> editedSignal() { return m_editedSignal; }
 };
 
 #endif

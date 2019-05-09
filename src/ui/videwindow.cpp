@@ -73,9 +73,14 @@ bool VideWindow::init()
     mainFrame->addWithSize(m_leftTabs, 25);
 
     m_editorTabs = new Tabs(this);
-    mainFrame->addWithSize(m_editorTabs, 50);
+    mainFrame->addWithSize(m_editorTabs, 25);
     m_editorTabs->changeTabSignal().connect(sigc::mem_fun(*this, &VideWindow::onEditorTabChange));
     m_editorTabs->closeTabSignal().connect(sigc::mem_fun(*this, &VideWindow::onCloseTab));
+
+    Tabs* m_editorTabs2 = new Tabs(this);
+    mainFrame->addWithSize(m_editorTabs2, 25);
+    m_editorTabs2->changeTabSignal().connect(sigc::mem_fun(*this, &VideWindow::onEditorTabChange));
+    m_editorTabs2->closeTabSignal().connect(sigc::mem_fun(*this, &VideWindow::onCloseTab));
 
     m_rightTabs = new Tabs(this, true, TAB_RIGHT);
     m_fileStructureView = new StructureView(m_vide, true);
@@ -117,11 +122,20 @@ bool VideWindow::init()
     editMenu->add(new MenuItem(L"Paste", L'v', 0));
     menu->add(editMenu);
 
+    MenuItem* viewMenu = new MenuItem(L"View");
+    viewMenu->add(new MenuItem(L"Split Horizontally", L'h', 0));
+    viewMenu->add(new MenuItem(L"Split Vertically"));
+    menu->add(viewMenu);
+
     MenuItem* buildMenu = new MenuItem(L"Build");
     buildMenu->add(new MenuItem(L"Build"));
     buildMenu->add(new MenuItem(L"Run"));
     buildMenu->add(new MenuItem(L"Clean"));
     menu->add(buildMenu);
+
+    MenuItem* helpMenu = new MenuItem(L"Help");
+    helpMenu->add(new MenuItem(L"Vide Help"));
+    menu->add(helpMenu);
 
     setMenu(menu);
 
@@ -188,6 +202,11 @@ Editor* VideWindow::openEntry(ProjectEntry* entry)
         editor = new Editor(buffer, entry->getFileTypeManager());
         editor->setBuffer(buffer);
 
+        if (buffer->isDirty())
+        {
+            editor->getFileTypeManager()->tokenise(buffer);
+        }
+
         editorView = new EditorView(m_vide, editor);
         Icon* icon = entry->getFileTypeManager()->getIcon();
         m_editorTabs->addTab(Frontier::Utils::string2wstring(entry->getName()), icon, editorView, true);
@@ -199,9 +218,9 @@ Editor* VideWindow::openEntry(ProjectEntry* entry)
     }
     else
     {
-        for (Tab tab : m_editorTabs->getTabs())
+        for (Tab* tab : m_editorTabs->getTabs())
         {
-            EditorView* ev = (EditorView*)tab.content;
+            EditorView* ev = (EditorView*)tab->getContent();
             if (ev->getEditor() == editor)
             {
                 editorView = ev;

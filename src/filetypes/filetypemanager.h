@@ -20,7 +20,6 @@ class FileTypeManager : public VidePlugin
  protected:
     Tokeniser* m_tokeniser;
 
-
  public:
     FileTypeManager(Vide* vide);
     virtual ~FileTypeManager();

@@ -68,7 +68,7 @@ bool CXXFileTypeManager::index(ProjectFile* file)
 
     indexStructure(unit, file);
 
-    clang_disposeTranslationUnit(unit);
+    //clang_disposeTranslationUnit(unit);
 
     return true;
 }
@@ -329,11 +329,21 @@ CXTranslationUnit CXXFileTypeManager::parse(ProjectFile* file, CXUnsavedFile* un
         unsavedFileCount = 1;
     }
 
-    CXTranslationUnit unit = clang_parseTranslationUnit(
-        getIndex(),
-        file->getAbsolutePath().c_str(), argv, argc,
-        unsavedFile, unsavedFileCount,
-        CXTranslationUnit_DetailedPreprocessingRecord | CXTranslationUnit_KeepGoing);
+    CXTranslationUnit unit;
+    if (file->getTokeniseData() == NULL)
+    {
+        unit = clang_parseTranslationUnit(
+            getIndex(),
+            file->getAbsolutePath().c_str(), argv, argc,
+            unsavedFile, unsavedFileCount,
+            CXTranslationUnit_DetailedPreprocessingRecord | CXTranslationUnit_KeepGoing);
+        file->setTokeniseData(unit);
+    }
+    else
+    {
+        unit = (CXTranslationUnit)(file->getTokeniseData());
+        clang_reparseTranslationUnit(unit, unsavedFileCount, unsavedFile, CXTranslationUnit_DetailedPreprocessingRecord | CXTranslationUnit_KeepGoing);
+    }
 
     for (char* arg : argv)
     {
@@ -342,8 +352,6 @@ CXTranslationUnit CXXFileTypeManager::parse(ProjectFile* file, CXUnsavedFile* un
             free(arg);
         }
     }
-
-
 
     return unit;
 }

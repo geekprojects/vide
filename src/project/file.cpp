@@ -11,6 +11,7 @@ ProjectFile::ProjectFile(Project* project, ProjectEntry* parent, std::string nam
 {
     m_buffer = NULL;
     m_hasBuildArgs = false;
+    m_tokeniseData = NULL;
 }
 
 ProjectFile::~ProjectFile()

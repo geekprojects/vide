@@ -21,12 +21,14 @@ void TasksView::init()
     m_scroller = new Scroller(m_vide, m_tasksList);
     add(m_scroller);
 
-    update();
+    update(NULL);
 
-    m_vide->taskCompleteSignal().connect(sigc::mem_fun(*this, &TasksView::update));
+    m_vide->getTaskExecutor()->queuedSignal().connect(sigc::mem_fun(*this, &TasksView::update));
+    m_vide->getTaskExecutor()->startedSignal().connect(sigc::mem_fun(*this, &TasksView::update));
+    m_vide->getTaskExecutor()->completeSignal().connect(sigc::mem_fun(*this, &TasksView::update));
 }
 
-void TasksView::update()
+void TasksView::update(Task* task)
 {
     m_tasksList->clearItems();
 

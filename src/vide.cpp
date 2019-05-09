@@ -76,6 +76,9 @@ bool Vide::init()
 
     m_taskExecutor = new TaskExecutor();
 
+    m_timerManager = new TimerManager();
+    m_timerManager->start();
+
     m_pluginManager = new VidePluginManager();
     m_pluginManager->init(this);
 
@@ -220,10 +223,4 @@ VideWindow* Vide::getProjectWindow(Project* project)
     }
     return NULL;
 }
-
-void Vide::taskComplete()
-{
-    m_taskCompleteSignal.emit();
-}
-
 

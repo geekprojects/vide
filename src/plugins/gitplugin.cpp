@@ -5,6 +5,7 @@
 #include "vide.h"
 #include "ui/videwindow.h"
 
+using namespace std;
 using namespace Geek;
 
 VIDE_PLUGIN(GitPlugin);
@@ -75,8 +76,14 @@ void GitPlugin::onOpenProjectEntry(ProjectEntry* projectEntry)
         return;
     }
 
+    string path = projectEntry->getFilePath();
+    if (path.at(0) == '/')
+    {
+        path = path.substr(1);
+    }
+
     git_blame* blame;
-    error = git_blame_file(&blame, repo, projectEntry->getFilePath().c_str(), NULL);
+    error = git_blame_file(&blame, repo, path.c_str(), NULL);
     if (error != 0)
     {
         const git_error *e = giterr_last();
@@ -85,15 +92,22 @@ void GitPlugin::onOpenProjectEntry(ProjectEntry* projectEntry)
     }
     log(DEBUG, "onOpenProjectEntry: blame=%p", blame);
 
-    const git_blame_hunk* hunk;
-    hunk = git_blame_get_hunk_byline(blame, 1);
-    log(DEBUG, "onOpenProjectEntry: hunk=%p", hunk);
+    int i = 0;
+    for (i = 1; i <= 10; i++)
+    {
+        const git_blame_hunk* hunk;
+        hunk = git_blame_get_hunk_byline(blame, i);
+        log(DEBUG, "onOpenProjectEntry: hunk=%p", hunk);
+        if (hunk == NULL)
+        {
+            break;
+        }
 
-    git_commit* commit;
-    git_commit_lookup(&commit, repo, &(hunk->final_commit_id));
+        git_commit* commit;
+        git_commit_lookup(&commit, repo, &(hunk->final_commit_id));
 
-    log(DEBUG, "onOpenProjectEntry: 1: %s", git_commit_message(commit));
-
+        log(DEBUG, "onOpenProjectEntry: %d: %s", i, git_commit_message(commit));
+    }
     git_blame_free(blame);
 }
 

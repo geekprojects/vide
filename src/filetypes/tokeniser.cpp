@@ -38,6 +38,7 @@ bool Tokeniser::tokenise(Buffer* buffer)
 {
     vector<Line*>::iterator lineIt;
 
+    buffer->lock();
     for (lineIt = buffer->getLines().begin(); lineIt != buffer->getLines().end(); lineIt++)
     {
         Line* line = *lineIt;
@@ -47,11 +48,13 @@ bool Tokeniser::tokenise(Buffer* buffer)
             res = tokenise(buffer, line);
             if (!res)
             {
+                buffer->unlock();
                 return false;
             }
         }
     }
     buffer->clearDirty();
+    buffer->unlock();
 
     return true;
 }
@@ -78,7 +81,7 @@ vector<LineToken*> Tokeniser::splitText(TokenType type, wstring text)
         {
             token = new LineToken();
             tokens.push_back(token);
-            token->column = pos;
+            //token->column = pos;
             token->isSpace = true;
             token->type = type;
 
@@ -107,7 +110,7 @@ vector<LineToken*> Tokeniser::splitText(TokenType type, wstring text)
             {
                 token = new LineToken();
                 token->type = type;
-                token->column = pos;
+                //token->column = pos;
                 tokens.push_back(token);
                 t++;
             }

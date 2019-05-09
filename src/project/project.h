@@ -169,6 +169,8 @@ class ProjectFile : public ProjectEntry
     bool m_hasBuildArgs;
     std::vector<std::string> m_buildArgs;
 
+    void* m_tokeniseData;
+
  public:
     ProjectFile(Project* project, ProjectEntry* parent, std::string name);
     virtual ~ProjectFile();
@@ -180,6 +182,9 @@ class ProjectFile : public ProjectEntry
     void setBuildArgs(std::vector<std::string> args);
     std::vector<std::string> getBuildArgs() { return m_buildArgs; }
     bool hasBuildArgs() { return m_hasBuildArgs; }
+
+    void setTokeniseData(void* data) { m_tokeniseData = data; }
+    void* getTokeniseData() { return m_tokeniseData; }
 };
 
 class ProjectDirectory : public ProjectEntry

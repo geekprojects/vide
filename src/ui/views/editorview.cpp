@@ -23,8 +23,11 @@
 #include "ui/views/editorview.h"
 #include "vide.h"
 #include "interfaces/vi/vi.h"
+#include "utils.h"
 
 #include <wctype.h>
+
+#include <frontier/utils.h>
 
 #define ALIGN(V, SIZE) ((((V) + (SIZE) - 1) / (SIZE)) * (SIZE))
 
@@ -32,13 +35,56 @@ using namespace std;
 using namespace Frontier;
 using namespace Geek;
 using namespace Geek::Gfx;
+using namespace Geek::Core;
+
+
+class EditorTokeniseTask : public Task
+{
+ private:
+    Editor* m_editor;
+    uint64_t m_tokeniseTime;
+
+ public:
+    EditorTokeniseTask(Editor* editor) : Task(L"Tokeniser")
+    {
+        m_editor = editor;
+    }
+
+    virtual ~EditorTokeniseTask()
+    {
+    }
+
+    void run()
+    {
+        uint64_t start = ::Utils::getTimestamp();
+        m_editor->getFileTypeManager()->tokenise(m_editor->getBuffer());
+        uint64_t end = ::Utils::getTimestamp();
+        m_tokeniseTime = end - start;
+        //m_editor->getBuffer()->tokeniseCompleteSignal().emit();
+    }
+
+    uint64_t getTokeniseTime()
+    {
+        return m_tokeniseTime;
+    }
+};
 
 EditorView::EditorView(Vide* vide, Editor* editor) : Widget(vide, L"EditorView")
 {
     m_vide = vide;
     m_editor = editor;
-    m_editor->cursorMovedSignal().connect(sigc::mem_fun(*this, &EditorView::cursorMoved));
+    m_editor->cursorMovedSignal().connect(sigc::mem_fun(*this, &EditorView::onCursorMoved));
+    m_editor->editedSignal().connect(sigc::mem_fun(*this, &EditorView::onEdit));
     m_characterMap = new EditorCharacterMap();
+
+    uint64_t tokeniseStart = ::Utils::getTimestamp();
+    m_editor->getFileTypeManager()->tokenise(m_editor->getBuffer());
+    uint64_t tokeniseEnd = ::Utils::getTimestamp();
+    m_tokeniseTime = tokeniseEnd - tokeniseStart;
+
+    m_indexTimer = new Timer(TIMER_ONE_SHOT, m_tokeniseTime + 10);
+    m_indexTimer->signal().connect(sigc::mem_fun(*this, &EditorView::indexTimer));
+log(DEBUG, "XXX: indexTimer active=%d\n", m_indexTimer->isActive());
 
     m_scrollBar = new ScrollBar(vide);
     m_scrollBar->incRefCount();
@@ -77,6 +123,7 @@ EditorView::EditorView(Vide* vide, Editor* editor) : Widget(vide, L"EditorView")
     }
 
     updateStatus();
+
 }
 
 EditorView::~EditorView()
@@ -103,14 +150,22 @@ bool EditorView::draw(Surface* surface)
     Buffer* buffer = m_editor->getBuffer();
     if (buffer->isDirty())
     {
-        m_editor->getFileTypeManager()->tokenise(buffer);
+        buffer->clearDirty();
+        //m_vide->getTaskExecutor()->addTask(new EditorTokeniseTask(m_editor));
     }
 
     m_editor->clearDirty();
 
     Position cursor = m_editor->getCursorPosition();
 
-    surface->clear(0x002b2b2b);
+    if (isActive())
+    {
+        surface->clear(0x00202020);
+    }
+    else
+    {
+        surface->clear(0x002f2f2f);
+    }
 
     FontManager* fm = m_app->getFontManager();
     FontHandle* textFont = ((Vide*)m_app)->getTextFont();
@@ -336,14 +391,30 @@ void EditorView::drawCursor(Surface* surface, int x, int y)
 {
     CursorType cursorType = m_interface->getCursorType();
 
+    bool active = isActive();
+
     // Draw the cursor!
     switch (cursorType)
     {
         case CURSOR_BLOCK:
-            surface->drawRectFilled(x, y, m_charSize.width, m_charSize.height, 0x00BBBBBB);
+            if (active)
+            {
+                surface->drawRectFilled(x, y, m_charSize.width, m_charSize.height, 0x00BBBBBB);
+            }
+            else
+            {
+                surface->drawRect(x, y, m_charSize.width, m_charSize.height, 0x00888888);
+            }
             break;
         case CURSOR_BAR:
-            surface->drawRectFilled(x, y, 1, m_charSize.height, 0x00BBBBBB);
+            if (active)
+            {
+                surface->drawRectFilled(x, y, 1, m_charSize.height, 0x00BBBBBB);
+            }
+            else
+            {
+                surface->drawRectFilled(x, y, 1, m_charSize.height, 0x00888888);
+            }
             break;
     }
 }
@@ -386,6 +457,19 @@ Widget* EditorView::handleEvent(Event* event)
                 }
                 return this;
             }
+            else if (!!(keyEvent->modifiers & KMOD_ALT) && !!(keyEvent->modifiers & KMOD_COMMAND))
+            {
+                if (keyEvent->key == KC_LEFT)
+                {
+                    log(DEBUG, "handleMessage: MOVING LEFT!!");
+                    return this;
+                }
+                if (keyEvent->key == KC_RIGHT)
+                {
+                    log(DEBUG, "handleMessage: MOVING RIGHT!!");
+                    return this;
+                }
+            }
 
             m_interface->key(keyEvent);
             updateStatus();
@@ -403,85 +487,85 @@ Widget* EditorView::handleEvent(Event* event)
         {
             MouseEvent* mouseEvent = (MouseEvent*)event;
 
-                int x = mouseEvent->x;
-                int y = mouseEvent->y;
+            int x = mouseEvent->x;
+            int y = mouseEvent->y;
 
-                if (m_scrollBar->intersects(x, y))
-                {
-                    return m_scrollBar->handleEvent(event);
-                }
-
-                Vector2D thisPos = getAbsolutePosition();
-                x -= thisPos.x;
-                y -= thisPos.y;
-
-                if (x > m_marginX)
-                {
-                    x -= m_marginX;
-
-                    LineToken* selectedToken = m_characterMap->getToken(y / m_charSize.height, x / m_charSize.width);
-                    Position mousePos = m_characterMap->getPosition(y / m_charSize.height, x / m_charSize.width);
-
-                    if (event->eventType == FRONTIER_EVENT_MOUSE_BUTTON)
-                    {
-                        MouseButtonEvent* mouseButtonEvent = (MouseButtonEvent*)event;
-                        if (mouseButtonEvent->direction)
-                        {
-                            m_selecting = true;
-                            m_editor->setSelectStart(mousePos);
-                            m_editor->setSelectEnd(mousePos);
-                            m_editor->moveCursor(mousePos);
-                        }
-                        else
-                        {
-                            m_selecting = false;
-                        }
-
-                        setDirty(DIRTY_CONTENT);
-                        return this;
-                    }
-                    else if (event->eventType == FRONTIER_EVENT_MOUSE_MOTION)
-                    {
-                        if (m_selecting)
-                        {
-                            m_editor->setSelectEnd(mousePos);
-                            m_editor->moveCursorX(mousePos.column);
-                            m_editor->moveCursorY(mousePos.line);
-                            setDirty(DIRTY_CONTENT);
-                        }
-
-                        VideWindow* videWindow = (VideWindow*)getWindow();
-                        if (selectedToken != NULL && !selectedToken->messages.empty())
-                        {
-                            int x = mouseEvent->x;
-                            int y = mouseEvent->y;
-                            Geek::Vector2D screenPos = videWindow->getScreenPosition(Geek::Vector2D(x + 1, y + 1));
-                            videWindow->getEditorTipWindow()->setToken(selectedToken, screenPos);
-                        }
-                        else
-                        {
-                            videWindow->getEditorTipWindow()->hide();
-                        }
-                    }
-                }
-                return this;
-            } break;
-
-            case FRONTIER_EVENT_MOUSE_SCROLL:
+            if (m_scrollBar->intersects(x, y))
             {
-                MouseScrollEvent* mouseScrollEvent = (MouseScrollEvent*)event;
-                int scrollPos = m_scrollBar->getPos();
-                scrollPos -= mouseScrollEvent->scrollY;
-                m_scrollBar->setPos(scrollPos);
+                return m_scrollBar->handleEvent(event);
+            }
 
-                setDirty(DIRTY_CONTENT);
+            Vector2D thisPos = getAbsolutePosition();
+            x -= thisPos.x;
+            y -= thisPos.y;
 
-                return this;
-            } break;
+            if (x > m_marginX)
+            {
+                x -= m_marginX;
 
-            default:
-                break;
-        }
+                LineToken* selectedToken = m_characterMap->getToken(y / m_charSize.height, x / m_charSize.width);
+                Position mousePos = m_characterMap->getPosition(y / m_charSize.height, x / m_charSize.width);
+
+                if (event->eventType == FRONTIER_EVENT_MOUSE_BUTTON)
+                {
+                    MouseButtonEvent* mouseButtonEvent = (MouseButtonEvent*)event;
+                    if (mouseButtonEvent->direction)
+                    {
+                        m_selecting = true;
+                        m_editor->setSelectStart(mousePos);
+                        m_editor->setSelectEnd(mousePos);
+                        m_editor->moveCursor(mousePos);
+                    }
+                    else
+                    {
+                        m_selecting = false;
+                    }
+
+                    setDirty(DIRTY_CONTENT);
+                    return this;
+                }
+                else if (event->eventType == FRONTIER_EVENT_MOUSE_MOTION)
+                {
+                    if (m_selecting)
+                    {
+                        m_editor->setSelectEnd(mousePos);
+                        m_editor->moveCursorX(mousePos.column);
+                        m_editor->moveCursorY(mousePos.line);
+                        setDirty(DIRTY_CONTENT);
+                    }
+
+                    VideWindow* videWindow = (VideWindow*)getWindow();
+                    if (selectedToken != NULL && !selectedToken->messages.empty())
+                    {
+                        int x = mouseEvent->x;
+                        int y = mouseEvent->y;
+                        Geek::Vector2D screenPos = videWindow->getScreenPosition(Geek::Vector2D(x + 1, y + 1));
+                        videWindow->getEditorTipWindow()->setToken(selectedToken, screenPos);
+                    }
+                    else
+                    {
+                        videWindow->getEditorTipWindow()->hide();
+                    }
+                }
+            }
+            return this;
+        } break;
+
+        case FRONTIER_EVENT_MOUSE_SCROLL:
+        {
+            MouseScrollEvent* mouseScrollEvent = (MouseScrollEvent*)event;
+            int scrollPos = m_scrollBar->getPos();
+            scrollPos -= mouseScrollEvent->scrollY;
+            m_scrollBar->setPos(scrollPos);
+
+            setDirty(DIRTY_CONTENT);
+
+            return this;
+        } break;
+
+        default:
+            break;
+    }
 
     return NULL;
 }
@@ -497,7 +581,7 @@ void EditorView::onMouseLeave()
     videWindow->getEditorTipWindow()->hide();
 }
 
-void EditorView::cursorMoved()
+void EditorView::onCursorMoved()
 {
     unsigned int scrollPos = m_scrollBar->getPos();
     Position cursor = m_editor->getCursorPosition();
@@ -516,6 +600,29 @@ void EditorView::cursorMoved()
             m_scrollBar->setPos(scrollPos);
         }
     }
+}
+
+void EditorView::onEdit()
+{
+    m_indexTimer->setPeriod(m_tokeniseTime + 10);
+    if (m_indexTimer->isActive())
+    {
+        log(DEBUG, "onEdit: Resetting timer...");
+        m_vide->getTimerManager()->resetTimer(m_indexTimer);
+    }
+    else
+    {
+        log(DEBUG, "onEdit: Adding timer...");
+        m_vide->getTimerManager()->addTimer(m_indexTimer);
+    }
+}
+
+void EditorView::indexTimer(Timer* timer)
+{
+    log(DEBUG, "indexTimer: INDEX TIMER!\n");
+    EditorTokeniseTask* task = new EditorTokeniseTask(m_editor);
+    task->completeSignal().connect(sigc::mem_fun(*this, &EditorView::tokeniseComplete));
+    m_vide->getTaskExecutor()->addTask(task);
 }
 
 void EditorView::updateStatus()
@@ -543,6 +650,13 @@ unsigned int EditorView::getViewLines()
     return m_setSize.height / charHeight;
 }
 
+void EditorView::tokeniseComplete(Task* task)
+{
+    EditorTokeniseTask* tokeniseTask = (EditorTokeniseTask*)task;
+    m_tokeniseTime = tokeniseTask->getTokeniseTime();
+    getWindow()->requestUpdate();
+}
+
 EditorCharacterMap::EditorCharacterMap()
 {
     m_lines = 0;
@@ -560,11 +674,17 @@ EditorCharacterMap::~EditorCharacterMap()
 
 EditorCharacter* EditorCharacterMap::get(int line, int column)
 {
-if (line >= m_lines || column >= m_columns)
-{
-printf("ERROR: EditorCharacterMap::get: Position is outside of map: %d, %d > %d, %d\n", line, column, m_lines, m_columns);
-return NULL;
-}
+    if (m_map == NULL)
+    {
+        return NULL;
+    }
+
+    if (line >= m_lines || column >= m_columns)
+    {
+        printf("ERROR: EditorCharacterMap::get: Position is outside of map: %d, %d > %d, %d\n", line, column, m_lines, m_columns);
+        return NULL;
+    }
+
     return &(m_map[(line * m_columns) + column]);
 }
 
@@ -592,10 +712,11 @@ void EditorCharacterMap::setToken(int line, int column, int width, LineToken* to
     for (i = 0; i < width; i++)
     {
         EditorCharacter* ec = get(line, column + i);
-if (ec == NULL)
-{
-printf("ERROR: Failed to set token: line=%d, column=%d\n", line, column);
-}
+        if (ec == NULL)
+        {
+            printf("ERROR: Failed to set token: line=%d, column=%d\n", line, column);
+            continue;
+        }
         ec->position = bufferPos;
         ec->token = token;
     }
@@ -603,13 +724,25 @@ printf("ERROR: Failed to set token: line=%d, column=%d\n", line, column);
 
 LineToken* EditorCharacterMap::getToken(int line, int column)
 {
-    return get(line, column)->token;
+    EditorCharacter* c = get(line, column);
+    if (c == NULL)
+    {
+        return NULL;
+    }
+    return c->token;
 }
 
 Position EditorCharacterMap::getPosition(int line, int column)
 {
     EditorCharacter* ec = get(line, column);
-    if (ec->token != NULL)
+/*
+    if (ec == NULL)
+    {
+        return Position(0, 0);
+    }
+*/
+
+    if (ec != NULL && ec->token != NULL)
     {
         return ec->position;
     }
@@ -617,11 +750,24 @@ Position EditorCharacterMap::getPosition(int line, int column)
     for (; column >= 0; column--)
     {
         ec = get(line, column);
+        if (ec == NULL)
+        {
+            continue;
+        }
+
         if (ec->token != NULL)
         {
             return ec->position;
         }
     }
-    return Position(ec->position.line, 0);
+
+    if (ec != NULL)
+    {
+        return Position(ec->position.line, 0);
+    }
+    else
+    {
+        return Position(0, 0);
+    }
 }
 
