@@ -39,7 +39,7 @@ ViCommandDefinition g_commands[] =
     // Insert commands
     {L"Insert", KC_I, KMOD_NONE,  COMMAND_INSERT, &ViInterface::commandNop, &ViInterface::commandMoveLeft},
     {L"Insert", KC_I, KMOD_SHIFT, COMMAND_INSERT, &ViInterface::commandInsertI, &ViInterface::commandMoveLeft},
-    {L"Insert", KC_A, KMOD_NONE,  COMMAND_INSERT, &ViInterface::commandInserta},
+    {L"Insert", KC_A, KMOD_NONE,  COMMAND_INSERT, &ViInterface::commandInserta, &ViInterface::commandMoveLeft},
     {L"Insert", KC_A, KMOD_SHIFT, COMMAND_INSERT, &ViInterface::commandInsertA, &ViInterface::commandMoveLeft},
     {L"Insert", KC_O, KMOD_NONE,  COMMAND_INSERT, &ViInterface::commandInserto},
     {L"Insert", KC_O, KMOD_SHIFT, COMMAND_INSERT, &ViInterface::commandInsertO},
