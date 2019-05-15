@@ -34,8 +34,9 @@ using namespace Geek;
 using namespace Geek::Gfx;
 using namespace Geek::Core;
 
-Editor::Editor(Buffer* buffer, FileTypeManager* ftm) : Logger("Editor")
+Editor::Editor(Vide* vide, Buffer* buffer, FileTypeManager* ftm) : Logger("Editor")
 {
+    m_vide = vide;
     m_buffer = buffer;
     m_fileTypeManager = ftm;
 
@@ -794,17 +795,14 @@ void Editor::copyToBuffer(int count)
             copyVec.push_back(line->text);
         }
     }
-#if 0
-    m_vide->setBuffer(copyVec);
-#endif
 
+    m_vide->setBuffer(copyVec);
 }
 
 vector<Edit> Editor::pasteFromBuffer()
 {
     vector<Edit> edits;
 
-#if 0
     vector<wstring> copyVec = m_vide->getBuffer();
 
     for (wstring text : copyVec)
@@ -812,11 +810,10 @@ vector<Edit> Editor::pasteFromBuffer()
         m_cursor.column = 0;
         edits.push_back(Edit(m_cursor, EDIT_NEW_LINE));
         m_cursor.line++;
-        edits.push_back(Edit(m_cursor, EDIT_INSERT, text));
+        edits.push_back(Edit(m_cursor, EDIT_INSERT, 0, text));
     }
 
     executeEdits(edits);
-#endif
 
     return edits;
 }

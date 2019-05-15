@@ -92,6 +92,8 @@ struct Edit
 class Editor : public Geek::Logger
 {
  private:
+    Vide* m_vide;
+
     Position m_cursor;
     bool m_dirty;
 
@@ -112,7 +114,7 @@ class Editor : public Geek::Logger
 
 
  public:
-    Editor(Buffer* buffer, FileTypeManager* ftm);
+    Editor(Vide* vide, Buffer* buffer, FileTypeManager* ftm);
     virtual ~Editor();
 
     bool save();
