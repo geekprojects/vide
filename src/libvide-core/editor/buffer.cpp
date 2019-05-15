@@ -19,10 +19,10 @@
  */
 
 
-#include "buffer.h"
+#include <vide/buffer.h>
+#include <vide/utils.h>
 
-#include "utf8.h"
-#include "utils.h"
+#include "../utf8.h"
 
 #include <string.h>
 

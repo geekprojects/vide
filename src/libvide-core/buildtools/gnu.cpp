@@ -1,6 +1,6 @@
 
-#include "buildtools/gnu.h"
-#include "utils.h"
+#include "gnu.h"
+#include <vide/utils.h>
 
 using namespace std;
 using namespace Geek;

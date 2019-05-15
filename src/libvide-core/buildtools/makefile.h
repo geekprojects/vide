@@ -1,7 +1,7 @@
 #ifndef __VIDE_BUILDTOOLS_Makefile_H_
 #define __VIDE_BUILDTOOLS_Makefile_H_
 
-#include "buildtools/buildtool.h"
+#include <vide/buildtool.h>
 
 class MakefileBuildTool : public BuildTool
 {

@@ -1,5 +1,5 @@
 
-#include "project/project.h"
+#include <vide/project.h>
 
 #include <geek/core-sha.h>
 

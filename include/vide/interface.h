@@ -17,33 +17,27 @@
  * You should have received a copy of the GNU General Public License
  * along with Vide.  If not, see <http://www.gnu.org/licenses/>.
  */
+#ifndef __VIDE_INTERFACE_H_
+#define __VIDE_INTERFACE_H_
 
+#include <frontier/events.h>
+#include <vide/editor.h>
 
-#include "interface.h"
+class Editor;
 
-Interface::Interface(Editor* editor)
+class Interface
 {
-    m_editor = editor;
-}
+ protected:
+    Editor* m_editor;
 
-Interface::~Interface()
-{
-}
+ public:
+    Interface(Editor* editor);
+    virtual ~Interface();
 
-void Interface::key(Frontier::KeyEvent* keyEvent)
-{
-}
+    virtual void key(Frontier::KeyEvent* keyEvent);
 
+    virtual CursorType getCursorType();
+    virtual std::wstring getStatus();
+};
 
-CursorType Interface::getCursorType()
-{
-    return CURSOR_BLOCK;
-}
-
-std::wstring Interface::getStatus()
-{
-    return L"";
-}
-
-
-
+#endif

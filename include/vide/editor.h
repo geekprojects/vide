@@ -21,14 +21,20 @@
 #ifndef __VIDE_EDITOR_H_
 #define __VIDE_EDITOR_H_
 
-#include "buffer.h"
-#include "filetypes/filetypemanager.h"
+#include <vide/buffer.h>
+#include <vide/filetypemanager.h>
 
 #include <geek/core-logger.h>
 #include <sigc++/sigc++.h>
 
 class Vide;
 class FileTypeManager;
+
+enum CursorType
+{
+    CURSOR_BLOCK,
+    CURSOR_BAR,
+};
 
 enum EditType
 {

@@ -19,10 +19,10 @@
  */
 
 
-#include "editor.h"
-#include "vide.h"
-#include "interfaces/vi/vi.h"
-#include "re.h"
+#include <vide/editor.h>
+#include <vide/vide.h>
+//#include "interfaces/vi/vi.h"
+#include <vide/re.h>
 
 #include <wctype.h>
 

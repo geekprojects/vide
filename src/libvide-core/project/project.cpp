@@ -19,10 +19,10 @@
  */
 
 
-#include "project/project.h"
-#include "config.h"
-#include "vide.h"
-#include "utils.h"
+#include <vide/project.h>
+//#include "config.h"
+#include <vide/vide.h>
+#include <vide/utils.h>
 
 #include <geek/core-file.h>
 #include <geek/core-string.h>
@@ -37,7 +37,7 @@
 #include <libfswatch/c++/monitor.hpp>
 #endif
 
-#include "filetypes/filetypemanager.h"
+#include <vide/filetypemanager.h>
 
 using namespace std;
 using namespace Geek;

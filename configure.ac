@@ -84,12 +84,15 @@ esac
 
 AC_CONFIG_FILES([
     Makefile
+    include/Makefile
+    include/vide/Makefile
     src/Makefile
-    src/editor/Makefile
-    src/project/Makefile
+    src/libvide-core/Makefile
+    src/libvide-core/editor/Makefile
+    src/libvide-core/project/Makefile
+    src/libvide-core/buildtools/Makefile
     src/filetypes/Makefile
     src/filetypes/cxx/Makefile
-    src/buildtools/Makefile
     src/ui/Makefile
     src/ui/views/Makefile
     src/interfaces/Makefile

@@ -30,7 +30,7 @@
 #include <frontier/utils.h>
 #include <geek/core-thread.h>
 
-#include "filetypes/tokeniser.h"
+#include <vide/tokeniser.h>
 
 class ProjectFile;
 

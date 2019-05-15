@@ -1,5 +1,5 @@
 
-SUBDIRS=editor project filetypes ui interfaces plugins buildtools
+SUBDIRS=libvide-core filetypes ui interfaces plugins
 
 bin_PROGRAMS=vide
 

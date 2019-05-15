@@ -1,5 +1,5 @@
 
-#include "buildtools/buildtool.h"
+#include <vide/buildtool.h>
 
 using namespace std;
 

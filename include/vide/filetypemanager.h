@@ -1,9 +1,9 @@
 #ifndef __VIDE_FILE_TYPE_MANAGER_H_
 #define __VIDE_FILE_TYPE_MANAGER_H_
 
-#include "tokeniser.h"
-#include "plugins/plugins.h"
-#include "vide.h"
+#include <vide/tokeniser.h>
+#include <vide/plugins.h>
+#include <vide/vide.h>
 
 #include <frontier/icon.h>
 

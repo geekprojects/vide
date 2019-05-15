@@ -1,5 +1,5 @@
 
-#include "plugins/plugins.h"
+#include <vide/plugins.h>
 
 using namespace std;
 using namespace Geek;

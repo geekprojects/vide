@@ -33,8 +33,8 @@
 #include <yaml-cpp/yaml.h>
 #include <sigc++/sigc++.h>
 
-#include "filetypes/filetypemanager.h"
-#include "editor/buffer.h"
+#include <vide/filetypemanager.h>
+#include <vide/buffer.h>
 
 class Vide;
 class Project;

@@ -1,10 +1,13 @@
 #ifndef __VIDE_BUILDTOOLS_BUILDTOOL_H_
 #define __VIDE_BUILDTOOLS_BUILDTOOL_H_
 
-#include "project/project.h"
-#include "plugins/plugins.h"
+#include <vide/project.h>
+#include <vide/plugins.h>
 
 #include <vector>
+
+class Project;
+class ProjectFile;
 
 class BuildTool : public VidePlugin
 {
