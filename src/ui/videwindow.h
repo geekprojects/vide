@@ -24,6 +24,7 @@
 #include <frontier/frontier.h>
 #include <frontier/widgets/label.h>
 #include <frontier/widgets/tabs.h>
+#include <frontier/widgets/resizeableframe.h>
 
 #include "ui/views/editorview.h"
 #include "ui/views/projectview.h"
@@ -43,11 +44,14 @@ class VideWindow : public Frontier::FrontierWindow
     Project* m_project;
 
     Frontier::Tabs* m_leftTabs;
-    Frontier::Tabs* m_editorTabs;
     Frontier::Tabs* m_rightTabs;
     FontHandle* m_textFont;
     Frontier::Label* m_editorStatus;
     Frontier::Label* m_interfaceStatus;
+
+    Frontier::ResizeableFrame* m_contentFrame;
+    std::vector<Frontier::Tabs*> m_editorTabs;
+    Frontier::Tabs* m_activeEditorTabs;
 
     ProjectView* m_projectView;
     StructureView* m_structureView;
@@ -60,6 +64,7 @@ class VideWindow : public Frontier::FrontierWindow
 
     void onEditorTabChange(Frontier::Widget* widget);
     void onCloseTab(Frontier::Widget* tab);
+    void onSplitHorizontally(Frontier::MenuItem* item);
 
     virtual bool init();
 

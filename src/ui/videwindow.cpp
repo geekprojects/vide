@@ -72,15 +72,24 @@ bool VideWindow::init()
  
     mainFrame->addWithSize(m_leftTabs, 25);
 
-    m_editorTabs = new Tabs(this);
-    mainFrame->addWithSize(m_editorTabs, 25);
-    m_editorTabs->changeTabSignal().connect(sigc::mem_fun(*this, &VideWindow::onEditorTabChange));
-    m_editorTabs->closeTabSignal().connect(sigc::mem_fun(*this, &VideWindow::onCloseTab));
+    m_contentFrame = new ResizeableFrame(this, true);
+    mainFrame->addWithSize(m_contentFrame, 50);
 
-    Tabs* m_editorTabs2 = new Tabs(this);
-    mainFrame->addWithSize(m_editorTabs2, 25);
-    m_editorTabs2->changeTabSignal().connect(sigc::mem_fun(*this, &VideWindow::onEditorTabChange));
-    m_editorTabs2->closeTabSignal().connect(sigc::mem_fun(*this, &VideWindow::onCloseTab));
+    Tabs* editorTabs = new Tabs(this);
+    //m_contentFrame->addWithSize(editorTabs, 50);
+    m_contentFrame->add(editorTabs);
+    editorTabs->changeTabSignal().connect(sigc::mem_fun(*this, &VideWindow::onEditorTabChange));
+    editorTabs->closeTabSignal().connect(sigc::mem_fun(*this, &VideWindow::onCloseTab));
+    m_activeEditorTabs = editorTabs;
+    m_editorTabs.push_back(editorTabs);
+
+/*
+    editorTabs = new Tabs(this);
+    m_contentFrame->addWithSize(editorTabs, 50);
+    editorTabs->changeTabSignal().connect(sigc::mem_fun(*this, &VideWindow::onEditorTabChange));
+    editorTabs->closeTabSignal().connect(sigc::mem_fun(*this, &VideWindow::onCloseTab));
+    m_editorTabs.push_back(editorTabs);
+*/
 
     m_rightTabs = new Tabs(this, true, TAB_RIGHT);
     m_fileStructureView = new StructureView(m_vide, true);
@@ -108,12 +117,24 @@ bool VideWindow::init()
     m_editorTipWindow = new EditorTipWindow(getApp());
 
     Menu* menu = new Menu();
+
+#if defined(__APPLE__) || defined(MACOSX)
+    MenuItem* appMenu = new MenuItem(L"__APP__");
+    appMenu->add(new MenuItem(L"Preferences...", ',', 0, sigc::mem_fun(*m_vide, &Vide::showSettingsWindow)));
+    appMenu->add(new MenuSeparator());
+    appMenu->add(new MenuItem(L"Quit", 'q', 0, sigc::mem_fun(*m_vide, &Vide::onQuitMenu)));
+    menu->add(appMenu);
+#endif
+
     MenuItem* fileMenu = new MenuItem(L"Project");
     fileMenu->add(new MenuItem(L"New..."));
     fileMenu->add(new MenuItem(L"Open..."));
-    fileMenu->add(new MenuItem(L"Close"));
+    fileMenu->add(new MenuItem(L"Close", 'w', 0));
     fileMenu->add(new MenuSeparator());
+#if !defined(__APPLE__) && !defined(MACOSX)
     fileMenu->add(new MenuItem(L"Settings"));
+    fileMenu->add(new MenuSeparator());
+#endif
     menu->add(fileMenu);
 
     MenuItem* editMenu = new MenuItem(L"Edit");
@@ -123,7 +144,7 @@ bool VideWindow::init()
     menu->add(editMenu);
 
     MenuItem* viewMenu = new MenuItem(L"View");
-    viewMenu->add(new MenuItem(L"Split Horizontally", L'h', 0));
+    viewMenu->add(new MenuItem(L"Split Horizontally", L'h', 0, sigc::mem_fun(*this, &VideWindow::onSplitHorizontally)));
     viewMenu->add(new MenuItem(L"Split Vertically"));
     menu->add(viewMenu);
 
@@ -154,6 +175,7 @@ void VideWindow::onEditorTabChange(Widget* widget)
     if (widget != NULL)
     {
         log(DEBUG, "onEditorTabChange: Setting active widget: %p", widget);
+        m_activeEditorTabs = (Tabs*)(widget->getParent());
         setActiveWidget(widget);
 
         EditorView* editor = (EditorView*)widget;
@@ -168,7 +190,7 @@ void VideWindow::onEditorTabChange(Widget* widget)
 void VideWindow::onCloseTab(Widget* tab)
 {
     log(DEBUG, "onCloseTab: Closing tab: %p", tab);
-    m_editorTabs->closeTab(tab);
+    //m_editorTabs->closeTab(tab);
 }
 
 void VideWindow::setEditorStatus(std::wstring message)
@@ -186,7 +208,7 @@ Editor* VideWindow::openEntry(ProjectEntry* entry)
     string filePath = entry->getFilePath();
     log(DEBUG, "openEntry: filePath=%s", filePath.c_str());
 
-    EditorView* activeEditorView = (EditorView*)m_editorTabs->getActiveTab();
+    EditorView* activeEditorView = (EditorView*)m_activeEditorTabs->getActiveTab();
 
     Editor* editor = entry->getEditor();
     EditorView* editorView = NULL;
@@ -199,7 +221,7 @@ Editor* VideWindow::openEntry(ProjectEntry* entry)
             return NULL;
         }
 
-        editor = new Editor(buffer, entry->getFileTypeManager());
+        editor = new Editor(m_vide, buffer, entry->getFileTypeManager());
         editor->setBuffer(buffer);
 
         if (buffer->isDirty())
@@ -209,7 +231,7 @@ Editor* VideWindow::openEntry(ProjectEntry* entry)
 
         editorView = new EditorView(m_vide, editor);
         Icon* icon = entry->getFileTypeManager()->getIcon();
-        m_editorTabs->addTab(Frontier::Utils::string2wstring(entry->getName()), icon, editorView, true);
+        m_activeEditorTabs->addTab(Frontier::Utils::string2wstring(entry->getName()), icon, editorView, true);
 
         entry->setEditor(editor);
         //editor->incRefCount(); // The entry keeps a reference
@@ -218,12 +240,19 @@ Editor* VideWindow::openEntry(ProjectEntry* entry)
     }
     else
     {
-        for (Tab* tab : m_editorTabs->getTabs())
+        for (Tabs* tabs : m_editorTabs)
         {
-            EditorView* ev = (EditorView*)tab->getContent();
-            if (ev->getEditor() == editor)
+            for (Tab* tab : tabs->getTabs())
             {
-                editorView = ev;
+                EditorView* ev = (EditorView*)tab->getContent();
+                if (ev->getEditor() == editor)
+                {
+                    editorView = ev;
+                    break;
+                }
+            }
+            if (editorView != NULL)
+            {
                 break;
             }
         }
@@ -233,14 +262,14 @@ Editor* VideWindow::openEntry(ProjectEntry* entry)
         {
             // Reopen tab
             editorView = new EditorView(m_vide, editor);
-            m_editorTabs->addTab(Frontier::Utils::string2wstring(entry->getName()), editorView, true);
+            m_activeEditorTabs->addTab(Frontier::Utils::string2wstring(entry->getName()), editorView, true);
         }
     }
 
     if (activeEditorView != editorView)
     {
         log(DEBUG, "openEntry: Setting active widget: %p", editor);
-        m_editorTabs->setActiveTab(editorView);
+        m_activeEditorTabs->setActiveTab(editorView);
 
         m_fileStructureView->setProjectFile((ProjectFile*)entry);
 
@@ -259,5 +288,17 @@ Editor* VideWindow::openEntry(ProjectEntry* entry, Position pos)
     editor->moveCursor(pos);
     log(DEBUG, "openEntry: line=%u, column=%u", pos.line, pos.column);
     return editor;
+}
+
+void VideWindow::onSplitHorizontally(Frontier::MenuItem* item)
+{
+log(DEBUG, "onSplitHorizontally: HERE!");
+    Tabs* editorTabs = new Tabs(this);
+    m_contentFrame->add(editorTabs);
+    editorTabs->changeTabSignal().connect(sigc::mem_fun(*this, &VideWindow::onEditorTabChange));
+    editorTabs->closeTabSignal().connect(sigc::mem_fun(*this, &VideWindow::onCloseTab));
+    m_activeEditorTabs = editorTabs;
+    m_editorTabs.push_back(editorTabs);
+    
 }
 

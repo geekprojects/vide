@@ -21,6 +21,7 @@
 
 #include "vide.h"
 #include "ui/welcomewindow.h"
+#include "ui/settingswindow.h"
 #include "plugins/plugins.h"
 
 #include <sys/stat.h>
@@ -35,6 +36,7 @@ using namespace Geek::Core;
 
 Vide::Vide() : FrontierApp(L"Vide")
 {
+    m_settingsWindow = NULL;
 }
 
 Vide::~Vide()
@@ -146,6 +148,15 @@ void Vide::showWelcomeWindow()
 void Vide::hideWelcomeWindow()
 {
     m_welcomeWindow->hide();
+}
+
+void Vide::showSettingsWindow(MenuItem* item)
+{
+    if (m_settingsWindow == NULL)
+    {
+        m_settingsWindow = new SettingsWindow(this);
+    }
+    m_settingsWindow->show();
 }
 
 bool Vide::openProject(string path)

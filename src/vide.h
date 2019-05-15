@@ -42,6 +42,7 @@ enum FileHandlerPriority
 #include "buildtools/buildtool.h"
 #include "project/project.h"
 
+class SettingsWindow;
 class VideWindow;
 class WelcomeWindow;
 class VidePluginManager;
@@ -51,6 +52,7 @@ class Vide : public Frontier::FrontierApp
 {
  private:
     WelcomeWindow* m_welcomeWindow;
+    SettingsWindow* m_settingsWindow;
 
     Geek::Core::TaskExecutor* m_taskExecutor;
     Geek::Core::TimerManager* m_timerManager;
@@ -90,6 +92,8 @@ class Vide : public Frontier::FrontierApp
 
     void showWelcomeWindow();
     void hideWelcomeWindow();
+
+    void showSettingsWindow(Frontier::MenuItem* item = NULL);
 
     bool openProject(std::string path);
     VideWindow* getProjectWindow(Project* project);
