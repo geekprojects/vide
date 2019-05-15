@@ -1,7 +1,7 @@
 
 int longfunction()
 {
-    printf("Hello world 0\n");
+    printf("Hello world 0 WITH A VERY VERY VERY VERY VERY VERY VERY VERY VERY VERY VERY VERY WITH A VERY VERY VERY VERY VERY VERY VERY VERY VERY VERY VERY VERY LONG LINE\n");
     printf("Hello world 1\n");
     printf("Hello world 2\n");
     printf("Hello world 3\n");
