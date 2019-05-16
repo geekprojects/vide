@@ -4,8 +4,8 @@
 AC_PREREQ([2.69])
 AC_INIT([Vide], [0.1], [ian@geekprojects.com])
 AM_INIT_AUTOMAKE([-Wall -Werror])
-AC_CONFIG_SRCDIR([src/vide.h])
-AC_CONFIG_HEADERS([src/config.h])
+AC_CONFIG_SRCDIR([include/vide/vide.h])
+AC_CONFIG_HEADERS([include/vide/config.h])
 
 # Checks for programs.
 AM_PROG_AR
@@ -91,12 +91,14 @@ AC_CONFIG_FILES([
     src/libvide-core/editor/Makefile
     src/libvide-core/project/Makefile
     src/libvide-core/buildtools/Makefile
-    src/filetypes/Makefile
-    src/filetypes/cxx/Makefile
-    src/ui/Makefile
-    src/ui/views/Makefile
-    src/interfaces/Makefile
-    src/interfaces/vi/Makefile
+    src/libvide-core/filetypes/Makefile
+    src/libvide-core/interfaces/Makefile
+    src/libvide-core/interfaces/vi/Makefile
     src/plugins/Makefile
+    src/plugins/filetypes/Makefile
+    src/plugins/filetypes/cxx/Makefile
+    src/plugins/git/Makefile
+    src/vide/Makefile
+    src/vide/views/Makefile
 ])
 AC_OUTPUT

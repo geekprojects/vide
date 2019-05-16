@@ -1,9 +1,9 @@
 
-SUBDIRS=libvide-core filetypes ui interfaces plugins
+SUBDIRS=libvide-core plugins vide
 
-bin_PROGRAMS=vide
+#bin_PROGRAMS=vide
 
-vide_SOURCES=main.cpp vide.cpp utils.cpp re.cpp
+#vide_SOURCES=main.cpp vide.cpp utils.cpp re.cpp
 
-vide_LDADD=editor/libeditor.la project/libproject.la filetypes/libfiletypes.la ui/libui.la interfaces/libinterfaces.la plugins/libplugins.la buildtools/libbuildtools.la
+#vide_LDADD=editor/libeditor.la project/libproject.la filetypes/libfiletypes.la ui/libui.la interfaces/libinterfaces.la plugins/libplugins.la buildtools/libbuildtools.la
 

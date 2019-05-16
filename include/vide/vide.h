@@ -21,9 +21,6 @@
 #ifndef __VIDE_VIDE_H_
 #define __VIDE_VIDE_H_
 
-#include <frontier/frontier.h>
-#include <frontier/widgets.h>
-
 #include <geek/core-tasks.h>
 #include <geek/core-timers.h>
 
@@ -46,7 +43,7 @@ class BuildTool;
 class Project;
 class ProjectFile;
 
-class Vide : public Frontier::FrontierApp
+class Vide : public Geek::Logger
 {
  private:
     Geek::Core::TaskExecutor* m_taskExecutor;

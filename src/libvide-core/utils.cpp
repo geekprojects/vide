@@ -18,7 +18,7 @@
  *  along with b0rk.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "utils.h"
+#include <vide/utils.h>
 
 #include <unistd.h>
 #include <wchar.h>

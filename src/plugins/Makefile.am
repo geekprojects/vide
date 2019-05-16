@@ -1,10 +1,16 @@
 
-noinst_LTLIBRARIES=libplugins.la
+SUBDIRS=filetypes
+if HAS_LIBGIT2
+SUBDIRS+=git
+endif
 
-libplugins_la_SOURCES=plugins.cpp
-libplugins_la_CPPFLAGS=-I{top_srcdir}/src
+lib_LTLIBRARIES=libvide-plugins.la
+
+libvide_plugins_la_SOURCES=
+libvide_plugins_la_CPPFLAGS=-I${top_srcdir}/src
+libvide_plugins_la_LIBADD=filetypes/libfiletypes.la
 
 if HAS_LIBGIT2
-libplugins_la_SOURCES+=gitplugin.cpp
+libvide_plugins_la_LIBADD+=git/libgitplugin.la
 endif
 
