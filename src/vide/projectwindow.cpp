@@ -114,12 +114,12 @@ void ProjectWindow::create()
             return;
         }
 
-        Project* project = new Project(m_vide, path);
+        Project* project = new Project(m_vide->getVide(), path);
         project->init();
         project->save();
 
         m_vide->hideWelcomeWindow();
-        m_vide->openProject(path);
+        m_vide->getVide()->openProject(path);
         hide();
     }
 }

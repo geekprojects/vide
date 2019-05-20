@@ -23,16 +23,16 @@ void TasksView::init()
 
     update(NULL);
 
-    m_vide->getTaskExecutor()->queuedSignal().connect(sigc::mem_fun(*this, &TasksView::update));
-    m_vide->getTaskExecutor()->startedSignal().connect(sigc::mem_fun(*this, &TasksView::update));
-    m_vide->getTaskExecutor()->completeSignal().connect(sigc::mem_fun(*this, &TasksView::update));
+    m_vide->getVide()->getTaskExecutor()->queuedSignal().connect(sigc::mem_fun(*this, &TasksView::update));
+    m_vide->getVide()->getTaskExecutor()->startedSignal().connect(sigc::mem_fun(*this, &TasksView::update));
+    m_vide->getVide()->getTaskExecutor()->completeSignal().connect(sigc::mem_fun(*this, &TasksView::update));
 }
 
 void TasksView::update(Task* task)
 {
     m_tasksList->clearItems();
 
-    vector<TaskInfo> tasks = m_vide->getTaskExecutor()->getTaskInfo();
+    vector<TaskInfo> tasks = m_vide->getVide()->getTaskExecutor()->getTaskInfo();
     for (TaskInfo info : tasks)
     {
         unsigned int icon;

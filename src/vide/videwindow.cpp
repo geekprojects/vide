@@ -221,7 +221,7 @@ Editor* VideWindow::openEntry(ProjectEntry* entry)
             return NULL;
         }
 
-        editor = new Editor(m_vide, buffer, entry->getFileTypeManager());
+        editor = new Editor(m_vide->getVide(), buffer, entry->getFileTypeManager());
         editor->setBuffer(buffer);
 
         if (buffer->isDirty())
@@ -230,7 +230,7 @@ Editor* VideWindow::openEntry(ProjectEntry* entry)
         }
 
         editorView = new EditorView(m_vide, editor);
-        Icon* icon = entry->getFileTypeManager()->getIcon();
+        Icon* icon = m_vide->getFileTypeIcon(entry->getFileTypeManager()->getIcon());
         m_activeEditorTabs->addTab(Frontier::Utils::string2wstring(entry->getName()), icon, editorView, true);
 
         entry->setEditor(editor);

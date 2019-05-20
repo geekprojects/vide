@@ -73,8 +73,8 @@ CPPFLAGS="$CPPFLAGS $libpcr32_CFLAGS"
 
 CPPFLAGS="-g $CPPFLAGS -Wall -Werror"
 
-#CPPFLAGS="-O0 -g $CPPFLAGS -Wall -Werror -O0  -fsanitize=address -fno-omit-frame-pointer -fsanitize-address-use-after-scope "
-#LDFLAGS="$LDFLAGS -fsanitize=address "
+CPPFLAGS="-O0 -g $CPPFLAGS -Wall -Werror -O0  -fsanitize=address -fno-omit-frame-pointer -fsanitize-address-use-after-scope "
+LDFLAGS="$LDFLAGS -fsanitize=address "
 
 case $host_os in
     darwin*)

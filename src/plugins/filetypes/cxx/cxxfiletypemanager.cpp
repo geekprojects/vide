@@ -20,7 +20,6 @@ CXXFileTypeManager::CXXFileTypeManager(Vide* vide) : FileTypeManager(vide)
     m_index = clang_createIndex(0, 0);
 
     m_iconSurface = Surface::loadPNG("data/icons/cpp_256x256.png");
-    m_icon = new SurfaceIcon(getVide()->getTheme(), m_iconSurface);
 }
 
 CXXFileTypeManager::~CXXFileTypeManager()
@@ -356,8 +355,11 @@ CXTranslationUnit CXXFileTypeManager::parse(ProjectFile* file, CXUnsavedFile* un
     return unit;
 }
 
-Icon* CXXFileTypeManager::getIcon()
+FileTypeIcon CXXFileTypeManager::getIcon()
 {
-    return m_icon;
+    FileTypeIcon fti;
+    fti.type = ICON_SURFACE;
+    fti.surface = m_iconSurface;
+    return fti;
 }
  

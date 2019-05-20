@@ -26,7 +26,7 @@ using namespace Frontier;
 
 int main(int argc, char** argv)
 {
-    VideApp vide;
+    Vide vide;
     vide.init();
 
     if (argc == 3 && !strcmp(argv[1], "project"))
@@ -45,23 +45,25 @@ int main(int argc, char** argv)
         project = argv[1];
     }
 
+    VideApp videApp(&vide);
+    videApp.init();
 
     if (project != NULL)
     {
-        vide.hideWelcomeWindow();
+        videApp.hideWelcomeWindow();
         bool res;
         res = vide.openProject(project);
         if (!res)
         {
-            vide.showWelcomeWindow();
+            videApp.showWelcomeWindow();
         }
     }
     else
     {
-        vide.showWelcomeWindow();
+        videApp.showWelcomeWindow();
     }
 
-    vide.main();
+    videApp.main();
 
     return 0;
 }

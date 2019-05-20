@@ -38,9 +38,11 @@ class WelcomeWindow;
 class VidePluginManager;
 class BuildTool;
 
-class VideApp : public Vide, public Frontier::FrontierApp
+class VideApp : public Frontier::FrontierApp
 {
  private:
+    Vide* m_vide;
+
     WelcomeWindow* m_welcomeWindow;
     SettingsWindow* m_settingsWindow;
 
@@ -48,11 +50,15 @@ class VideApp : public Vide, public Frontier::FrontierApp
     FontHandle* m_textFont;
     FontHandle* m_textIconFont;
 
+    void onOpenProject(Project* project);
+
  public:
-    VideApp();
+    VideApp(Vide* vide);
     virtual ~VideApp();
 
     virtual bool init();
+
+    Vide* getVide() { return m_vide; }
 
     FontHandle* getTextFont() { return m_textFont; }
     FontHandle* getTextIconFont() { return m_textIconFont; }
@@ -63,6 +69,8 @@ class VideApp : public Vide, public Frontier::FrontierApp
     void showSettingsWindow(Frontier::MenuItem* item = NULL);
 
     VideWindow* getProjectWindow(Project* project);
+
+    Frontier::Icon* getFileTypeIcon(FileTypeIcon fti);
 };
 
 #endif

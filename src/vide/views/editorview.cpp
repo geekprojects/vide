@@ -609,12 +609,12 @@ void EditorView::onEdit()
     if (m_indexTimer->isActive())
     {
         log(DEBUG, "onEdit: Resetting timer...");
-        m_vide->getTimerManager()->resetTimer(m_indexTimer);
+        m_vide->getVide()->getTimerManager()->resetTimer(m_indexTimer);
     }
     else
     {
         log(DEBUG, "onEdit: Adding timer...");
-        m_vide->getTimerManager()->addTimer(m_indexTimer);
+        m_vide->getVide()->getTimerManager()->addTimer(m_indexTimer);
     }
 }
 
@@ -623,7 +623,7 @@ void EditorView::indexTimer(Timer* timer)
     log(DEBUG, "indexTimer: INDEX TIMER!\n");
     EditorTokeniseTask* task = new EditorTokeniseTask(m_editor);
     task->completeSignal().connect(sigc::mem_fun(*this, &EditorView::tokeniseComplete));
-    m_vide->getTaskExecutor()->addTask(task);
+    m_vide->getVide()->getTaskExecutor()->addTask(task);
 }
 
 void EditorView::updateStatus()

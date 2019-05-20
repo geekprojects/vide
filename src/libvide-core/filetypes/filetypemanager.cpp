@@ -51,9 +51,12 @@ bool FileTypeManager::tokenise(Buffer* buffer, Line* line)
     return m_tokeniser->tokenise(buffer, line);
 }
 
-Icon* FileTypeManager::getIcon()
+FileTypeIcon FileTypeManager::getIcon()
 {
-    return getVide()->getTheme()->getIcon(FRONTIER_ICON_FILE);
+    FileTypeIcon fti;
+    fti.type = ICON_ICON;
+    fti.icon = FRONTIER_ICON_FILE;
+    return fti;
 }
 
 VIDE_PLUGIN(TextFileTypeManager);
@@ -74,9 +77,12 @@ FileHandlerPriority TextFileTypeManager::canHandle(ProjectFile* file)
     return PRIORITY_LOW;
 }
 
-Icon* TextFileTypeManager::getIcon()
+FileTypeIcon TextFileTypeManager::getIcon()
 {
-    return getVide()->getTheme()->getIcon(FRONTIER_ICON_FILE_ALT);
+    FileTypeIcon fti;
+    fti.type = ICON_ICON;
+    fti.icon = FRONTIER_ICON_FILE_ALT;
+    return fti;
 }
 
 

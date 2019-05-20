@@ -43,7 +43,6 @@ class CXXFileTypeManager : public FileTypeManager
  protected:
     CXIndex m_index;
     Geek::Gfx::Surface* m_iconSurface;
-    Frontier::Icon* m_icon;
 
  public:
     CXXFileTypeManager(Vide* vide);
@@ -60,7 +59,7 @@ class CXXFileTypeManager : public FileTypeManager
 
     CXTranslationUnit parse(ProjectFile* file, CXUnsavedFile* unsavedFile);
 
-    Frontier::Icon* getIcon();
+    FileTypeIcon getIcon();
 };
 
 

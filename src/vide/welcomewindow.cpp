@@ -10,7 +10,7 @@ using namespace std;
 using namespace Frontier;
 using namespace Geek;
 
-WelcomeWindow::WelcomeWindow(VideApp* vide) : FrontierWindow(vide, L"Welcome to Vide", WINDOW_NORMAL)
+WelcomeWindow::WelcomeWindow(VideApp* vide) : FrontierWindow((FrontierApp*)vide, L"Welcome to Vide", WINDOW_NORMAL)
 {
     m_vide = vide;
 }
@@ -63,7 +63,7 @@ void WelcomeWindow::chooseProject()
         return;
     }
 
-    bool res = m_vide->openProject(path);
+    bool res = m_vide->getVide()->openProject(path);
     if (res)
     {
         hide();
@@ -74,7 +74,7 @@ void WelcomeWindow::selectProject(ListItem* item)
 {
     log(DEBUG, "selectProject: item=%p -> %s", item, item->getPrivateData());
 
-    bool res = m_vide->openProject((char*)item->getPrivateData());
+    bool res = m_vide->getVide()->openProject((char*)item->getPrivateData());
     if (res)
     {
         hide();

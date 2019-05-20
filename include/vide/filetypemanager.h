@@ -6,10 +6,27 @@
 #include <vide/vide.h>
 
 #include <frontier/icon.h>
+#include <geek/gfx-surface.h>
 
 class Project;
 class ProjectFile;
 class VidePlugin;
+
+enum FileTypeIconType
+{
+    ICON_ICON,
+    ICON_SURFACE
+};
+
+struct FileTypeIcon
+{
+    FileTypeIconType type;
+    union
+    {
+        uint32_t icon;
+        Geek::Gfx::Surface* surface;
+    };
+};
 
 struct FileTypeManagerData
 {
@@ -35,7 +52,7 @@ class FileTypeManager : public VidePlugin
     virtual bool tokenise(Buffer* buffer);
     virtual bool tokenise(Buffer* buffer, Line* line);
 
-    virtual Frontier::Icon* getIcon();
+    virtual FileTypeIcon getIcon();
 };
 
 class TextFileTypeManager : public FileTypeManager
@@ -48,7 +65,7 @@ class TextFileTypeManager : public FileTypeManager
 
     virtual FileHandlerPriority canHandle(ProjectFile* file);
 
-    virtual Frontier::Icon* getIcon();
+    virtual FileTypeIcon getIcon();
 };
 
 #endif

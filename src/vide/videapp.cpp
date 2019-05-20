@@ -34,8 +34,9 @@ using namespace Frontier;
 using namespace Geek;
 using namespace Geek::Core;
 
-VideApp::VideApp() : FrontierApp(L"VideApp")
+VideApp::VideApp(Vide* vide) : FrontierApp(L"VideApp")
 {
+    m_vide = vide;
     m_settingsWindow = NULL;
 }
 
@@ -46,12 +47,6 @@ VideApp::~VideApp()
 bool VideApp::init()
 {
     bool res;
-
-    res = Vide::init();
-    if (!res)
-    {
-        return false;
-    }
 
     res = FrontierApp::init();
     if (!res)
@@ -81,6 +76,8 @@ bool VideApp::init()
     }
 
     m_welcomeWindow = new WelcomeWindow(this);
+
+    m_vide->openProjectSignal().connect(sigc::mem_fun(*this, &VideApp::onOpenProject));
 
     return true;
 }
@@ -114,5 +111,28 @@ VideWindow* VideApp::getProjectWindow(Project* project)
         }
     }
     return NULL;
+}
+
+void VideApp::onOpenProject(Project* project)
+{
+    VideWindow* window = new VideWindow(this, project);
+    m_videWindows.push_back(window);
+
+    window->show();
+}
+
+Frontier::Icon* VideApp::getFileTypeIcon(FileTypeIcon fti)
+{
+    Icon* icon = NULL;
+    switch (fti.type)
+    {
+        case ICON_ICON:
+            icon = getTheme()->getIcon(fti.icon);
+            break;
+        case ICON_SURFACE:
+            icon = new SurfaceIcon(getTheme(), fti.surface);
+            break;
+    }
+    return icon;
 }
 
