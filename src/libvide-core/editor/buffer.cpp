@@ -26,6 +26,8 @@
 
 #include <string.h>
 
+#include <map>
+
 using namespace std;
 using namespace Geek;
 
@@ -65,6 +67,17 @@ void Buffer::insertLine(int asLine, Line* line)
     int i;
     for (it = m_lines.begin(), i = 0; i < asLine && it != m_lines.end(); it++, i++)
     {
+    }
+
+    // If we're adding a new last line and the previous last line didn't have
+    // a line ending, set one
+    if (it == m_lines.end() && !m_lines.empty())
+    {
+        string eol = m_lines.back()->lineEnding;
+        if (eol.length() == 0)
+        {
+            m_lines.back()->lineEnding = m_lineEnding;
+        }
     }
     m_lines.insert(it, line);
 
@@ -144,7 +157,7 @@ char* Buffer::writeToMem(uint32_t& size)
         size += line->lineEnding.length();
     }
 
-    char* data = new char[size];
+    char* data = new char[size + 1];
     char* p = data;
 
     for (Line* line : m_lines)
@@ -163,6 +176,7 @@ char* Buffer::writeToMem(uint32_t& size)
             *(p++) = line->lineEnding.at(pos);
         }
     }
+    *p = 0;
 
     return data;
 }
@@ -204,12 +218,28 @@ Buffer* Buffer::loadFile(const char* filename)
 
     memset(fileData + length, 0, 128);
 
-    char* pos = fileData;
-    char* end = fileData + length;
+    Buffer* buffer = loadMem(filename, fileData, fileData + length);
+
+    delete[] fileData;
+
+    return buffer;
+}
+
+Buffer* Buffer::loadString(const char* filename, std::string text)
+{
+    const char* start = text.c_str();
+    return loadMem(filename, start, start + text.length());
+}
+
+Buffer* Buffer::loadMem(const char* filename, const char* start, const char* end)
+{
+    const char* pos = start;
 
     Buffer* buffer = new Buffer(filename);
     Line* line = NULL;
     LineToken* token = NULL;
+
+    map<string, int> eolCounts;
 
     while (pos < end)
     {
@@ -245,6 +275,17 @@ Buffer* Buffer::loadFile(const char* filename)
                     line->lineEnding += cur;
                 }
             }
+
+            // Count line endings
+            map<string, int>::iterator it;
+            it = eolCounts.find(line->lineEnding);
+            int count = 0;
+            if (it != eolCounts.end())
+            {
+                count = it->second;
+            }
+            count++;
+            eolCounts.insert(make_pair(line->lineEnding, count));
 
             buffer->m_lines.push_back(line);
 
@@ -283,7 +324,23 @@ Buffer* Buffer::loadFile(const char* filename)
         buffer->m_lines.push_back(line);
     }
 
-    delete[] fileData;
+    // Figure out the file's most-used End of Line characters
+    int maxCount = 0;
+    string maxEOL = "\n";
+    map<string, int>::iterator it;
+    for (it = eolCounts.begin(); it != eolCounts.end(); it++)
+    {
+        //printf("loadMem: 0x%x = %d\n", it->first.at(0), it->second);
+        if (it->second > maxCount)
+        {
+            maxCount = it->second;
+            maxEOL = it->first;
+        }
+    }
+
+    //printf("loadMem: Most popular EOL: 0x%x\n", maxEOL.at(0));
+    buffer->m_lineEnding = maxEOL;
+
     return buffer;
 }
 

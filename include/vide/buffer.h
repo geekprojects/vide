@@ -167,6 +167,7 @@ class Buffer
     ProjectFile* m_projectFile;
     std::vector<Line*> m_lines;
     bool m_dirty;
+    std::string m_lineEnding;
 
     uint64_t m_timestamp;
     Geek::Mutex* m_mutex;
@@ -224,6 +225,8 @@ class Buffer
     void dump();
 
     static Buffer* loadFile(const char* filename);
+    static Buffer* loadMem(const char* filename, const char* start, const char* end);
+    static Buffer* loadString(const char* filename, std::string text);
 };
 
 #endif
