@@ -33,11 +33,25 @@ using namespace Geek::Core;
 
 Vide::Vide() : Logger("Vide")
 {
+    m_taskExecutor = NULL;
+    m_timerManager = NULL;
+    m_pluginManager = NULL;
 }
 
 Vide::~Vide()
 {
-    delete m_pluginManager;
+    if (m_taskExecutor != NULL)
+    {
+        delete m_taskExecutor;
+    }
+    if (m_timerManager != NULL)
+    {
+        delete m_timerManager;
+    }
+    if (m_pluginManager != NULL)
+    {
+        delete m_pluginManager;
+    }
 }
 
 bool Vide::init()
