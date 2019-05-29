@@ -24,6 +24,18 @@
 #include <vide/editor.h>
 
 class Editor;
+class Interface;
+
+class InterfacePlugin : public VidePlugin
+{
+ private:
+
+ public:
+    InterfacePlugin(Vide* vide, std::string pluginName);
+    virtual ~InterfacePlugin();
+
+    virtual Interface* createInterface(Editor* editor) = 0;
+};
 
 class Interface
 {

@@ -141,6 +141,17 @@ struct ViCommand
     }
 };
 
+class ViInterfacePlugin : public InterfacePlugin
+{
+ private:
+
+ public:
+    ViInterfacePlugin(Vide* vide);
+    virtual ~ViInterfacePlugin();
+
+    virtual Interface* createInterface(Editor* editor);
+};
+
 class ViInterface : public Interface
 {
  protected:

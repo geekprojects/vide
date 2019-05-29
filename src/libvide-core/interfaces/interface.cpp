@@ -18,8 +18,19 @@
  * along with Vide.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
+#include <vide/vide.h>
 #include <vide/interface.h>
+
+using namespace std;
+
+InterfacePlugin::InterfacePlugin(Vide* vide, std::string pluginName)
+    : VidePlugin(vide, string("Interface::") + pluginName)
+{
+}
+
+InterfacePlugin::~InterfacePlugin()
+{
+}
 
 Interface::Interface(Editor* editor)
 {

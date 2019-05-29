@@ -26,6 +26,23 @@
 using namespace std;
 using namespace Frontier;
 
+VIDE_PLUGIN(ViInterfacePlugin);
+
+ViInterfacePlugin::ViInterfacePlugin(Vide* vide) : InterfacePlugin(vide, "vi")
+{
+}
+
+ViInterfacePlugin::~ViInterfacePlugin()
+{
+}
+
+
+Interface* ViInterfacePlugin::createInterface(Editor* editor)
+{
+    return new ViInterface(editor);
+}
+
+
 ViInterface::ViInterface(Editor* editor) : Interface(editor)
 {
     setMode(MODE_NORMAL);
