@@ -62,7 +62,7 @@ class EditorView : public Frontier::Widget, public View
  private:
     VideApp* m_vide;
     Editor* m_editor;
-    // XXX Interface* m_interface;
+    Interface* m_interface;
     EditorCharacterMap* m_characterMap;
 
     Geek::Core::Timer* m_indexTimer;

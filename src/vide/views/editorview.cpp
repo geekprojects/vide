@@ -20,9 +20,9 @@
 
 
 #include <vide/editor.h>
+#include <vide/interface.h>
 #include "views/editorview.h"
 #include <vide/vide.h>
-// XXX #include "interfaces/vi/vi.h"
 #include <vide/utils.h>
 
 #include <wctype.h>
@@ -84,14 +84,17 @@ EditorView::EditorView(VideApp* vide, Editor* editor) : Widget(vide, L"EditorVie
 
     m_indexTimer = new Timer(TIMER_ONE_SHOT, m_tokeniseTime + 10);
     m_indexTimer->signal().connect(sigc::mem_fun(*this, &EditorView::indexTimer));
-log(DEBUG, "XXX: indexTimer active=%d\n", m_indexTimer->isActive());
 
     m_scrollBar = new ScrollBar(vide);
     m_scrollBar->incRefCount();
     m_scrollBar->setParent(this);
     m_scrollBar->changedPositionSignal().connect(sigc::mem_fun(*this, &EditorView::onScrollbarChanged));
 
-    //m_interface = new ViInterface(editor);
+    InterfacePlugin* interfacePlugin = (InterfacePlugin*)vide->getVide()->getPluginManager()->findPlugin("ViInterfacePlugin");
+    if (interfacePlugin != NULL)
+    {
+        m_interface = interfacePlugin->createInterface(editor);
+    }
 
     m_marginX = 40;
 
@@ -143,6 +146,8 @@ void EditorView::layout()
 {
     m_scrollBar->setPosition(m_setSize.width - m_scrollBar->getMinSize().width, 0);
     m_scrollBar->setSize(Size(m_scrollBar->getMinSize().width, m_setSize.height));
+
+    m_editor->setViewLines(getViewLines());
 }
 
 bool EditorView::draw(Surface* surface)
@@ -389,8 +394,7 @@ bool EditorView::draw(Surface* surface)
 
 void EditorView::drawCursor(Surface* surface, int x, int y)
 {
-    // XXX CursorType cursorType = m_interface->getCursorType();
-    CursorType cursorType = CURSOR_BLOCK;
+    CursorType cursorType = m_interface->getCursorType();
 
     bool active = isActive();
 
@@ -472,7 +476,7 @@ Widget* EditorView::handleEvent(Event* event)
                 }
             }
 
-            // XXX m_interface->key(keyEvent);
+            m_interface->key(keyEvent);
             updateStatus();
 
             if (m_editor->isDirty())
@@ -632,7 +636,7 @@ void EditorView::updateStatus()
     if (videWindow != NULL)
     {
 
-        // XXX videWindow->setInterfaceStatus(m_interface->getStatus());
+        videWindow->setInterfaceStatus(m_interface->getStatus());
         wchar_t editorStatus[1024];
         swprintf(
             editorStatus,
