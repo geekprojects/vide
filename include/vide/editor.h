@@ -102,6 +102,7 @@ class Editor : public Geek::Logger
 
     Position m_cursor;
     bool m_dirty;
+    int m_viewLines;
 
     Position m_selectStart;
     Position m_selectEnd;
@@ -118,7 +119,6 @@ class Editor : public Geek::Logger
     void doJoinLines(unsigned int line, Line* line1);
     void doSplitLine(Position pos, Line* line);
 
-
  public:
     Editor(Vide* vide, Buffer* buffer, FileTypeManager* ftm);
     virtual ~Editor();
@@ -129,6 +129,8 @@ class Editor : public Geek::Logger
     Buffer* getBuffer() { return m_buffer; }
     FileTypeManager* getFileTypeManager() { return m_fileTypeManager; }
 
+    int getViewLines() { return m_viewLines; }
+    void setViewLines(int lines) { m_viewLines = lines; }
     Position getCursorPosition() { return m_cursor; }
     unsigned int getCursorX() { return m_cursor.column; }
     unsigned int getCursorY() { return m_cursor.line; }
@@ -158,7 +160,6 @@ class Editor : public Geek::Logger
     void moveCursorDelta(int dx, int dy, bool allowXOver = false);
     void moveCursorXEnd();
     void moveCursorYEnd();
-    void moveCursorNextToken();
     void moveCursorPage(int dir);
 
     void searchNext(std::wstring pattern);

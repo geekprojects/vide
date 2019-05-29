@@ -79,61 +79,41 @@ Position Editor::findPrevWord(Position from)
         from.column = line->text.length() - 1;
     }
 
+    // Find starting token
     TokenAt at;
     at = line->tokenAt(from.column, false);
 
-    bool prevLine = false;
-    if (at.it != line->tokens.begin() && (at.it - 1) != line->tokens.begin())
+    vector<LineToken*>::iterator it = at.it;
+    int lineNum = from.line;
+    int column = at.tokenColumn;
+    while (true)
     {
-        LineToken* curToken = *(at.it);
-        log(DEBUG, "CURRENT TOKEN: %ls", curToken->text.c_str());
-
-        if (at.tokenColumn < from.column)
+        if (it == line->tokens.begin())
         {
-            return Position(from.line, at.tokenColumn);
+            // Beginning of a line!
+            if (lineNum == 0)
+            {
+                // Beginning of the buffer!
+                return Position(0, 0);
+            }
+
+            lineNum--;
+            line = m_buffer->getLine(lineNum);
+            column = line->text.length();
+            it = line->tokens.end();
+
+            continue;
         }
 
-        do
+        // Get previous token
+        it--;
+        LineToken* token = (*it);
+        column -= token->text.length(); 
+        if (!token->isSpace)
         {
-at.tokenColumn -= (*(at.it))->text.length();
-            at.it--;
-        }
-        while (at.it != line->tokens.begin() && (*(at.it))->isSpace);
-
-        if (at.it != line->tokens.begin())
-        {
-            LineToken* nextToken = *(at.it);
-
-            log(DEBUG, "PREV TOKEN: %ls", nextToken->text.c_str());
-            return Position(from.line, at.tokenColumn);
-        }
-        else
-        {
-            prevLine = true;
+            return Position(lineNum, column);
         }
     }
-    else
-    {
-        prevLine = true;
-    }
-
-    if (prevLine)
-    {
-        log(DEBUG, "START OF LINE");
-        if (from.line > 0)
-        {
-            Line* prevLine = m_buffer->getLine(from.line - 1);
-            return findPrevWord(Position(from.line - 1, prevLine->text.length() - 1));
-        }
-        else
-        {
-            log(DEBUG, "RETURNING START OF FILE");
-
-            return Position(0, 0);
-        }
-    }
-
-    return Position(0, 0);
 }
 
 Position Editor::findNextWord()
@@ -332,11 +312,9 @@ void Editor::moveCursorYEnd()
 
 void Editor::moveCursorPage(int dir)
 {
-#if 0
     int viewLines = getViewLines();
 
     moveCursorDelta(0, viewLines * dir);
-#endif
 }
 
 void Editor::searchNext(wstring pattern)
