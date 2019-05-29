@@ -86,6 +86,12 @@ VidePlugin::VidePlugin(Vide* vide) : Logger(L"VidePlugin")
 {
     m_vide = vide;
 }
+VidePlugin::VidePlugin(Vide* vide, string pluginName)
+    : Logger(string("VidePlugin[") + pluginName + "]")
+{
+    m_vide = vide;
+}
+
 
 VidePlugin::~VidePlugin()
 {
