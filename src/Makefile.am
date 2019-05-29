@@ -1,5 +1,5 @@
 
-SUBDIRS=libvide-core plugins vide
+SUBDIRS=libvide-core plugins vide turbovide
 
 #bin_PROGRAMS=vide
 

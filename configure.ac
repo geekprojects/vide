@@ -3,7 +3,7 @@
 
 AC_PREREQ([2.69])
 AC_INIT([Vide], [0.1], [ian@geekprojects.com])
-AM_INIT_AUTOMAKE([-Wall -Werror])
+AM_INIT_AUTOMAKE([-Wall -Werror foreign subdir-objects])
 AC_CONFIG_SRCDIR([include/vide/vide.h])
 AC_CONFIG_HEADERS([include/vide/config.h])
 
@@ -100,5 +100,7 @@ AC_CONFIG_FILES([
     src/plugins/git/Makefile
     src/vide/Makefile
     src/vide/views/Makefile
+    src/turbovide/Makefile
+    tests/Makefile
 ])
 AC_OUTPUT

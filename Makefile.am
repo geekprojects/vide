@@ -1,5 +1,5 @@
 
-SUBDIRS=src
+SUBDIRS=src tests
 
 COPYRIGHT_LICENSE ?= GPL3
 COPYRIGHT_HOLDER ?= Ian Parker <ian@geekprojects.com>
@@ -22,3 +22,7 @@ add-copyright:
           --word-wrap $(COPYRIGHT_WORD_WRAP) \
           --output-dir $(COPYRIGHT_OUTPUT_DIR) \
           --syntax ../frontier/tools/syntax.yml
+
+osxapp:
+	appr.sh --executable src/vide/.libs/vide --app Vide.app --appname Vide --bundleid com.geekprojects.vide --version 0.0.1 --highdpi true
+
