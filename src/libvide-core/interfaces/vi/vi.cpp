@@ -24,6 +24,7 @@
 #include <wctype.h>
 
 using namespace std;
+using namespace Geek;
 using namespace Frontier;
 
 VIDE_PLUGIN(ViInterfacePlugin);
@@ -242,14 +243,18 @@ void ViInterface::keyInsert(Frontier::KeyEvent* keyEvent)
             m_prevCommands.push_back(m_command);
 
             setMode(MODE_NORMAL);
-            break;;
+            break;
 
         case KC_BACKSPACE:
             if (m_editor->getCursorX() > 0)
             {
-                m_editor->moveCursorDelta(-1, 0);
+                bool eol = m_editor->isCursorAtEndOfLine();
+                m_editor->moveCursorDelta(-1, 0, true);
                 m_command->addEdits(m_editor->deleteAtCursor());
-                m_command->edit.pop_back();
+                if (eol)
+                {
+                    m_editor->moveCursorDelta(1, 0, true);
+                }
             }
             break;
 
