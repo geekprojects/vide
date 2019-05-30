@@ -141,8 +141,10 @@ bool Buffer::save()
 
 char* Buffer::writeToMem(uint32_t& size)
 {
+    lock();
     size = 0;
 
+    // Calculate the size required
     for (Line* line : m_lines)
     {
         unsigned int pos;
@@ -177,6 +179,8 @@ char* Buffer::writeToMem(uint32_t& size)
         }
     }
     *p = 0;
+
+    unlock();
 
     return data;
 }
@@ -363,7 +367,10 @@ TokenAt Line::tokenAt(unsigned int column, bool ignoreSpace)
 
     if (column == 0)
     {
-        at.token = *(at.it);
+        if (at.it != tokens.end())
+        {
+            at.token = *(at.it);
+        }
         return at;
     }
 
