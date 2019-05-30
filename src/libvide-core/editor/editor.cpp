@@ -317,6 +317,12 @@ void Editor::moveCursorPage(int dir)
     moveCursorDelta(0, viewLines * dir);
 }
 
+bool Editor::isCursorAtEndOfLine()
+{
+    unsigned int width = m_buffer->getLineLength(m_cursor.line);
+    return (m_cursor.column >= width);
+}
+
 void Editor::searchNext(wstring pattern)
 {
     RegularExpression re;
@@ -431,10 +437,12 @@ void Editor::searchPrev(wstring pattern)
 
 void Editor::executeEdits(vector<Edit> edits)
 {
+    m_buffer->lock();
     for (Edit edit : edits)
     {
         executeEdit(edit);
     }
+    m_buffer->unlock();
 
     m_editedSignal.emit();
     setDirty();
@@ -788,7 +796,7 @@ vector<Edit> Editor::pasteFromBuffer()
         m_cursor.column = 0;
         edits.push_back(Edit(m_cursor, EDIT_NEW_LINE));
         m_cursor.line++;
-        edits.push_back(Edit(m_cursor, EDIT_INSERT, 0, text));
+        edits.push_back(Edit(m_cursor, EDIT_INSERT, L"", text));
     }
 
     executeEdits(edits);

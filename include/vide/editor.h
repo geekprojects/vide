@@ -70,7 +70,7 @@ struct Edit
         editType = _editType;
         if (_prevChr != 0)
         {
-            prevText = std::wstring(L"") + _prevChr;
+            prevText = std::wstring(1, _prevChr);
         }
         else
         {
@@ -78,7 +78,7 @@ struct Edit
         }
         if (_newChr != 0)
         {
-            newText = std::wstring(L"") + _newChr;
+            newText = std::wstring(1, _newChr);
         }
         else
         {
@@ -161,6 +161,7 @@ class Editor : public Geek::Logger
     void moveCursorXEnd();
     void moveCursorYEnd();
     void moveCursorPage(int dir);
+    bool isCursorAtEndOfLine();
 
     void searchNext(std::wstring pattern);
     void searchPrev(std::wstring pattern);
