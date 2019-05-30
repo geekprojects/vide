@@ -153,6 +153,9 @@ void EditorView::layout()
 bool EditorView::draw(Surface* surface)
 {
     Buffer* buffer = m_editor->getBuffer();
+
+    buffer->lock();
+
     if (buffer->isDirty())
     {
         buffer->clearDirty();
@@ -375,6 +378,8 @@ bool EditorView::draw(Surface* surface)
 
         drawY += m_charSize.height;
     }
+
+    buffer->unlock();
 
     surface->drawLine(m_marginX - 1, 0, m_marginX - 1, m_setSize.height - 1, 0xffBBBBBB);
 
