@@ -75,7 +75,7 @@ class Vide : public Geek::Logger
     void setBuffer(std::vector<std::wstring> buffer) { m_buffer = buffer; }
     std::vector<std::wstring> getBuffer() { return m_buffer; }
 
-    bool openProject(std::string path);
+    Project* openProject(std::string path);
 
     // Hooks for plugins
     sigc::signal<void, Project*> openProjectSignal() { return m_openProjectSignal; }

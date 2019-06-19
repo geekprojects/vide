@@ -56,7 +56,7 @@ Vide::~Vide()
 
 bool Vide::init()
 {
-    m_taskExecutor = new TaskExecutor();
+    m_taskExecutor = new TaskExecutor(2);
 
     m_timerManager = new TimerManager();
     m_timerManager->start();
@@ -119,7 +119,7 @@ BuildTool* Vide::findBuildTool(Project* project)
     return selected;
 }
 
-bool Vide::openProject(string path)
+Project* Vide::openProject(string path)
 {
     log(DEBUG, "openProject: path=%s", path.c_str());
     unsigned int len = path.length();
@@ -131,7 +131,7 @@ bool Vide::openProject(string path)
     {
         int err = errno;
         log(ERROR, "openProject: Failed to stat path: %s", strerror(err));
-        return false;
+        return NULL;
     }
 
     bool isDir = S_ISDIR(pathStat.st_mode);
@@ -148,7 +148,7 @@ bool Vide::openProject(string path)
         else
         {
             log(ERROR, "openProject: Not a vide.project file");
-            return false;
+            return NULL;
         }
     }
     else
@@ -157,7 +157,7 @@ bool Vide::openProject(string path)
         if (res != 0)
         {
             log(ERROR, "openProject: Specified path doesn't contain a Vide project file. Create a project first!");
-            return false;
+            return NULL;
         }
     }
 
@@ -167,7 +167,7 @@ bool Vide::openProject(string path)
     if (!loaded)
     {
         delete project;
-        return false;
+        return NULL;
     }
 
     project->scan();
@@ -180,6 +180,6 @@ bool Vide::openProject(string path)
 
     //window->show();
 
-    return true;
+    return project;
 }
 
