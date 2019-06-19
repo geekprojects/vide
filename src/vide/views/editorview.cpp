@@ -77,10 +77,8 @@ EditorView::EditorView(VideApp* vide, Editor* editor) : Widget(vide, L"EditorVie
     m_editor->editedSignal().connect(sigc::mem_fun(*this, &EditorView::onEdit));
     m_characterMap = new EditorCharacterMap();
 
-    uint64_t tokeniseStart = ::Utils::getTimestamp();
-    m_editor->getFileTypeManager()->tokenise(m_editor->getBuffer());
-    uint64_t tokeniseEnd = ::Utils::getTimestamp();
-    m_tokeniseTime = tokeniseEnd - tokeniseStart;
+    // Kick off a tokenisation straight away
+    indexTimer(NULL);
 
     m_indexTimer = new Timer(TIMER_ONE_SHOT, m_tokeniseTime + 10);
     m_indexTimer->signal().connect(sigc::mem_fun(*this, &EditorView::indexTimer));
@@ -370,7 +368,7 @@ bool EditorView::draw(Surface* surface)
             }
         }
 
-        if (xpos == cursor.column && bufferPos.line == cursor.line)
+        if (cursor.column >= xpos && bufferPos.line == cursor.line)
         {
             // The cursor is just beyond the last character
             drawCursor(surface, drawX, drawY);
