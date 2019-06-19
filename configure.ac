@@ -11,6 +11,7 @@ AC_CONFIG_HEADERS([include/vide/config.h])
 AM_PROG_AR
 AC_PROG_CXX
 AC_PROG_CC
+AC_LANG([C++])
 AC_PROG_MAKE_SET
 AC_PROG_LIBTOOL
 AC_PROG_RANLIB
@@ -30,6 +31,8 @@ AC_TYPE_SIZE_T
 AC_TYPE_UINT16_T
 AC_TYPE_UINT32_T
 AC_TYPE_UINT8_T
+
+AC_CONFIG_MACRO_DIR([m4])
 
 # Checks for library functions.
 AC_CHECK_FUNCS([iswprint memset])
@@ -55,6 +58,13 @@ if test x$LIBCLANG = xtrue; then
     AC_DEFINE(HAS_LIBCLANG, 1, [libclang])
     LIBS="$LIBS -lclang"
 fi
+
+AX_CXX_CHECK_LIB(antlr4-runtime, [antlr4::RuntimeMetaData::getRuntimeVersion()], [
+    HAS_LIBANTLR4=yes
+    AC_DEFINE(HAS_LIBANTLR4, 1, [libantlr4-runtime])
+    LIBS="$LIBS -lantlr4-runtime"
+])
+AM_CONDITIONAL([HAS_LIBANTLR4], [test "x$HAS_LIBANTLR4" = "xyes"])
 
 AC_SEARCH_LIBS([git_libgit2_init], [git2], [LIBGIT2="true" ], [ LIBGIT2="false"])
 AM_CONDITIONAL([HAS_LIBGIT2], [test x$LIBGIT2 = xtrue])
@@ -97,10 +107,12 @@ AC_CONFIG_FILES([
     src/plugins/Makefile
     src/plugins/filetypes/Makefile
     src/plugins/filetypes/cxx/Makefile
+    src/plugins/filetypes/java/Makefile
     src/plugins/git/Makefile
     src/vide/Makefile
     src/vide/views/Makefile
     src/turbovide/Makefile
+    src/videtool/Makefile
     tests/Makefile
 ])
 AC_OUTPUT
