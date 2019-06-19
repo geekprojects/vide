@@ -40,4 +40,5 @@ configure.scan
 output/
 
 src/vide
+src/videtool/videtool
 
