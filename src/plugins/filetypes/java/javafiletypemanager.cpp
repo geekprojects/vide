@@ -219,11 +219,20 @@ FileTypeIcon JavaFileTypeManager::getIcon()
 JavaParserContext* JavaFileTypeManager::parse(ANTLRInputStream* inputStream)
 {
     JavaParserContext* ctx = new JavaParserContext();
-    ctx->inputStream = inputStream;
-    ctx->lexer = new JavaLexer(ctx->inputStream);
-    ctx->tokenStream = new CommonTokenStream(ctx->lexer);
-    ctx->tokenStream->fill();
-    ctx->parser = new JavaParser(ctx->tokenStream);
+
+    try
+    {
+        ctx->inputStream = inputStream;
+        ctx->lexer = new JavaLexer(ctx->inputStream);
+        ctx->tokenStream = new CommonTokenStream(ctx->lexer);
+        ctx->tokenStream->fill();
+        ctx->parser = new JavaParser(ctx->tokenStream);
+    }
+    catch (std::exception& e)
+    {
+        log(ERROR, "Failed to parse file: %s", e.what());
+        return NULL;
+    }
 
     ctx->packageName = "";
     JavaParser::CompilationUnitContext* compilationUnit = ctx->parser->compilationUnit();
