@@ -14,6 +14,33 @@ static struct option g_globalOptions[] =
     {0, 0, 0, 0}
 };
 
+void commandCreateProject(int argc, char** argv, Vide* vide, string projectPath)
+{
+    Project* project = new Project(vide, projectPath);
+    project->init();
+    project->scan();
+    project->index();
+
+    vide->getTaskExecutor()->wait();
+
+    project->save();
+
+    delete project;
+}
+
+void commandLoadProject(int argc, char** argv, Vide* vide, string projectPath)
+{
+    Project* project = new Project(vide, projectPath);
+    project->load();
+
+    project->scan();
+    project->index();
+
+    vide->getTaskExecutor()->wait();
+
+    delete project;
+}
+
 void commandTokenise(int argc, char** argv, Vide* vide, string projectPath)
 {
     if (argc < 1)
@@ -90,7 +117,15 @@ int main(int argc, char** argv)
     Vide* vide = new Vide();
     vide->init();
 
-    if (command == "tokenise")
+    if (command == "createproject")
+    {
+        commandCreateProject(argc - optind, argv + optind, vide, projectPath);
+    }
+    else if (command == "loadproject")
+    {
+        commandLoadProject(argc - optind, argv + optind, vide, projectPath);
+    }
+    else if (command == "tokenise")
     {
         commandTokenise(argc - optind, argv + optind, vide, projectPath);
     }
