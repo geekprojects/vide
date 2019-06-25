@@ -146,14 +146,14 @@ bool CXXTokeniser::tokenise(Buffer* buffer)
                 line->tokens.push_back(lineToken);
             }
 
-#if 0
+#if 1
             log(DEBUG, "tokenise:  %u:  -> start: line=%u, col=%u, end: line=%u, col=%u, length=%u", t, start.line, start.column, end.line, end.column, length);
 #endif
             lastEnd = end.column;
 
             wstring text = line->text.substr(start.column, length);
 
-#if 0
+#if 1
             log(DEBUG, "tokenise:  %u:  -> [%ls] token kind=%u, cursor kind=%u", t, text.c_str(), kind, cursorKind);
 #endif
 
@@ -218,6 +218,27 @@ bool CXXTokeniser::tokenise(Buffer* buffer)
                     }
                     break;
             }
+
+#if 0
+            if (clang_isReference(cursorKind))
+            {
+                CXCursor ref = clang_getCursorReferenced(cursors[t]);
+                if (!clang_Cursor_isNull(ref))
+                {
+                    CXString refString = clang_getCursorPrettyPrinted(ref, NULL);
+                    log(DEBUG, " -> isReference to: %s\n", clang_getCString(refString));
+                    //clang_disposeString(refString);
+                    //CXSourceLocation location = clang_getCursorLocation(ref);
+
+                    //CXFile file;
+                    //int line;
+                    //int column;
+                    //int offset;
+                    //clang_getExpansionLocation(ref, 
+
+                }
+            }
+#endif
 
             if (lineToken->text.find(L' ') != string::npos || lineToken->text.find(L'\t') != string::npos)
             {

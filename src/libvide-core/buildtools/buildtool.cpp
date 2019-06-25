@@ -17,7 +17,7 @@ bool BuildTool::init()
     return true;
 }
 
-FileHandlerPriority BuildTool::canHandle(Project* project)
+FileHandlerPriority BuildTool::canHandle(ProjectModule* project)
 {
     return PRIORITY_UNSUPPORTED;
 }

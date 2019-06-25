@@ -9,6 +9,8 @@ static const char* ProjectDefinitionTypeString(ProjectDefinitionType type)
 {
     switch (type)
     {
+        case DEF_NONE:
+            return "DEF_NONE";
         case DEF_UNKNOWN:
             return "DEF_UNKNOWN";
         case DEF_NAMESPACE:
@@ -33,6 +35,8 @@ static const char* ProjectDefinitionTypeString(ProjectDefinitionType type)
             return "DEF_ENUM_CONSTANT";
         case DEF_TYPEDEF:
             return "DEF_TYPEDEF";
+        case DEF_PACKAGE:
+            return "DEF_PACKAGE";
         default:
             return "DEF_UNKNOWN";
     }
@@ -84,6 +88,10 @@ static ProjectDefinitionType string2ProjectDefinitionType(string type)
     {
         return DEF_TYPEDEF;
     }
+    else if (type == "DEF_PACKAGE")
+    {
+        return DEF_PACKAGE;
+    }
     return DEF_UNKNOWN;
 }
 
@@ -108,6 +116,7 @@ bool ProjectIndex::init()
     Table entries;
     entries.name = "vide_entries";
     entries.columns.insert(Column("id", true, true));
+    entries.columns.insert(Column("module_id"));
     entries.columns.insert(Column("parent_id"));
     entries.columns.insert(Column("path"));
     entries.columns.insert(Column("name"));
@@ -154,9 +163,10 @@ void ProjectIndex::addEntry(ProjectEntry* entry)
     }
 
     m_dbMutex->lock();
-    string sql = "SELECT id, hash FROM vide_entries WHERE path = ?";
+    string sql = "SELECT id, hash FROM vide_entries WHERE module_id = ? AND path = ?";
     PreparedStatement* ps = m_db->prepareStatement(sql);
-    ps->bindString(1, entry->getFilePath());
+    ps->bindString(1, entry->getModule()->getId());
+    ps->bindString(2, entry->getFilePath());
     ps->executeQuery();
     if (ps->step())
     {
@@ -178,11 +188,12 @@ void ProjectIndex::addEntry(ProjectEntry* entry)
             }
         }
 
-        string insertSql = "INSERT INTO vide_entries (id, parent_id, path, name, type, updated) VALUES (null, ?, ?, ?, ?, ?)";
+        string insertSql = "INSERT INTO vide_entries (id, module_id, parent_id, path, name, type, updated) VALUES (null, ?, ?, ?, ?, ?, ?)";
         PreparedStatement* insertPs = m_db->prepareStatement(insertSql);
-        insertPs->bindInt64(1, parentId);
-        insertPs->bindString(2, entry->getFilePath());
-        insertPs->bindString(3, entry->getName());
+        insertPs->bindString(1, entry->getModule()->getId());
+        insertPs->bindInt64(2, parentId);
+        insertPs->bindString(3, entry->getFilePath());
+        insertPs->bindString(4, entry->getName());
         string type;
         switch (entry->getType())
         {
@@ -199,8 +210,8 @@ void ProjectIndex::addEntry(ProjectEntry* entry)
                 type = "UNKNOWN";
                 break;
         }
-        insertPs->bindString(4, type);
-        insertPs->bindInt64(5, 0);
+        insertPs->bindString(5, type);
+        insertPs->bindInt64(6, 0);
         insertPs->execute();
         entry->setId(m_db->getLastInsertId());
         m_db->endTransaction();
@@ -219,7 +230,7 @@ void ProjectIndex::updateEntry(ProjectEntry* entry)
         return;
     }
      
-    string sql = "UPDATE vide_entries SET hash=? WHERE id=?";
+    string sql = "UPDATE vide_entries SET hash = ? WHERE id=?";
 
     m_dbMutex->lock();
 

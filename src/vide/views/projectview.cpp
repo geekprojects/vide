@@ -55,12 +55,16 @@ void ProjectView::update()
 {
 if (m_projectList != NULL)
 {
-    TreeListItem* rootItem = new TreeListItem(m_vide, L"Project");
+vector<ProjectModule*> modules = m_project->getModules();
+for (ProjectModule* module : modules)
+{
+    TreeListItem* rootItem = new TreeListItem(m_vide, module->getName());
     rootItem->setOpen(true);
     m_projectList->addItem(rootItem);
 
-    ProjectDirectory* root = m_project->getRoot();
+    ProjectDirectory* root = module->getRoot();
     addDirectory(rootItem, root);
+}
 }
 }
 

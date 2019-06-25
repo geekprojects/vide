@@ -11,7 +11,7 @@ class GNUBuildTool : public MakefileBuildTool
     GNUBuildTool(Vide* vide);
     virtual ~GNUBuildTool();
 
-    virtual FileHandlerPriority canHandle(Project* project);
+    virtual FileHandlerPriority canHandle(ProjectModule* project);
 };
 
 #endif

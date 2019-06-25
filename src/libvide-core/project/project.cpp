@@ -51,9 +51,6 @@ Project::Project(Vide* vide, string rootPath) : Logger("Project")
     free(rp);
     log(DEBUG, "Project: m_rootPath=%s -> %s", rootPath.c_str(), m_rootPath.c_str());
 
-    m_root = NULL;
-    m_buildTool = NULL;
-
     m_index = new ProjectIndex(this);
 }
 
@@ -67,16 +64,9 @@ bool Project::init()
     m_config["version"] = "1.0";
     m_config["root"] = m_rootPath;
 
-    m_buildTool = m_vide->findBuildTool(this);
-    if (m_buildTool != NULL)
-    {
-        log(DEBUG, "init: buildTool: %s", m_buildTool->getPluginName().c_str());
-        m_config["buildTool"]["name"] = m_buildTool->getPluginName();
-    }
-    else
-    {
-        log(WARN, "init: Unable to detect build tool");
-    }
+    ProjectModule* module = new ProjectModule(this, "root", L"Root", m_rootPath);
+    module->init(m_config["modules"][0]);
+    m_modules.push_back(module);
 
     m_index->init();
 
@@ -96,10 +86,15 @@ bool Project::load()
         return false;
     }
 
-    if (m_config["buildTool"]["name"])
+    for (YAML::Node node : m_config["modules"])
     {
-        string buildToolName = m_config["buildTool"]["name"].as<std::string>();
-        m_buildTool = (BuildTool*)m_vide->getPluginManager()->findPlugin(buildToolName);
+        string id = node["id"].as<std::string>();
+        wstring name = ::Utils::string2wstring(node["name"].as<std::string>());
+        string path = node["path"].as<std::string>();
+        ProjectModule* module = new ProjectModule(this, id, name, path);
+        module->load(node);
+
+        m_modules.push_back(module);
     }
 
     m_index->init();
@@ -137,10 +132,10 @@ void process_events(const vector<fsw::event>& events, void *context)
 
 bool Project::scan()
 {
-    m_root = new ProjectDirectory(this, NULL, "");
-    m_index->addEntry(m_root);
-
-    scanDirectory(m_root, m_rootPath);
+    for (ProjectModule* module : m_modules)
+    {
+        module->scan();
+    }
 
 #if 0
     m_root->dump(0);
@@ -156,78 +151,13 @@ bool Project::scan()
     return true;
 }
 
-bool Project::scanDirectory(ProjectDirectory* entry, std::string path)
-{
-    DIR* fd;
-    dirent* dirent;
-
-    log(DEBUG, "scanDirectory: Scanning %s", path.c_str());
-
-    fd = opendir(path.c_str());
-    if (fd == NULL)
-    {
-        return false;
-    }
-
-    vector<string> names;
-    while ((dirent = readdir(fd)) != NULL)
-    {
-        if (dirent->d_name[0] == '.')
-        {
-            continue;
-        }
-
-        string name = string(dirent->d_name);
-        size_t pos = name.rfind(".");
-        string ext = "";
-        if (pos != string::npos)
-        {
-            ext = name.substr(pos + 1);
-        }
-
-        if (ext == "o" || ext == "dSYM" || ext == "Plo" || ext == "a" || ext == "la" || ext == "la" || ext == "lo")
-        {
-            continue;
-        }
-        names.push_back(dirent->d_name);
-    }
-
-    std::sort(names.begin(), names.end());
-
-    for (string name : names)
-    {
-        struct stat stat;
-        string childPath = path + "/" + name;
-
-        lstat(childPath.c_str(), &stat);
-        if (S_ISDIR(stat.st_mode))
-        {
-            ProjectDirectory* child = new ProjectDirectory(this, entry, name);
-            m_index->addEntry(child);
-            entry->addChild(child);
-            scanDirectory(child, childPath);
-        }
-        else if (S_ISREG(stat.st_mode))
-        {
-            ProjectFile* child = new ProjectFile(this, entry, name);
-            m_index->addEntry(child);
-
-            FileTypeManager* ftm = m_vide->findFileTypeManager(child);
-            if (ftm != NULL)
-            {
-                child->setFileTypeManager(ftm);
-            }
-
-            entry->addChild(child);
-        }
-    }
-
-    return true;
-}
-
 bool Project::index()
 {
-    indexDirectory(m_root);
+    for (ProjectModule* module : m_modules)
+    {
+        module->index();
+    }
+    // XXX indexDirectory(m_root);
 /*
     // Resolve all parents
     map<std::string, ProjectDefinition*>::iterator it;
@@ -244,47 +174,9 @@ bool Project::index()
     return true;
 }
 
-bool Project::indexDirectory(ProjectDirectory* dir)
-{
-    for (ProjectEntry* entry : dir->getChildren())
-    {
-        switch (entry->getType())
-        {
-            case ENTRY_FILE:
-                indexFile((ProjectFile*)entry);
-                break;
-            case ENTRY_DIR:
-                indexDirectory((ProjectDirectory*)entry);
-                break;
-            default:
-                break;
-        }
-    }
-    return true;
-}
-
-bool Project::indexFile(ProjectFile* file)
-{
-    string hash = file->calculateHash();
-
-    if (hash != file->getHash())
-    {
-        log(DEBUG, "indexFile: File modified: %s", file->getFilePath().c_str());
-        file->setHash(hash);
-
-        m_index->removeSources(file);
-        m_index->updateEntry(file);
-
-        m_vide->getTaskExecutor()->addTask(new FileIndexTask(file));
-        //file->getFileTypeManager()->index(file);
-    }
-
-    return true;
-}
-
-
 ProjectEntry* Project::getEntry(string path)
 {
+#if 0
     vector<string> pathParts = Geek::Core::splitString(path, '/');
 
     ProjectEntry* pos = m_root;
@@ -302,6 +194,9 @@ ProjectEntry* Project::getEntry(string path)
     }
 
     return pos;
+#else
+return NULL;
+#endif
 }
 
 
@@ -332,8 +227,8 @@ void Project::dumpStructure()
 */
 }
 
-ProjectDirectory::ProjectDirectory(Project* project, ProjectEntry* parent, std::string name)
-    : ProjectEntry(project, ENTRY_DIR, parent, name)
+ProjectDirectory::ProjectDirectory(ProjectModule* module, ProjectEntry* parent, std::string name)
+    : ProjectEntry(module, ENTRY_DIR, parent, name)
 {
 }
 

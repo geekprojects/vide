@@ -7,10 +7,10 @@ using namespace std;
 using namespace Geek;
 using namespace Geek::Core;
 
-ProjectEntry::ProjectEntry(Project* project, ProjectEntryType type, ProjectEntry* parent, std::string name)
+ProjectEntry::ProjectEntry(ProjectModule* module, ProjectEntryType type, ProjectEntry* parent, std::string name)
 {
     m_id = 0;
-    m_project = project;
+    m_module = module;
     m_type = type;
     m_parent = parent;
     m_name = name;
@@ -71,6 +71,11 @@ void ProjectEntry::dump(int level)
     }
 }
 
+Project* ProjectEntry::getProject()
+{
+    return m_module->getProject();
+}
+
 string ProjectEntry::getFilePath()
 {
     string path = "";
@@ -101,13 +106,13 @@ string ProjectEntry::getFileDir()
     }
     else
     {
-        return m_project->getRootPath();
+        return m_module->getRootPath();
     }
 }
 
 string ProjectEntry::getAbsolutePath()
 {
-    return m_project->getRootPath() + getFilePath();
+    return m_module->getRootPath() + getFilePath();
 }
 
 void ProjectEntry::addDefinition(ProjectDefinition* def)

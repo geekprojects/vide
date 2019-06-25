@@ -6,7 +6,7 @@
 
 #include <vector>
 
-class Project;
+class ProjectModule;
 class ProjectFile;
 
 class BuildTool : public VidePlugin
@@ -19,7 +19,7 @@ class BuildTool : public VidePlugin
 
     bool init();
 
-    virtual FileHandlerPriority canHandle(Project* project);
+    virtual FileHandlerPriority canHandle(ProjectModule* module);
 
     virtual std::vector<std::string> getFileFlags(ProjectFile* file);
 };

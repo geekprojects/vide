@@ -31,6 +31,7 @@
 #include <geek/core-thread.h>
 
 #include <vide/tokeniser.h>
+#include <vide/projectdefs.h>
 
 class ProjectFile;
 
@@ -121,6 +122,7 @@ struct LineToken
     //unsigned int column;
     std::wstring text;
     TokenType type;
+    ProjectDefinitionType definitionType;
     bool isSpace;
     Frontier::Rect drawRect;
 

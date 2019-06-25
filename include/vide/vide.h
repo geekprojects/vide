@@ -41,6 +41,7 @@ class FileTypeManager;
 class VidePluginManager;
 class BuildTool;
 class Project;
+class ProjectModule;
 class ProjectFile;
 
 class Vide : public Geek::Logger
@@ -66,7 +67,7 @@ class Vide : public Geek::Logger
     void registerFileTypeManager(FileTypeManager* ftm);
     FileTypeManager* findFileTypeManager(ProjectFile* file);
     void registerBuildTool(BuildTool* bt);
-    BuildTool* findBuildTool(Project* project);
+    BuildTool* findBuildTool(ProjectModule* module);
 
     Geek::Core::TaskExecutor* getTaskExecutor() { return m_taskExecutor; }
     Geek::Core::TimerManager* getTimerManager() { return m_timerManager; }

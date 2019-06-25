@@ -17,7 +17,8 @@ CXXFileTypeManager::CXXFileTypeManager(Vide* vide) : FileTypeManager(vide)
 {
     m_tokeniser = new CXXTokeniser(this);
 
-    m_index = clang_createIndex(0, 0);
+    m_index = clang_createIndex(1, 1);
+    clang_CXIndex_setGlobalOptions(m_index, CXGlobalOpt_ThreadBackgroundPriorityForAll);
 
     m_iconSurface = Surface::loadPNG("data/icons/cpp_256x256.png");
 }
@@ -265,7 +266,7 @@ CXTranslationUnit CXXFileTypeManager::parse(ProjectFile* file, CXUnsavedFile* un
     vector<string> buildArgs;
     if (!file->hasBuildArgs())
     {
-        BuildTool* buildTool = file->getProject()->getBuildTool();
+        BuildTool* buildTool = file->getModule()->getBuildTool();
 
         buildArgs.push_back("-x");
         buildArgs.push_back("c++");
@@ -328,6 +329,9 @@ CXTranslationUnit CXXFileTypeManager::parse(ProjectFile* file, CXUnsavedFile* un
         unsavedFileCount = 1;
     }
 
+unsigned int flags = clang_defaultEditingTranslationUnitOptions();
+printf("XXX: flags=0x%x\n", flags);
+
     CXTranslationUnit unit;
     if (file->getTokeniseData() == NULL)
     {
@@ -335,13 +339,13 @@ CXTranslationUnit CXXFileTypeManager::parse(ProjectFile* file, CXUnsavedFile* un
             getIndex(),
             file->getAbsolutePath().c_str(), argv, argc,
             unsavedFile, unsavedFileCount,
-            CXTranslationUnit_DetailedPreprocessingRecord | CXTranslationUnit_KeepGoing);
+            CXTranslationUnit_DetailedPreprocessingRecord | CXTranslationUnit_KeepGoing | CXTranslationUnit_PrecompiledPreamble);
         file->setTokeniseData(unit);
     }
     else
     {
         unit = (CXTranslationUnit)(file->getTokeniseData());
-        clang_reparseTranslationUnit(unit, unsavedFileCount, unsavedFile, CXTranslationUnit_DetailedPreprocessingRecord | CXTranslationUnit_KeepGoing);
+        clang_reparseTranslationUnit(unit, unsavedFileCount, unsavedFile, CXTranslationUnit_DetailedPreprocessingRecord | CXTranslationUnit_KeepGoing | CXTranslationUnit_PrecompiledPreamble);
     }
 
     for (char* arg : argv)

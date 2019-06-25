@@ -11,7 +11,7 @@ class MakefileBuildTool : public BuildTool
     MakefileBuildTool(Vide* vide);
     virtual ~MakefileBuildTool();
 
-    virtual FileHandlerPriority canHandle(Project* project);
+    virtual FileHandlerPriority canHandle(ProjectModule* project);
 
     virtual std::vector<std::string> getFileFlags(ProjectFile* file);
 };

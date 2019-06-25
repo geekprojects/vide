@@ -6,8 +6,8 @@
 using namespace std;
 using namespace Geek::Core;
 
-ProjectFile::ProjectFile(Project* project, ProjectEntry* parent, std::string name)
-    : ProjectEntry(project, ENTRY_FILE, parent, name)
+ProjectFile::ProjectFile(ProjectModule* module, ProjectEntry* parent, std::string name)
+    : ProjectEntry(module, ENTRY_FILE, parent, name)
 {
     m_buffer = NULL;
     m_hasBuildArgs = false;
@@ -25,7 +25,7 @@ Buffer* ProjectFile::open()
         return m_buffer;
     }
 
-    m_buffer = Buffer::loadFile((getProject()->getRootPath() + getFilePath()).c_str());
+    m_buffer = Buffer::loadFile((getModule()->getRootPath() + getFilePath()).c_str());
     if (m_buffer == NULL)
     {
         printf("ERROR: Failed to open file: %s\n", getFilePath().c_str());
@@ -41,7 +41,7 @@ Buffer* ProjectFile::open()
 
 string ProjectFile::calculateHash()
 {
-    return SHA::sha256File(getProject()->getRootPath() + getFilePath());
+    return SHA::sha256File(getModule()->getRootPath() + getFilePath());
 }
 
 void ProjectFile::setBuildArgs(std::vector<string> args)

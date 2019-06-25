@@ -35,30 +35,16 @@
 
 #include <vide/filetypemanager.h>
 #include <vide/buffer.h>
+#include <vide/projectdefs.h>
 
 class Vide;
 class Project;
+class ProjectModule;
 class ProjectEntry;
 class Editor;
 class BuildTool;
 class FileTypeManager;
 struct FileTypeManagerData;
-
-enum ProjectDefinitionType
-{
-    DEF_UNKNOWN,
-    DEF_NAMESPACE,
-    DEF_CLASS,
-    DEF_CLASS_TEMPLATE,
-    DEF_FUNCTION_SPEC,
-    DEF_FUNCTION_IMPL,
-    DEF_FUNCTION_TEMPLATE,
-    DEF_FIELD,
-    DEF_VARIABLE,
-    DEF_ENUM,
-    DEF_ENUM_CONSTANT,
-    DEF_TYPEDEF,
-};
 
 struct ProjectDefinitionSource
 {
@@ -105,7 +91,7 @@ class ProjectEntry
 {
  private:
     int64_t m_id;
-    Project* m_project;
+    ProjectModule* m_module;
     ProjectEntryType m_type;
     ProjectEntry* m_parent;
     std::string m_name;
@@ -120,13 +106,14 @@ class ProjectEntry
     std::vector<ProjectEntry*> m_children;
 
  public:
-    ProjectEntry(Project* project, ProjectEntryType type, ProjectEntry* parent, std::string name);
+    ProjectEntry(ProjectModule* module, ProjectEntryType type, ProjectEntry* parent, std::string name);
     virtual ~ProjectEntry();
 
     void setId(int64_t id) { m_id = id; }
     int64_t getId() { return m_id; }
 
-    Project* getProject() { return m_project; }
+    Project* getProject();
+    ProjectModule* getModule() { return m_module; }
     ProjectEntryType getType() { return m_type; }
     std::string getName() { return m_name; }
     std::string getFilePath();
@@ -172,7 +159,7 @@ class ProjectFile : public ProjectEntry
     void* m_tokeniseData;
 
  public:
-    ProjectFile(Project* project, ProjectEntry* parent, std::string name);
+    ProjectFile(ProjectModule* module, ProjectEntry* parent, std::string name);
     virtual ~ProjectFile();
 
     virtual Buffer* open();
@@ -192,7 +179,7 @@ class ProjectDirectory : public ProjectEntry
  private:
 
  public:
-    ProjectDirectory(Project* project, ProjectEntry* parent, std::string name);
+    ProjectDirectory(ProjectModule* module, ProjectEntry* parent, std::string name);
     virtual ~ProjectDirectory();
 
 };
@@ -239,6 +226,39 @@ class ProjectIndex : public Geek::Logger
     std::vector<ProjectDefinition*> getRootDefinitions();
 };
 
+class ProjectModule : public Geek::Logger
+{
+ private:
+    Project* m_project;
+    std::string m_id;
+    std::wstring m_name;
+    std::string m_path;
+
+    ProjectDirectory* m_root;
+    BuildTool* m_buildTool;
+
+    bool scanDirectory(ProjectDirectory* entry, std::string path);
+    bool indexDirectory(ProjectDirectory* dir);
+    bool indexFile(ProjectFile* file);
+
+ public:
+    ProjectModule(Project* project, std::string id, std::wstring name, std::string path);
+    virtual ~ProjectModule();
+
+    bool init(YAML::Node config);
+    bool load(YAML::Node config);
+
+    bool scan();
+    bool index();
+
+    Project* getProject() { return m_project; }
+    std::string getId() { return m_id; }
+    std::wstring getName() { return m_name; }
+    std::string getRootPath() { return m_path; }
+    BuildTool* getBuildTool() { return m_buildTool; }
+    ProjectDirectory* getRoot() { return m_root; }
+};
+
 class Project : public Geek::Logger
 {
  private:
@@ -247,17 +267,10 @@ class Project : public Geek::Logger
 
     YAML::Node m_config;
 
-    ProjectDirectory* m_root;
-
-    BuildTool* m_buildTool;
-
+    std::vector<ProjectModule*> m_modules;
     ProjectIndex* m_index;
 
     sigc::signal<void, ProjectEntry*> m_openEntrySignal;
-
-    bool scanDirectory(ProjectDirectory* entry, std::string path);
-    bool indexDirectory(ProjectDirectory* dir);
-    bool indexFile(ProjectFile* file);
 
  public:
     Project(Vide* vide, std::string rootPath);
@@ -277,14 +290,13 @@ class Project : public Geek::Logger
     std::string getVidePath() { return getRootPath() + "/.vide"; }
     std::string getConfigPath();
 
-    ProjectDirectory* getRoot() { return m_root; }
     ProjectEntry* getEntry(std::string path);
 
     ProjectIndex* getIndex() { return m_index; }
     ProjectDefinition* findDefinition(std::string name);
     void addDefinition(ProjectDefinition* def);
 
-    BuildTool* getBuildTool() { return m_buildTool; }
+    std::vector<ProjectModule*>& getModules() { return m_modules; }
 
     sigc::signal<void, ProjectEntry*> openEntrySignal() { return m_openEntrySignal; }
 

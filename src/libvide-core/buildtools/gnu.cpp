@@ -15,7 +15,7 @@ GNUBuildTool::~GNUBuildTool()
 {
 }
 
-FileHandlerPriority GNUBuildTool::canHandle(Project* project)
+FileHandlerPriority GNUBuildTool::canHandle(ProjectModule* project)
 {
     string confFile = project->getRootPath() + "/configure";
     if (!Utils::fileIsExecutable(confFile))

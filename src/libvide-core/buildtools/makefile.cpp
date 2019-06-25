@@ -17,7 +17,7 @@ MakefileBuildTool::~MakefileBuildTool()
 {
 }
 
-FileHandlerPriority MakefileBuildTool::canHandle(Project* project)
+FileHandlerPriority MakefileBuildTool::canHandle(ProjectModule* project)
 {
     string makefile = project->getRootPath() + "/Makefile";
     if (!Utils::fileIsReadable(makefile))

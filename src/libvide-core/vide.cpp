@@ -98,14 +98,14 @@ void Vide::registerBuildTool(BuildTool* ftm)
     m_buildTools.push_back(ftm);
 }
 
-BuildTool* Vide::findBuildTool(Project* project)
+BuildTool* Vide::findBuildTool(ProjectModule* module)
 {
     BuildTool* selected = NULL;
     FileHandlerPriority selectedPriority = PRIORITY_UNSUPPORTED;
     for (BuildTool* bt : m_buildTools)
     {
         FileHandlerPriority priority;
-        priority = bt->canHandle(project);
+        priority = bt->canHandle(module);
         if (priority != PRIORITY_UNSUPPORTED)
         {
             if (selected == NULL || priority > selectedPriority)
