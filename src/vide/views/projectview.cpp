@@ -36,7 +36,8 @@ ProjectView::ProjectView(VideApp* vide, Project* project) : Frame(vide, L"Projec
 {
     m_vide = vide;
     m_project = project;
-    m_margin = 0;
+
+    getWidgetStyle()->applyProperty("margin", 0);
 
     m_projectList = new List(m_vide);
     m_scroller = new Scroller(m_vide, m_projectList);
@@ -53,6 +54,7 @@ void ProjectView::init()
 
 void ProjectView::update()
 {
+log(DEBUG, "update: Here!");
 if (m_projectList != NULL)
 {
 vector<ProjectModule*> modules = m_project->getModules();
@@ -66,6 +68,7 @@ for (ProjectModule* module : modules)
     addDirectory(rootItem, root);
 }
 }
+log(DEBUG, "update: Done!");
 }
 
 void ProjectView::addDirectory(TreeListItem* parent, ProjectDirectory* dir)
@@ -109,7 +112,7 @@ void ProjectView::addDirectory(TreeListItem* parent, ProjectDirectory* dir)
     }
 }
 
-void ProjectView::onItemClicked(Frontier::ListItem* item)
+void ProjectView::onItemClicked(Frontier::Widget* item)
 {
     ProjectEntry* entry = (ProjectEntry*)item->getPrivateData();
     if (entry == NULL)

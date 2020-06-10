@@ -76,6 +76,8 @@ struct ProjectDefinition
         id = 0;
     }
 
+    bool isSource(ProjectEntry* entry);
+
     void dump(int level);
 };
 
@@ -207,6 +209,8 @@ class ProjectIndex : public Geek::Logger
     Geek::Core::Database* m_db;
     Geek::Mutex* m_dbMutex;
 
+    std::map<std::string, ProjectDefinition*> m_definitionCache;
+
     ProjectDefinition* createDefinition(Geek::Core::PreparedStatement* ps);
 
  public:
@@ -224,6 +228,7 @@ class ProjectIndex : public Geek::Logger
     void addDefinition(ProjectDefinition* def);
     std::vector<ProjectDefinition*> getEntryDefinitions(ProjectEntry* entry);
     std::vector<ProjectDefinition*> getRootDefinitions();
+    void populateChildDefinitions(ProjectDefinition* def);
 };
 
 class ProjectModule : public Geek::Logger

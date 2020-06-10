@@ -19,8 +19,10 @@ void commandCreateProject(int argc, char** argv, Vide* vide, string projectPath)
     Project* project = new Project(vide, projectPath);
     project->init();
     project->scan();
-    project->index();
 
+    vide->getTaskExecutor()->wait();
+
+    project->index();
     vide->getTaskExecutor()->wait();
 
     project->save();
@@ -39,6 +41,34 @@ void commandLoadProject(int argc, char** argv, Vide* vide, string projectPath)
     vide->getTaskExecutor()->wait();
 
     delete project;
+}
+
+static void printStructure(Project* project, ProjectDefinition* def, int level = 0)
+{
+    string spaces = string(level * 4, ' ');
+
+    printf("%s%s\n", spaces.c_str(), def->name.c_str());
+
+    project->getIndex()->populateChildDefinitions(def);
+
+    for (ProjectDefinition* child : def->children)
+    {
+        printStructure(project, child, level + 1);
+    }
+}
+
+void commandStructure(int argc, char** argv, Vide* vide, string projectPath)
+{
+    Project* project = new Project(vide, projectPath);
+    project->load();
+
+    vector<ProjectDefinition*> defs;
+    defs = project->getIndex()->getRootDefinitions();
+
+    for (ProjectDefinition* def : defs)
+    {
+        printStructure(project, def);
+    }
 }
 
 void commandTokenise(int argc, char** argv, Vide* vide, string projectPath)
@@ -124,6 +154,10 @@ int main(int argc, char** argv)
     else if (command == "loadproject")
     {
         commandLoadProject(argc - optind, argv + optind, vide, projectPath);
+    }
+    else if (command == "structure")
+    {
+        commandStructure(argc - optind, argv + optind, vide, projectPath);
     }
     else if (command == "tokenise")
     {

@@ -16,9 +16,9 @@ class WelcomeWindow : public Frontier::FrontierWindow
 
     virtual bool init();
 
-    void createProject();
-    void chooseProject();
-    void selectProject(Frontier::ListItem* item);
+    void createProject(Frontier::Widget* button);
+    void chooseProject(Frontier::Widget* button);
+    void selectProject(Frontier::Widget* item);
 
  public:
     WelcomeWindow(VideApp* vide);

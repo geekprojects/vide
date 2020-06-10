@@ -35,6 +35,7 @@ Buffer::Buffer(string filename)
 {
     m_filename = filename;
     m_dirty = true;
+    m_timestamp = 0;
 
     m_mutex = Thread::createMutex();
 }
@@ -107,6 +108,7 @@ void Buffer::setDirtyLine(Line* line)
 void Buffer::clearDirty()
 {
     m_dirty = false;
+    //m_timestamp = Utils::getTimestamp();
 }
 
 bool Buffer::save()
@@ -344,6 +346,8 @@ Buffer* Buffer::loadMem(const char* filename, const char* start, const char* end
 
     //printf("loadMem: Most popular EOL: 0x%x\n", maxEOL.at(0));
     buffer->m_lineEnding = maxEOL;
+
+    buffer->m_timestamp = Utils::getTimestamp();
 
     return buffer;
 }

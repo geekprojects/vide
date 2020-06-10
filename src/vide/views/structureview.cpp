@@ -30,7 +30,7 @@ StructureView::StructureView(VideApp* vide, bool fileView) : Frame(vide, L"Struc
     m_vide = vide;
     m_fileView = fileView;
 
-    m_margin = 0;
+    getWidgetStyle()->applyProperty("margin", 0);
 
     m_structureList = new List(m_vide);
     m_scroller = new Scroller(m_vide, m_structureList);
@@ -47,6 +47,7 @@ void StructureView::init()
 
 void StructureView::update()
 {
+log(DEBUG, "update: Here!");
     m_structureList->clearItems();
 
     vector<ProjectDefinition*> defs;
@@ -68,8 +69,9 @@ void StructureView::update()
     for (ProjectDefinition* def : defs)
     {
         log(DEBUG, "update: def: %s", def->name.c_str());
-        addDefinition(NULL, def);
+        addDefinition(NULL, def, 0);
     }
+log(DEBUG, "update: Done!");
 }
 
 void StructureView::setProjectFile(ProjectFile* projectFile)
@@ -92,7 +94,7 @@ uint32_t typeToIcon(ProjectDefinitionType type)
     }
 }
 
-void StructureView::addDefinition(Frontier::TreeListItem* parent, ProjectDefinition* def)
+void StructureView::addDefinition(Frontier::TreeListItem* parent, ProjectDefinition* def, int depth)
 {
     ProjectDefinitionSource fileSource;
     bool singleFileSource = false;
@@ -101,7 +103,7 @@ void StructureView::addDefinition(Frontier::TreeListItem* parent, ProjectDefinit
         bool found = false;
         for (ProjectDefinitionSource source : def->sources)
         {
-            if (source.entry == m_projectFile)
+            if (source.entry->getId() == m_projectFile->getId())
             {
                 fileSource = source;
                 found = true;
@@ -153,7 +155,6 @@ void StructureView::addDefinition(Frontier::TreeListItem* parent, ProjectDefinit
     {
         for (ProjectDefinitionSource source : def->sources)
         {
-
             char linestr[32];
             snprintf(linestr, 32, "%u", source.position.line);
             TextListItem* sourceItem = new TextListItem(m_vide,
@@ -168,13 +169,29 @@ void StructureView::addDefinition(Frontier::TreeListItem* parent, ProjectDefinit
         }
     }
 
-    for (ProjectDefinition* child : def->children)
+    if (depth < 3)
     {
-        addDefinition(item, child);
+        if (def->children.empty())
+        {
+            VideWindow* videWindow = (VideWindow*)getWindow();
+            Project* project = videWindow->getProject();
+            project->getIndex()->populateChildDefinitions(def);
+        }
+
+        int count = 0;
+        for (ProjectDefinition* child : def->children)
+        {
+            addDefinition(item, child, depth + 1);
+            count++;
+            if (count >= 20)
+            {
+                break;
+            }
+        }
     }
 }
 
-void StructureView::onItemClicked(Frontier::ListItem* item)
+void StructureView::onItemClicked(Frontier::Widget* item)
 {
     ProjectDefinitionSource* source = (ProjectDefinitionSource*)item->getPrivateData();
     ((VideWindow*)getWindow())->openEntry(source->entry, source->position);

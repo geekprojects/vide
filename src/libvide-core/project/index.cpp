@@ -146,6 +146,7 @@ bool ProjectIndex::init()
 
     m_db->execute("CREATE INDEX IF NOT EXISTS vide_entries_parent_idx ON vide_entries (parent_id)");
     m_db->execute("CREATE UNIQUE INDEX IF NOT EXISTS vide_definitions_name_idx ON vide_definitions (name)");
+    m_db->execute("CREATE INDEX IF NOT EXISTS vide_definitions_parent_idx ON vide_definitions (parent)");
     m_db->execute("CREATE INDEX IF NOT EXISTS vide_sources_def_idx ON vide_sources (definition_id)");
     m_db->execute("CREATE INDEX IF NOT EXISTS vide_sources_entry_idx ON vide_sources (entry_id)");
 
@@ -281,6 +282,11 @@ ProjectDefinition* ProjectIndex::findDefinition(std::string name)
 
 void ProjectIndex::addDefinition(ProjectDefinition* def)
 {
+    if (def->name == "")
+    {
+        log(WARN, "addDefinition: Attempt to add a definition without a name!");
+        return;
+    }
     m_dbMutex->lock();
 
     m_db->startTransaction();
@@ -317,12 +323,16 @@ void ProjectIndex::addDefinition(ProjectDefinition* def)
     m_db->endTransaction();
 
     m_dbMutex->unlock();
+
+    m_definitionCache.insert(make_pair(def->name, def));
 }
 
 vector<ProjectDefinition*> ProjectIndex::getEntryDefinitions(ProjectEntry* entry)
 {
     vector<ProjectDefinition*> results;
     string sql = "SELECT d.id, d.name, d.parent FROM vide_definitions d WHERE EXISTS (SELECT 1 FROM vide_sources s WHERE s.definition_id = d.id AND s.entry_id=?)";
+
+log(DEBUG, "getEntryDefinitions: entry id=%lld", entry->getId());
 
     m_dbMutex->lock();
 
@@ -333,10 +343,11 @@ vector<ProjectDefinition*> ProjectIndex::getEntryDefinitions(ProjectEntry* entry
     {
         ProjectDefinition* def = createDefinition(ps);
 
-        log(DEBUG, "getEntryDefinitions: def=%s", def->name.c_str());
+        log(DEBUG, "getEntryDefinitions: def=%s, id=%lld", def->name.c_str(), def->id);
 
         results.push_back(def);
     }
+    delete ps;
 
     m_dbMutex->unlock();
 
@@ -360,21 +371,58 @@ vector<ProjectDefinition*> ProjectIndex::getRootDefinitions()
 
         results.push_back(def);
     }
+    delete ps;
 
     m_dbMutex->unlock();
 
     return results;
 }
 
+void ProjectIndex::populateChildDefinitions(ProjectDefinition* def)
+{
+    def->children.clear();
+
+    vector<ProjectDefinition*> results;
+    string sql = "SELECT d.id, d.name, d.parent FROM vide_definitions d WHERE parent = ?";
+
+    m_dbMutex->lock();
+
+    PreparedStatement* ps = m_db->prepareStatement(sql);
+    ps->bindString(1, def->name);
+    ps->executeQuery();
+    while (ps->step())
+    {
+        ProjectDefinition* child = createDefinition(ps);
+
+        //log(DEBUG, "populateChildDefinitions: child=%s", child->name.c_str());
+
+        def->children.push_back(child);
+    }
+    delete ps;
+
+    m_dbMutex->unlock();
+   
+}
+
+
 // The m_dbMutex must already be locked!
 ProjectDefinition* ProjectIndex::createDefinition(Geek::Core::PreparedStatement* ps)
 {
+    string name = ps->getString(1);
+
+    map<std::string, ProjectDefinition*>::iterator it;
+    it = m_definitionCache.find(name);
+    if (it != m_definitionCache.end())
+    {
+        return it->second;
+    }
+
     ProjectDefinition* def = new ProjectDefinition();
     def->id = ps->getInt(0);
-    def->name = ps->getString(1);
+    def->name = name;
     def->parentName = ps->getString(2);
 
-    string sourcesSql = "SELECT s.id, s.entry_id, s.type, s.line, s.col, e.path FROM vide_sources s JOIN vide_entries e on e.id = s.entry_id WHERE definition_id=?";
+    string sourcesSql = "SELECT s.id, s.entry_id, s.type, s.line, s.col, e.path FROM vide_sources s JOIN vide_entries e on e.id = s.entry_id WHERE s.definition_id=?";
     PreparedStatement* sourcesPs = m_db->prepareStatement(sourcesSql);
     sourcesPs->bindInt64(1, def->id);
     sourcesPs->executeQuery();
@@ -393,14 +441,18 @@ ProjectDefinition* ProjectIndex::createDefinition(Geek::Core::PreparedStatement*
         {
             source.entry = m_project->getEntry(path);
 
-#if 0
+#if 1
             log(DEBUG, "findDefinition: source: id=%lld -> path=%s, entry=%p", source.id, path.c_str(), source.entry);
 #endif
 
             def->sources.push_back(source);
         }
     }
+    delete sourcesPs;
+
+    m_definitionCache.insert(make_pair(name, def));
 
     return def;
 }
+
 

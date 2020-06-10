@@ -83,7 +83,7 @@ EditorView::EditorView(VideApp* vide, Editor* editor) : Widget(vide, L"EditorVie
     m_indexTimer = new Timer(TIMER_ONE_SHOT, m_tokeniseTime + 10);
     m_indexTimer->signal().connect(sigc::mem_fun(*this, &EditorView::indexTimer));
 
-    m_scrollBar = new ScrollBar(vide);
+    m_scrollBar = new ScrollBar(vide, false);
     m_scrollBar->incRefCount();
     m_scrollBar->setParent(this);
     m_scrollBar->changedPositionSignal().connect(sigc::mem_fun(*this, &EditorView::onScrollbarChanged));
@@ -150,6 +150,7 @@ void EditorView::layout()
 
 bool EditorView::draw(Surface* surface)
 {
+log(DEBUG, "draw: Here!");
     Buffer* buffer = m_editor->getBuffer();
 
     buffer->lock();
@@ -377,6 +378,7 @@ bool EditorView::draw(Surface* surface)
         drawY += m_charSize.height;
     }
 
+    m_characterMap->setTimestamp(buffer->getTimestamp());
     buffer->unlock();
 
     surface->drawLine(m_marginX - 1, 0, m_marginX - 1, m_setSize.height - 1, 0xffBBBBBB);
@@ -392,6 +394,7 @@ bool EditorView::draw(Surface* surface)
         m_scrollBar->getWidth(), m_scrollBar->getHeight());
     m_scrollBar->draw(&scrollbarVP);
 
+log(DEBUG, "draw: Done!");
     return true;
 }
 
@@ -510,51 +513,58 @@ Widget* EditorView::handleEvent(Event* event)
             if (x > m_marginX)
             {
                 x -= m_marginX;
-
-                LineToken* selectedToken = m_characterMap->getToken(y / m_charSize.height, x / m_charSize.width);
-                Position mousePos = m_characterMap->getPosition(y / m_charSize.height, x / m_charSize.width);
-
-                if (event->eventType == FRONTIER_EVENT_MOUSE_BUTTON)
+                m_editor->getBuffer()->lock();
+                if (m_characterMap->getTimestamp() == m_editor->getBuffer()->getTimestamp())
                 {
-                    MouseButtonEvent* mouseButtonEvent = (MouseButtonEvent*)event;
-                    if (mouseButtonEvent->direction)
-                    {
-                        m_selecting = true;
-                        m_editor->setSelectStart(mousePos);
-                        m_editor->setSelectEnd(mousePos);
-                        m_editor->moveCursor(mousePos);
-                    }
-                    else
-                    {
-                        m_selecting = false;
-                    }
 
-                    setDirty(DIRTY_CONTENT);
-                    return this;
-                }
-                else if (event->eventType == FRONTIER_EVENT_MOUSE_MOTION)
-                {
-                    if (m_selecting)
+                    LineToken* selectedToken = m_characterMap->getToken(y / m_charSize.height, x / m_charSize.width);
+                    Position mousePos = m_characterMap->getPosition(y / m_charSize.height, x / m_charSize.width);
+
+                    if (event->eventType == FRONTIER_EVENT_MOUSE_BUTTON)
                     {
-                        m_editor->setSelectEnd(mousePos);
-                        m_editor->moveCursorX(mousePos.column);
-                        m_editor->moveCursorY(mousePos.line);
+                        MouseButtonEvent* mouseButtonEvent = (MouseButtonEvent*)event;
+                        if (mouseButtonEvent->direction)
+                        {
+                            m_selecting = true;
+                            m_editor->setSelectStart(mousePos);
+                            m_editor->setSelectEnd(mousePos);
+                            m_editor->moveCursor(mousePos);
+                        }
+                        else
+                        {
+                            m_selecting = false;
+                        }
+
                         setDirty(DIRTY_CONTENT);
-                    }
+                        m_editor->getBuffer()->unlock();
 
-                    VideWindow* videWindow = (VideWindow*)getWindow();
-                    if (selectedToken != NULL && !selectedToken->messages.empty())
-                    {
-                        int x = mouseEvent->x;
-                        int y = mouseEvent->y;
-                        Geek::Vector2D screenPos = videWindow->getScreenPosition(Geek::Vector2D(x + 1, y + 1));
-                        videWindow->getEditorTipWindow()->setToken(selectedToken, screenPos);
+                        return this;
                     }
-                    else
+                    else if (event->eventType == FRONTIER_EVENT_MOUSE_MOTION)
                     {
-                        videWindow->getEditorTipWindow()->hide();
+                        if (m_selecting)
+                        {
+                            m_editor->setSelectEnd(mousePos);
+                            m_editor->moveCursorX(mousePos.column);
+                            m_editor->moveCursorY(mousePos.line);
+                            setDirty(DIRTY_CONTENT);
+                        }
+
+                        VideWindow* videWindow = (VideWindow*)getWindow();
+                        if (selectedToken != NULL && !selectedToken->messages.empty())
+                        {
+                            int x = mouseEvent->x;
+                            int y = mouseEvent->y;
+                            Geek::Vector2D screenPos = videWindow->getScreenPosition(Geek::Vector2D(x + 1, y + 1));
+                            videWindow->getEditorTipWindow()->setToken(selectedToken, screenPos);
+                        }
+                        else
+                        {
+                            videWindow->getEditorTipWindow()->hide();
+                        }
                     }
                 }
+                m_editor->getBuffer()->unlock();
             }
             return this;
         } break;
@@ -662,7 +672,11 @@ void EditorView::tokeniseComplete(Task* task)
 {
     EditorTokeniseTask* tokeniseTask = (EditorTokeniseTask*)task;
     m_tokeniseTime = tokeniseTask->getTokeniseTime();
-    getWindow()->requestUpdate();
+    FrontierWindow* window = getWindow();
+    if (window != NULL)
+    {
+        window->requestUpdate();
+    }
 }
 
 EditorCharacterMap::EditorCharacterMap()

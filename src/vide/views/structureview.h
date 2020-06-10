@@ -20,9 +20,9 @@ class StructureView : public Frontier::Frame, public View
     bool m_fileView;
     ProjectFile* m_projectFile;
 
-    void addDefinition(Frontier::TreeListItem* parent, ProjectDefinition* def);
+    void addDefinition(Frontier::TreeListItem* parent, ProjectDefinition* def, int depth);
 
-    void onItemClicked(Frontier::ListItem* item);
+    void onItemClicked(Frontier::Widget* item);
 
  public:
     StructureView(VideApp* vide, bool fileView);

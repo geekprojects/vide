@@ -14,9 +14,9 @@ class ProjectWindow : public Frontier::FrontierWindow
 
     virtual bool init();
 
-    virtual void chooseProjectDir();
-    virtual void create();
-    virtual void cancel();
+    virtual void chooseProjectDir(Frontier::Widget* w);
+    virtual void create(Frontier::Widget* w);
+    virtual void cancel(Frontier::Widget* w);
 
  public:
     ProjectWindow(VideApp* vide);

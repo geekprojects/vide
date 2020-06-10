@@ -237,6 +237,23 @@ ProjectDirectory::~ProjectDirectory()
 }
 
 
+bool ProjectDefinition::isSource(ProjectEntry* entry)
+{
+    if (entry->getId() == 0)
+    {
+        return false;
+    }
+
+    for (ProjectDefinitionSource source : sources)
+    {
+        if (source.entry != NULL && source.entry->getId() == entry->getId())
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
 void ProjectDefinition::dump(int level)
 {
     string spaces = "";

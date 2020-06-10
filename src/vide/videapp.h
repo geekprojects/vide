@@ -47,8 +47,8 @@ class VideApp : public Frontier::FrontierApp
     SettingsWindow* m_settingsWindow;
 
     std::vector<VideWindow*> m_videWindows;
-    FontHandle* m_textFont;
-    FontHandle* m_textIconFont;
+    Geek::FontHandle* m_textFont;
+    Geek::FontHandle* m_textIconFont;
 
     void onOpenProject(Project* project);
 
@@ -60,8 +60,8 @@ class VideApp : public Frontier::FrontierApp
 
     Vide* getVide() { return m_vide; }
 
-    FontHandle* getTextFont() { return m_textFont; }
-    FontHandle* getTextIconFont() { return m_textIconFont; }
+    Geek::FontHandle* getTextFont() { return m_textFont; }
+    Geek::FontHandle* getTextIconFont() { return m_textIconFont; }
 
     void showWelcomeWindow();
     void hideWelcomeWindow();

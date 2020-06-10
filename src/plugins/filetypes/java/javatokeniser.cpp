@@ -104,6 +104,8 @@ bool JavaTokeniser::tokenise(Buffer* buffer)
     }
     string className = "";
 
+    buffer->lock();
+
     for (Line* line : buffer->getLines())
     {
         line->clearTokens();
@@ -240,7 +242,9 @@ log(DEBUG, "tokenise:  -> line text=%ls", lineText.c_str());
         }
 
     }
-    //buffer->unlock();
+
+    buffer->clearDirty();
+    buffer->unlock();
 
     log(DEBUG, "tokenise: Done!");
     return true;

@@ -81,7 +81,7 @@ PKG_CHECK_MODULES(libpcre32, libpcre32 >= 8.0)
 LIBS="$LIBS $libpcre32_LIBS"
 CPPFLAGS="$CPPFLAGS $libpcr32_CFLAGS"
 
-CPPFLAGS="-g $CPPFLAGS -Wall -Werror"
+CPPFLAGS="-g $CPPFLAGS -Wall -Werror -std=c++14"
 
 CPPFLAGS="-O0 -g $CPPFLAGS -Wall -Werror -O0  -fsanitize=address -fno-omit-frame-pointer -fsanitize-address-use-after-scope "
 LDFLAGS="$LDFLAGS -fsanitize=address "

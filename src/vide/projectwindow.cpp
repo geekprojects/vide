@@ -27,32 +27,32 @@ ProjectWindow::~ProjectWindow()
 
 bool ProjectWindow::init()
 {
-    Frame* rootFrame = new Frame(this, false);
-    rootFrame->add(new Label(this, L"Project to Vide"));
+    Frame* rootFrame = new Frame(getApp(), false);
+    rootFrame->add(new Label(getApp(), L"Project to Vide"));
 
-    Grid* grid = new Grid(this);
+    Grid* grid = new Grid(getApp());
     rootFrame->add(grid);
 
-    grid->put(0, 0, new Label(this, L"Project Name:"));
-    grid->put(1, 0, new TextInput(this));
+    grid->put(0, 0, new Label(getApp(), L"Project Name:"));
+    grid->put(1, 0, new TextInput(getApp()));
 
-    grid->put(0, 1, new Label(this, L"Project Directory:"));
-    Frame* rootDirFrame = new Frame(this, true);
+    grid->put(0, 1, new Label(getApp(), L"Project Directory:"));
+    Frame* rootDirFrame = new Frame(getApp(), true);
     IconButton* chooseDirButton;
-    rootDirFrame->setMargin(0);
-    rootDirFrame->setPadding(0);
-    rootDirFrame->add(m_projectDirInput = new TextInput(this));
-    rootDirFrame->add(chooseDirButton = new IconButton(this, getApp()->getTheme()->getIcon(FRONTIER_ICON_FOLDER)));
+    rootDirFrame->getWidgetStyle()->applyProperty("margin", 0);
+    rootDirFrame->getWidgetStyle()->applyProperty("padding", 0);
+    rootDirFrame->add(m_projectDirInput = new TextInput(getApp()));
+    rootDirFrame->add(chooseDirButton = new IconButton(getApp(), getApp()->getTheme()->getIcon(FRONTIER_ICON_FOLDER)));
     grid->put(1, 1, rootDirFrame);
     chooseDirButton->clickSignal().connect(sigc::mem_fun(*this, &ProjectWindow::chooseProjectDir));
 
-    grid->put(0, 2, new Label(this, L"Project Type:"));
+    grid->put(0, 2, new Label(getApp(), L"Project Type:"));
 
     vector<wstring> projectTypes;
     projectTypes.push_back(L"C/C++");
     projectTypes.push_back(L"Java");
     projectTypes.push_back(L"Other");
-    ComboBox* projectTypeBox = new ComboBox(this, projectTypes);
+    ComboBox* projectTypeBox = new ComboBox(getApp(), projectTypes);
     grid->put(1, 2, projectTypeBox);
 
     vector<wstring> buildTypes;
@@ -60,26 +60,26 @@ bool ProjectWindow::init()
     buildTypes.push_back(L"Makefile");
     buildTypes.push_back(L"CMake");
     buildTypes.push_back(L"Other...");
-    ComboBox* buildTypeBox = new ComboBox(this, buildTypes);
-    grid->put(0, 3, new Label(this, L"Build System:"));
+    ComboBox* buildTypeBox = new ComboBox(getApp(), buildTypes);
+    grid->put(0, 3, new Label(getApp(), L"Build System:"));
     grid->put(1, 3, buildTypeBox);
 
-    grid->put(0, 4, new Label(this, L"Include Dirs:"));
-    List* includeList = new List(this);
-    includeList->addItem(new TextListItem(this, L"include"));
-    grid->put(1, 4, new Scroller(this, includeList));
+    grid->put(0, 4, new Label(getApp(), L"Include Dirs:"));
+    List* includeList = new List(getApp());
+    includeList->addItem(new TextListItem(getApp(), L"include"));
+    grid->put(1, 4, new Scroller(getApp(), includeList));
 
-    grid->put(0, 5, new Label(this, L"System Include Dirs:"));
-    List* sysIncludeList = new List(this);
-    sysIncludeList->addItem(new TextListItem(this, L"/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include"));
-    sysIncludeList->addItem(new TextListItem(this, L"/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include/c++/v1"));
-    grid->put(1, 5, new Scroller(this, sysIncludeList));
+    grid->put(0, 5, new Label(getApp(), L"System Include Dirs:"));
+    List* sysIncludeList = new List(getApp());
+    sysIncludeList->addItem(new TextListItem(getApp(), L"/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include"));
+    sysIncludeList->addItem(new TextListItem(getApp(), L"/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include/c++/v1"));
+    grid->put(1, 5, new Scroller(getApp(), sysIncludeList));
 
-    Frame* buttonFrame = new Frame(this, true);
+    Frame* buttonFrame = new Frame(getApp(), true);
     Button* createButton;
     Button* cancelButton;
-    buttonFrame->add(createButton = new Button(this, L"Create"));
-    buttonFrame->add(cancelButton = new Button(this, L"Cancel"));
+    buttonFrame->add(createButton = new Button(getApp(), L"Create"));
+    buttonFrame->add(cancelButton = new Button(getApp(), L"Cancel"));
     rootFrame->add(buttonFrame);
 
     createButton->clickSignal().connect(sigc::mem_fun(*this, &ProjectWindow::create));
@@ -90,7 +90,7 @@ bool ProjectWindow::init()
     return true;
 }
 
-void ProjectWindow::chooseProjectDir()
+void ProjectWindow::chooseProjectDir(Widget* w)
 {
     string dir = getApp()->chooseFile(DIRECTORIES_ONLY, "", "");
     if (dir.length() != 0)
@@ -99,7 +99,7 @@ void ProjectWindow::chooseProjectDir()
     }
 }
 
-void ProjectWindow::create()
+void ProjectWindow::create(Widget* w)
 {
     string path = Utils::wstring2string(m_projectDirInput->getText());
     if (path != "")
@@ -124,7 +124,7 @@ void ProjectWindow::create()
     }
 }
 
-void ProjectWindow::cancel()
+void ProjectWindow::cancel(Widget* w)
 {
     hide();
 }

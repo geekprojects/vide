@@ -17,7 +17,7 @@ class SettingsWindow : public Frontier::FrontierWindow
     SettingsWindow(VideApp* vide);
     virtual ~SettingsWindow();
 
-    bool onClose();
+    void onClose();
 };
 
 #endif

@@ -43,6 +43,7 @@ class EditorCharacterMap
  private:
     int m_lines;
     int m_columns;
+    uint64_t m_timestamp;
     EditorCharacter* m_map;
 
     EditorCharacter* get(int line, int column);
@@ -50,6 +51,9 @@ class EditorCharacterMap
  public:
     EditorCharacterMap();
     ~EditorCharacterMap();
+
+    void setTimestamp(uint64_t timestamp) { m_timestamp = timestamp; }
+    uint64_t getTimestamp() { return m_timestamp; }
 
     void reset(int lines, int columns);
     void setToken(int line, int column, int width, LineToken* token, Position bufferPos);

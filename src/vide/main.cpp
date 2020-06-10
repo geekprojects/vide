@@ -52,6 +52,7 @@ int main(int argc, char** argv)
     {
         videApp.hideWelcomeWindow();
         bool res;
+printf("XXX: Opening project=%s\n", project);
         res = vide.openProject(project);
         if (!res)
         {

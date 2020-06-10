@@ -185,6 +185,9 @@ CXChildVisitResult CXXFileTypeManager::structureVisitor(CXCursor cursor, CXCurso
         log(DEBUG, "structureVisitor: Line %u: %s, parent=%s (%p) (kind=%u, isDef=%u)", pos.line, defName.c_str(), parentName.c_str(), parentDef, cursorKind, isDef);
 #endif
 
+if (!def->isSource(file))
+{
+
         ProjectDefinitionSource source;
         source.entry = file;
         source.position = pos;
@@ -228,6 +231,8 @@ CXChildVisitResult CXXFileTypeManager::structureVisitor(CXCursor cursor, CXCurso
                 source.type = DEF_ENUM_CONSTANT;
                 break;
             case CXCursor_TypedefDecl:
+            case CXCursor_TypeAliasTemplateDecl:
+            case CXCursor_TypeAliasDecl:
                 source.type = DEF_TYPEDEF;
                 break;
             case CXCursor_VarDecl:
@@ -240,6 +245,7 @@ CXChildVisitResult CXXFileTypeManager::structureVisitor(CXCursor cursor, CXCurso
                 exit(1);
         }
         def->sources.push_back(source);
+}
 
         project->addDefinition(def);
         file->addDefinition(def);
@@ -271,6 +277,7 @@ CXTranslationUnit CXXFileTypeManager::parse(ProjectFile* file, CXUnsavedFile* un
         buildArgs.push_back("-x");
         buildArgs.push_back("c++");
         buildArgs.push_back("-Wall");
+        buildArgs.push_back("-ferror-limit=100");
         buildArgs.push_back("-I/usr/include");
         buildArgs.push_back("-I/usr/local/include");
 #ifdef __APPLE__

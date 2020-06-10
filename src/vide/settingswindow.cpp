@@ -16,17 +16,17 @@ SettingsWindow::~SettingsWindow()
 
 bool SettingsWindow::init()
 {
-    Frame* rootFrame = new Frame(this, true);
+    Frame* rootFrame = new Frame(getApp(), true);
 
-    List* pagesList = new List(this);
-    Scroller* scroller = new Scroller(this);
+    List* pagesList = new List(getApp());
+    Scroller* scroller = new Scroller(getApp());
     scroller->setChild(pagesList);
     rootFrame->add(scroller);
 
-    pagesList->addItem(new TextListItem(this, L"General"));
-    pagesList->addItem(new TextListItem(this, L"Editor"));
+    pagesList->addItem(new TextListItem(getApp(), L"General"));
+    pagesList->addItem(new TextListItem(getApp(), L"Editor"));
 
-    rootFrame->add(new Button(this, L"Settings!"));
+    rootFrame->add(new Button(getApp(), L"Settings!"));
 
     setContent(rootFrame);
 
@@ -35,10 +35,8 @@ bool SettingsWindow::init()
     return true;
 }
 
-bool SettingsWindow::onClose()
+void SettingsWindow::onClose()
 {
     hide();
-
-    return true;
 }
 

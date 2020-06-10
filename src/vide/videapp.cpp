@@ -115,9 +115,11 @@ VideWindow* VideApp::getProjectWindow(Project* project)
 
 void VideApp::onOpenProject(Project* project)
 {
+log(DEBUG, "onOpenProject: Here!");
     VideWindow* window = new VideWindow(this, project);
     m_videWindows.push_back(window);
 
+log(DEBUG, "onOpenProject: Opening window...");
     window->show();
 }
 

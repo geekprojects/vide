@@ -45,7 +45,7 @@ class VideWindow : public Frontier::FrontierWindow
 
     Frontier::Tabs* m_leftTabs;
     Frontier::Tabs* m_rightTabs;
-    FontHandle* m_textFont;
+    Geek::FontHandle* m_textFont;
     Frontier::Label* m_editorStatus;
     Frontier::Label* m_interfaceStatus;
 
@@ -60,7 +60,7 @@ class VideWindow : public Frontier::FrontierWindow
 
     EditorTipWindow* m_editorTipWindow;
 
-    void onOpenFile();
+    void onOpenFile(Frontier::Widget* button);
 
     void onEditorTabChange(Frontier::Widget* widget);
     void onCloseTab(Frontier::Widget* tab);
@@ -72,7 +72,7 @@ class VideWindow : public Frontier::FrontierWindow
     VideWindow(VideApp* app, Project* project);
     ~VideWindow();
 
-    FontHandle* getTextFont() { return m_textFont; }
+    Geek::FontHandle* getTextFont() { return m_textFont; }
 
     void setEditorStatus(std::wstring message);
     void setInterfaceStatus(std::wstring message);

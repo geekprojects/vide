@@ -22,25 +22,25 @@ WelcomeWindow::~WelcomeWindow()
 bool WelcomeWindow::init()
 {
     Frame* rootFrame = new Frame(this, false);
-    rootFrame->add(new Label(this, L"Welcome to Vide"));
+    rootFrame->add(new Label(getApp(), L"Welcome to Vide"));
 
     Button* createButton;
     Button* openButton;
-    rootFrame->add(createButton = new Button(this, L"Create New Project"));
-    rootFrame->add(openButton = new Button(this, L"Open Existing Project"));
+    rootFrame->add(createButton = new Button(getApp(), L"Create New Project"));
+    rootFrame->add(openButton = new Button(getApp(), L"Open Existing Project"));
 
     createButton->clickSignal().connect(sigc::mem_fun(*this, &WelcomeWindow::createProject));
     openButton->clickSignal().connect(sigc::mem_fun(*this, &WelcomeWindow::chooseProject));
 
-    rootFrame->add(new Label(this, L"Recent Projects"));
+    rootFrame->add(new Label(getApp(), L"Recent Projects"));
 
-    List* list = new List(this);
-    TextListItem* item = new TextListItem(this, L"/Users/ian/projects/vide/testproject");
+    List* list = new List(getApp());
+    TextListItem* item = new TextListItem(getApp(), L"/Users/ian/projects/vide/testproject");
     item->setPrivateData(strdup("/Users/ian/projects/vide/testproject"));
     item->doubleClickSignal().connect(sigc::mem_fun(*this, &WelcomeWindow::selectProject));
     list->addItem(item);
 
-    Scroller* scroller = new Scroller(this);
+    Scroller* scroller = new Scroller(getApp());
     scroller->setChild(list);
     rootFrame->add(scroller);
 
@@ -49,13 +49,13 @@ bool WelcomeWindow::init()
     return true;
 }
 
-void WelcomeWindow::createProject()
+void WelcomeWindow::createProject(Widget* w)
 {
     ProjectWindow* projectWindow = new ProjectWindow(m_vide);
     projectWindow->show();
 }
 
-void WelcomeWindow::chooseProject()
+void WelcomeWindow::chooseProject(Widget* w)
 {
     string path = m_vide->chooseFile(0, "", "");
     if (path.length() == 0)
@@ -70,7 +70,7 @@ void WelcomeWindow::chooseProject()
     }
 }
 
-void WelcomeWindow::selectProject(ListItem* item)
+void WelcomeWindow::selectProject(Widget* item)
 {
     log(DEBUG, "selectProject: item=%p -> %s", item, item->getPrivateData());
 

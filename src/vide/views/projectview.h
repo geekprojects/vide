@@ -44,7 +44,7 @@ class ProjectView : public Frontier::Frame, public View
 
     void addDirectory(Frontier::TreeListItem* parent, ProjectDirectory* dir);
 
-    void onItemClicked(Frontier::ListItem* item);
+    void onItemClicked(Frontier::Widget* item);
 
  public:
     ProjectView(VideApp* vide, Project* project);

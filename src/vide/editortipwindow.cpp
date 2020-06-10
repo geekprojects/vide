@@ -40,7 +40,7 @@ void EditorTipWindow::setToken(LineToken* token, Geek::Vector2D pos)
 
         for (TokenMessage message : token->messages)
         {
-            Label* label = new Label(this, Frontier::Utils::string2wstring(message.text));
+            Label* label = new Label(getApp(), Frontier::Utils::string2wstring(message.text));
             m_frame->add(label);
         }
         setContent(m_frame);

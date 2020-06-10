@@ -43,27 +43,27 @@ VideWindow::~VideWindow()
 
 bool VideWindow::init()
 {
-    m_interfaceStatus = new Label(this, L"", ALIGN_LEFT);
+    m_interfaceStatus = new Label(getApp(), L"", ALIGN_LEFT);
 
-    Frame* rootFrame = new Frame(this, false);
+    Frame* rootFrame = new Frame(getApp(), false);
 
-    Frame* toolbar = new Frame(this, true);
-    toolbar->setPadding(0);
-    IconButton* openButton = new IconButton(this, getApp()->getTheme()->getIcon(FRONTIER_ICON_FOLDER_OPEN));
+    Frame* toolbar = new Frame(getApp(), true);
+    toolbar->getWidgetStyle()->applyProperty("padding", 0);
+    IconButton* openButton = new IconButton(getApp(), getApp()->getTheme()->getIcon(FRONTIER_ICON_FOLDER_OPEN));
     openButton->clickSignal().connect(sigc::mem_fun(*this, &VideWindow::onOpenFile));
     toolbar->add(openButton);
-    toolbar->add(new IconButton(this, getApp()->getTheme()->getIcon(FRONTIER_ICON_SAVE)));
-    toolbar->add(new IconButton(this, getApp()->getTheme()->getIcon(FRONTIER_ICON_SYNC)));
+    toolbar->add(new IconButton(getApp(), getApp()->getTheme()->getIcon(FRONTIER_ICON_SAVE)));
+    toolbar->add(new IconButton(getApp(), getApp()->getTheme()->getIcon(FRONTIER_ICON_SYNC)));
     rootFrame->add(toolbar);
 
-    ResizeableFrame* bottomFrame = new ResizeableFrame(this, false);
+    ResizeableFrame* bottomFrame = new ResizeableFrame(getApp(), false);
     //Frame* bottomFrame = new Frame(this, false);
     rootFrame->add(bottomFrame);
 
-    ResizeableFrame* mainFrame = new ResizeableFrame(this, true);
+    ResizeableFrame* mainFrame = new ResizeableFrame(getApp(), true);
     bottomFrame->addWithSize(mainFrame, 75);
 
-    m_leftTabs = new Tabs(this, true, TAB_LEFT);
+    m_leftTabs = new Tabs(getApp(), true, TAB_LEFT);
     m_projectView = new ProjectView(m_vide, m_project);
     m_leftTabs->addTab(L"Files", getApp()->getTheme()->getIcon(FRONTIER_ICON_FOLDER_OPEN), m_projectView);
 
@@ -72,10 +72,10 @@ bool VideWindow::init()
  
     mainFrame->addWithSize(m_leftTabs, 25);
 
-    m_contentFrame = new ResizeableFrame(this, true);
+    m_contentFrame = new ResizeableFrame(getApp(), true);
     mainFrame->addWithSize(m_contentFrame, 50);
 
-    Tabs* editorTabs = new Tabs(this);
+    Tabs* editorTabs = new Tabs(getApp());
     //m_contentFrame->addWithSize(editorTabs, 50);
     m_contentFrame->add(editorTabs);
     editorTabs->changeTabSignal().connect(sigc::mem_fun(*this, &VideWindow::onEditorTabChange));
@@ -91,21 +91,21 @@ bool VideWindow::init()
     m_editorTabs.push_back(editorTabs);
 */
 
-    m_rightTabs = new Tabs(this, true, TAB_RIGHT);
+    m_rightTabs = new Tabs(getApp(), true, TAB_RIGHT);
     m_fileStructureView = new StructureView(m_vide, true);
     m_rightTabs->addTab(L"Structure", getApp()->getTheme()->getIcon(FRONTIER_ICON_SITEMAP), m_fileStructureView);
     mainFrame->addWithSize(m_rightTabs, 25);
 
-    Frame* statusFrame = new Frame(this, true);
+    Frame* statusFrame = new Frame(getApp(), true);
     statusFrame->add(m_interfaceStatus);
-    statusFrame->add(m_editorStatus = new Label(this, L"", ALIGN_RIGHT));
+    statusFrame->add(m_editorStatus = new Label(getApp(), L"", ALIGN_RIGHT));
     rootFrame->add(statusFrame);
 
-    Tabs* bottomTabs = new Tabs(this, true, TAB_BOTTOM);
+    Tabs* bottomTabs = new Tabs(getApp(), true, TAB_BOTTOM);
     Terminal* terminal;
-    bottomTabs->addTab(L"Terminal", getApp()->getTheme()->getIcon(FRONTIER_ICON_TERMINAL), terminal = new Terminal(this));
+    bottomTabs->addTab(L"Terminal", getApp()->getTheme()->getIcon(FRONTIER_ICON_TERMINAL), terminal = new Terminal(getApp()));
     terminal->run("make");
-    bottomTabs->addTab(L"Search", getApp()->getTheme()->getIcon(FRONTIER_ICON_SEARCH), new Label(this, L"Search"));
+    bottomTabs->addTab(L"Search", getApp()->getTheme()->getIcon(FRONTIER_ICON_SEARCH), new Label(getApp(), L"Search"));
     bottomTabs->addTab(L"Tasks", getApp()->getTheme()->getIcon(FRONTIER_ICON_SEARCH), m_tasksView = new TasksView(m_vide));
     bottomFrame->addWithSize(bottomTabs, 25);
 
@@ -163,7 +163,7 @@ bool VideWindow::init()
     return true;
 }
 
-void VideWindow::onOpenFile()
+void VideWindow::onOpenFile(Widget* w)
 {
     log(DEBUG, "onOpenFile: Here!");
     string file = getApp()->chooseFile(0, "", "");
@@ -288,7 +288,7 @@ Editor* VideWindow::openEntry(ProjectEntry* entry, Position pos)
 void VideWindow::onSplitHorizontally(Frontier::MenuItem* item)
 {
 log(DEBUG, "onSplitHorizontally: HERE!");
-    Tabs* editorTabs = new Tabs(this);
+    Tabs* editorTabs = new Tabs(getApp());
     m_contentFrame->add(editorTabs);
     editorTabs->changeTabSignal().connect(sigc::mem_fun(*this, &VideWindow::onEditorTabChange));
     editorTabs->closeTabSignal().connect(sigc::mem_fun(*this, &VideWindow::onCloseTab));
