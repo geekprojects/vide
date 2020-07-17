@@ -52,6 +52,7 @@ include_directories(${CMAKE_SOURCE_DIR}/include)
 add_subdirectory(src/libvide-core)
 add_subdirectory(src/plugins)
 add_subdirectory(src/vide)
+add_subdirectory(tests)
 
 set(DATADIR ${CMAKE_INSTALL_PREFIX}/share/vide)
 install(DIRECTORY data/ DESTINATION ${DATADIR})

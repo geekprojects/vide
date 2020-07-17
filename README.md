@@ -22,11 +22,13 @@ Installation
 ------------
 
 ```
-./autogen.sh (If cloned from git)
-./configure
+mkdir build
+cd build
+cmake ..
 make
 sudo make install
 ```
+
 
 License
 -------
