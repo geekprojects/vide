@@ -80,7 +80,7 @@ bool Project::load()
         log(DEBUG, "Loading config: %s", getConfigPath().c_str());
         m_config = YAML::LoadFile(getConfigPath().c_str());
     }
-    catch (const exception e)
+    catch (const exception& e)
     {
         log(ERROR, "load: Failed to load project file: %s", e.what());
         return false;

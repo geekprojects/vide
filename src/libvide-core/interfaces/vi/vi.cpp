@@ -461,6 +461,7 @@ wstring ViInterface::getStatus()
         case MODE_SEARCH:
             return L"Search: " + m_searchString;
     }
+    return L"";
 }
 
 

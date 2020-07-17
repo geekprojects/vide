@@ -15,6 +15,7 @@ add_executable(vide
 
 include_directories(${CMAKE_SOURCE_DIR}/include ${CMAKE_SOURCE_DIR}/src/vide)
 
+add_definitions(-Wno-class-memaccess)
 
 target_link_libraries(vide vide-core vide-plugins ${libfrontier_LDFLAGS})
 

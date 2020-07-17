@@ -20,12 +20,13 @@
 
 
 #include <vide/project.h>
-//#include "config.h"
 #include <vide/vide.h>
 #include <vide/utils.h>
 
 #include <geek/core-file.h>
 #include <geek/core-string.h>
+
+#include <algorithm>
 
 #include <dirent.h>
 #include <unistd.h>

@@ -24,6 +24,7 @@
 
 #include <sys/stat.h>
 #include <unistd.h>
+#include <string.h>
 
 #define PROJECT_FILE ".vide"
 

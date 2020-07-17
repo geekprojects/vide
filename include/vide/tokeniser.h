@@ -23,6 +23,8 @@
 
 #include <geek/core-logger.h>
 
+#include <vector>
+
 class Buffer;
 struct Line;
 struct LineToken;

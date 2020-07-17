@@ -11,6 +11,8 @@ add_library(vide-plugins SHARED
     git/gitplugin.cpp
 )
 
+add_definitions(-Wno-error=attributes)
+
 include_directories(${clang_INCLUDE} ${ANTLR4_INCLUDE})
 target_link_libraries(vide-plugins vide-core ${clang_LIBRARY} ${ANTLR4_LIBRARY} ${git2_LIBRARY})
 
