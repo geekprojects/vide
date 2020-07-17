@@ -20,7 +20,7 @@
 
 
 #include "videwindow.h"
-#include "utils.h"
+#include "vide/utils.h"
 
 #include <frontier/widgets/iconbutton.h>
 #include <frontier/widgets/resizeableframe.h>
