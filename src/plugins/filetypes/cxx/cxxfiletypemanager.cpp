@@ -20,7 +20,7 @@ CXXFileTypeManager::CXXFileTypeManager(Vide* vide) : FileTypeManager(vide)
     m_index = clang_createIndex(1, 1);
     clang_CXIndex_setGlobalOptions(m_index, CXGlobalOpt_ThreadBackgroundPriorityForAll);
 
-    m_iconSurface = Surface::loadPNG("data/icons/cpp_256x256.png");
+    m_iconSurface = Surface::loadPNG(vide->getDataPath() + "/icons/cpp_256x256.png");
 }
 
 CXXFileTypeManager::~CXXFileTypeManager()

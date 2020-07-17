@@ -27,6 +27,9 @@
 
 #define PROJECT_FILE ".vide"
 
+#define STRINGIFY(x) XSTRINGIFY(x)
+#define XSTRINGIFY(x) #x
+
 using namespace std;
 using namespace Geek;
 using namespace Geek::Core;
@@ -181,5 +184,10 @@ Project* Vide::openProject(string path)
     //window->show();
 
     return project;
+}
+
+string Vide::getDataPath()
+{
+    return string(STRINGIFY(DATADIR));
 }
 

@@ -21,7 +21,7 @@ JavaFileTypeManager::JavaFileTypeManager(Vide* vide) : FileTypeManager(vide)
 {
     m_tokeniser = new JavaTokeniser(this);
 
-    m_iconSurface = Surface::loadPNG("data/icons/java_256x256.png");
+    m_iconSurface = Surface::loadPNG(vide->getDataPath() + "/icons/java_256x256.png");
 }
 
 JavaFileTypeManager::~JavaFileTypeManager()

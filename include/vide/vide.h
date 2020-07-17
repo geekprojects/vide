@@ -82,6 +82,8 @@ class Vide : public Geek::Logger
     sigc::signal<void, Project*> openProjectSignal() { return m_openProjectSignal; }
 
     void taskComplete();
+
+    std::string getDataPath();
 };
 
 #endif
