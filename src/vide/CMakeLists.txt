@@ -17,7 +17,8 @@ include_directories(${CMAKE_SOURCE_DIR}/include ${CMAKE_SOURCE_DIR}/src/vide)
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
     add_definitions(-Wno-class-memaccess)
+    target_link_options(vide PUBLIC "LINKER:--no-as-needed")
 endif()
 
-target_link_libraries(vide vide-core vide-plugins ${libfrontier_LDFLAGS})
+target_link_libraries(vide PUBLIC vide-core vide-plugins ${libfrontier_LDFLAGS})
 
